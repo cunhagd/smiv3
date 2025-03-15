@@ -52,7 +52,6 @@ const sentimentData = [
 const Dashboard = () => {
   const [totalMencoes, setTotalMencoes] = useState(0);
   const [areaChartData, setAreaChartData] = useState([]);
-  const [chartPeriodView, setChartPeriodView] = useState('mensal');
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
@@ -77,38 +76,61 @@ const Dashboard = () => {
         .catch(error => console.error('Erro ao buscar total de menções:', error))
         .finally(() => setIsLoading(false));
       
-      // Buscar dados para o gráfico de área (simulado por enquanto)
-      // Normalmente aqui teríamos um endpoint como: 
-      // fetch(`https://smi-api-production-fae2.up.railway.app/mentions-by-period?from=${from}&to=${to}&period=${chartPeriodView}`)
-      
-      // Como não temos esse endpoint, vamos simular os dados com base no período selecionado
-      simulateAreaChartData(from, to, chartPeriodView);
+      // Gerar dados para o gráfico de área baseado no período selecionado
+      simulateAreaChartData(from, to);
     }
-  }, [dateRange, chartPeriodView]); // Reexecuta quando o dateRange ou chartPeriodView mudam
+  }, [dateRange]); // Reexecuta quando o dateRange muda
 
-  const simulateAreaChartData = (from, to, periodView) => {
+  const simulateAreaChartData = (from: string, to: string) => {
     // Converter as strings de data para objetos Date
     const fromDate = new Date(from);
     const toDate = new Date(to);
     
     // Calcular a diferença em dias
-    const diffTime = Math.abs(toDate - fromDate);
+    const diffTime = Math.abs(toDate.getTime() - fromDate.getTime());
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir o dia final
     
     const data = [];
     
-    // Dados mensais
-    if (periodView === 'mensal') {
+    // Determinar automaticamente o melhor agrupamento com base no intervalo de datas
+    if (diffDays <= 31) {
+      // Dados diários para períodos de até 31 dias
+      for (let i = 0; i < diffDays; i++) {
+        const day = new Date(fromDate);
+        day.setDate(day.getDate() + i);
+        
+        // Formatar como "DD/MM"
+        const dayStr = day.getDate().toString().padStart(2, '0');
+        const monthStr = (day.getMonth() + 1).toString().padStart(2, '0');
+        
+        data.push({
+          name: `${dayStr}/${monthStr}`,
+          value: Math.floor(Math.random() * 30) + 5 // Valor aleatório entre 5 e 35
+        });
+      }
+    } else if (diffDays <= 92) {
+      // Dados semanais para períodos de até ~3 meses
+      const numWeeks = Math.ceil(diffDays / 7);
+      
+      for (let i = 0; i < numWeeks; i++) {
+        const weekStart = new Date(fromDate);
+        weekStart.setDate(weekStart.getDate() + (i * 7));
+        
+        // Formatar como "DD/MM"
+        const startDay = weekStart.getDate().toString().padStart(2, '0');
+        const startMonth = (weekStart.getMonth() + 1).toString().padStart(2, '0');
+        
+        data.push({
+          name: `${startDay}/${startMonth}`,
+          value: Math.floor(Math.random() * 50) + 10 // Valor aleatório entre 10 e 60
+        });
+      }
+    } else {
+      // Dados mensais para períodos mais longos
       const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
       
-      // Se o período for mais de um ano, exibimos todos os meses entre as datas
-      const startMonth = fromDate.getMonth();
-      const startYear = fromDate.getFullYear();
-      const endMonth = toDate.getMonth();
-      const endYear = toDate.getFullYear();
-      
       // Gerar dados para cada mês no intervalo
-      let currentDate = new Date(startYear, startMonth, 1);
+      let currentDate = new Date(fromDate);
       
       while (currentDate <= toDate) {
         const month = months[currentDate.getMonth()];
@@ -123,52 +145,10 @@ const Dashboard = () => {
         // Avançar para o próximo mês
         currentDate.setMonth(currentDate.getMonth() + 1);
       }
-    } 
-    // Dados semanais (se o período for até ~3 meses)
-    else if (periodView === 'semanal' || (periodView === 'mensal' && diffDays <= 90)) {
-      // Dividir o período em semanas
-      const numWeeks = Math.ceil(diffDays / 7);
-      
-      for (let i = 0; i < numWeeks; i++) {
-        const weekStart = new Date(fromDate);
-        weekStart.setDate(weekStart.getDate() + (i * 7));
-        
-        const weekEnd = new Date(weekStart);
-        weekEnd.setDate(weekEnd.getDate() + 6);
-        
-        // Formatar como "DD/MM - DD/MM"
-        const startDay = weekStart.getDate().toString().padStart(2, '0');
-        const startMonth = (weekStart.getMonth() + 1).toString().padStart(2, '0');
-        
-        data.push({
-          name: `${startDay}/${startMonth}`,
-          value: Math.floor(Math.random() * 50) + 10 // Valor aleatório entre 10 e 60
-        });
-      }
-    } 
-    // Dados diários (se o período for até ~30 dias)
-    else if (periodView === 'diário' || diffDays <= 31) {
-      for (let i = 0; i < diffDays; i++) {
-        const day = new Date(fromDate);
-        day.setDate(day.getDate() + i);
-        
-        // Formatar como "DD/MM"
-        const dayStr = day.getDate().toString().padStart(2, '0');
-        const monthStr = (day.getMonth() + 1).toString().padStart(2, '0');
-        
-        data.push({
-          name: `${dayStr}/${monthStr}`,
-          value: Math.floor(Math.random() * 30) + 5 // Valor aleatório entre 5 e 35
-        });
-      }
     }
     
     console.log('Dados simulados para o gráfico de área:', data);
     setAreaChartData(data);
-  };
-
-  const handleChartPeriodChange = (e) => {
-    setChartPeriodView(e.target.value);
   };
 
   const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
@@ -238,20 +218,9 @@ const Dashboard = () => {
           <div className="dashboard-card">
             <div className="dashboard-card-header">
               <h3 className="text-lg font-medium">Menções por Período</h3>
-              <div className="flex items-center gap-2">
-                <select 
-                  className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm"
-                  value={chartPeriodView}
-                  onChange={handleChartPeriodChange}
-                >
-                  <option value="mensal">Mensal</option>
-                  <option value="semanal">Semanal</option>
-                  <option value="diário">Diário</option>
-                </select>
-                <button className="p-1 hover:bg-white/5 rounded-full">
-                  <ArrowRight className="h-4 w-4 text-gray-400" />
-                </button>
-              </div>
+              <button className="p-1 hover:bg-white/5 rounded-full">
+                <ArrowRight className="h-4 w-4 text-gray-400" />
+              </button>
             </div>
             {isLoading ? (
               <div className="flex items-center justify-center h-[300px]">
