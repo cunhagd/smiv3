@@ -6,6 +6,16 @@ import DateRangePicker from '@/components/DateRangePicker';
 
 const columns = [
   {
+    id: 'data',
+    header: 'Data',
+    accessorKey: 'data',
+    sortable: true,
+    cell: (info: any) => {
+      const date = new Date(info.getValue());
+      return date.toLocaleDateString('pt-BR');
+    },
+  },
+  {
     id: 'portal',
     header: 'Portal',
     accessorKey: 'portal',
@@ -18,14 +28,14 @@ const Spreadsheet = () => {
     from: new Date('2025-03-01'),
     to: new Date('2025-03-15'),
   });
-  const [portais, setPortais] = useState([]);
+  const [noticias, setNoticias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
     setIsLoading(true);
     setError(null);
-    fetch(`https://smi-api-production-fae2.up.railway.app/portais`)
+    fetch(`https://smi-api-production-fae2.up.railway.app/noticias`)
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
@@ -34,18 +44,18 @@ const Spreadsheet = () => {
         return response.json();
       })
       .then(data => {
-        console.log('Dados dos portais recebidos da API:', data);
+        console.log('Dados das notícias recebidos da API:', data);
         if (Array.isArray(data)) {
-          setPortais(data);
+          setNoticias(data);
         } else {
           console.warn('A resposta da API não é um array:', data);
-          setPortais([]);
+          setNoticias([]);
         }
       })
       .catch(error => {
-        console.error('Erro ao buscar portais:', error.message);
+        console.error('Erro ao buscar notícias:', error.message);
         setError(error.message);
-        setPortais([]);
+        setNoticias([]);
       })
       .finally(() => setIsLoading(false));
   }, []);
@@ -84,12 +94,12 @@ const Spreadsheet = () => {
             <div className="flex items-center justify-center h-[300px]">
               <p className="text-red-400">Erro ao carregar dados: {error}</p>
             </div>
-          ) : portais.length === 0 ? (
+          ) : noticias.length === 0 ? (
             <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Nenhum portal encontrado</p>
+              <p className="text-gray-400">Nenhuma notícia encontrada</p>
             </div>
           ) : (
-            <DataTable data={portais} columns={columns} />
+            <DataTable data={noticias} columns={columns} />
           )}
         </div>
       </main>
