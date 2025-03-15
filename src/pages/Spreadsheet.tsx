@@ -35,7 +35,7 @@ const Spreadsheet = () => {
   useEffect(() => {
     setIsLoading(true);
     setError(null);
-    fetch(`http://localhost:3000/noticias`)
+    fetch(`https://smi-api-production-fae2.up.railway.app/noticias`)
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
