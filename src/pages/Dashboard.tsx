@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
-import { ptBR } from 'date-fns/locale'; // Para usar o português
+import { ptBR } from 'date-fns/locale';
 import { 
   ArrowRight, 
   Newspaper, 
@@ -53,6 +53,7 @@ const sentimentData = [
 const Dashboard = () => {
   const [totalMencoes, setTotalMencoes] = useState(0);
   const [areaChartData, setAreaChartData] = useState([]);
+  const [totalPontuacao, setTotalPontuacao] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
@@ -73,15 +74,13 @@ const Dashboard = () => {
           console.log('Dados de total de menções recebidos da API:', data);
           setTotalMencoes(data.total_mencoes || 0);
         })
-        .catch(error => console.error('Erro ao buscar total de menções:', error))
-        .finally(() => setIsLoading(false));
+        .catch(error => console.error('Erro ao buscar total de menções:', error));
 
       // Buscar dados para o gráfico de área
       fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=mencoes-por-periodo&from=${from}&to=${to}`)
         .then(response => response.json())
         .then(data => {
           console.log('Dados brutos do gráfico recebidos da API:', data);
-          // Formatar as datas para DD/MMM
           const formattedData = data.map(item => ({
             name: format(new Date(item.name), 'dd/MMM', { locale: ptBR }).toLowerCase(), // ex.: "01/mar"
             value: item.value
@@ -90,6 +89,16 @@ const Dashboard = () => {
           setAreaChartData(formattedData);
         })
         .catch(error => console.error('Erro ao buscar dados do gráfico:', error));
+
+      // Buscar total de pontuação
+      fetch(`https://smi-api-production-fae2.up.railway.app/pontuacao-total?from=${from}&to=${to}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Dados de pontuação total recebidos da API:', data);
+          setTotalPontuacao(data.total_pontuacao || 0);
+        })
+        .catch(error => console.error('Erro ao buscar pontuação total:', error))
+        .finally(() => setIsLoading(false));
     }
   }, [dateRange]);
 
@@ -147,8 +156,8 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Alcance Estimado" 
-            value="2.7M" 
+            title="Pontuação" 
+            value={isLoading ? "..." : totalPontuacao.toString()} 
             change="+15.8% em relação ao mês anterior" 
             isPositive 
             icon={<BarChartIcon className="h-6 w-6" />} 
