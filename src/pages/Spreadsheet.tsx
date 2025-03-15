@@ -32,7 +32,10 @@ const Spreadsheet = () => {
     console.log('useEffect iniciado');
     setIsLoading(true);
     setError(null);
-    fetch('https://smi-api-production-fae2.up.railway.app/noticias')
+    const from = dateRange.from.toISOString().split('T')[0];
+    const to = dateRange.to.toISOString().split('T')[0];
+    console.log('Chamando API com from:', from, 'e to:', to);
+    fetch(`https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}`)
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
@@ -58,11 +61,13 @@ const Spreadsheet = () => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, []);
+  }, [dateRange]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
-    setDateRange(range);
+    if (range.from && range.to) {
+      setDateRange({ from: range.from, to: range.to });
+    }
   };
 
   console.log('Renderizando Spreadsheet, noticias:', noticias);
@@ -86,24 +91,24 @@ const Spreadsheet = () => {
         </div>
         <div className="dashboard-card">
           {isLoading ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Carregando dados...</p>
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-red-400">Erro ao carregar dados: {error}</p>
-            </div>
-          ) : noticias.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Nenhuma notícia encontrada</p>
-            </div>
-          ) : (
-            <DataTable data={noticias} columns={columns} />
-          )}
-        </div>
-      </main>
-    </div>
-  );
-};
-
-export default Spreadsheet;
+                       <div className="flex items-center justify-center h-[300px]">
+                       <p className="text-gray-400">Carregando dados...</p>
+                     </div>
+                   ) : error ? (
+                     <div className="flex items-center justify-center h-[300px]">
+                       <p className="text-red-400">Erro ao carregar dados: {error}</p>
+                     </div>
+                   ) : noticias.length === 0 ? (
+                     <div className="flex items-center justify-center h-[300px]">
+                       <p className="text-gray-400">Nenhuma notícia encontrada</p>
+                     </div>
+                   ) : (
+                     <DataTable data={noticias} columns={columns} />
+                   )}
+                 </div>
+               </main>
+             </div>
+           );
+         };
+         
+         export default Spreadsheet;
