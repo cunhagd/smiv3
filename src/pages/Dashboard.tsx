@@ -5,7 +5,6 @@ import {
   TrendingUp, 
   TrendingDown, 
   BarChart as BarChartIcon,
-  Calendar,
   Filter,
   Download
 } from 'lucide-react';
@@ -14,6 +13,7 @@ import StatCard from '@/components/StatCard';
 import AreaChart from '@/components/charts/AreaChart';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
+import DateRangePicker from '@/components/DateRangePicker';
 
 // Mock data (manteremos por enquanto para os gráficos)
 const areaChartData = [
@@ -64,6 +64,10 @@ const sentimentData = [
 
 const Dashboard = () => {
   const [totalMencoes, setTotalMencoes] = useState(0);
+  const [dateRange, setDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date(),
+  });
 
   useEffect(() => {
     fetch('https://smi-api-production-fae2.up.railway.app/metrics') // Domínio real da sua API
@@ -74,6 +78,12 @@ const Dashboard = () => {
       })
       .catch(error => console.error('Erro ao buscar total de menções:', error));
   }, []);
+
+  const handleDateRangeChange = (range) => {
+    setDateRange(range);
+    // Aqui você poderia fazer uma nova chamada à API com as datas selecionadas
+    console.log('Novo período selecionado:', range);
+  };
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
@@ -87,10 +97,7 @@ const Dashboard = () => {
           </div>
           
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <div className="flex items-center gap-2 px-3 py-2 bg-dark-card border border-white/10 rounded-lg">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-sm">Últimos 30 dias</span>
-            </div>
+            <DateRangePicker onChange={handleDateRangeChange} />
             
             <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
               <Filter className="h-4 w-4" />

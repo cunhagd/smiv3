@@ -1,8 +1,8 @@
-
-import React from 'react';
+import React, { useState } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Calendar } from 'lucide-react';
+import { Filter, Download } from 'lucide-react';
+import DateRangePicker from '@/components/DateRangePicker';
 
 // Mock data
 const newsData = [
@@ -177,6 +177,17 @@ const columns = [
 ];
 
 const Spreadsheet = () => {
+  const [dateRange, setDateRange] = useState({
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    to: new Date(),
+  });
+
+  const handleDateRangeChange = (range) => {
+    setDateRange(range);
+    // Aqui você poderia fazer uma nova chamada à API com as datas selecionadas
+    console.log('Novo período selecionado:', range);
+  };
+
   return (
     <div className="min-h-screen bg-dark-bg text-white">
       <Navbar />
@@ -188,11 +199,18 @@ const Spreadsheet = () => {
             <p className="text-gray-400">Gerenciamento e análise de notícias</p>
           </div>
           
-          <div className="flex items-center gap-2 mt-4 md:mt-0">
-            <div className="flex items-center gap-2 px-3 py-2 bg-dark-card border border-white/10 rounded-lg">
-              <Calendar className="h-4 w-4 text-gray-400" />
-              <span className="text-sm">Últimos 30 dias</span>
-            </div>
+          <div className="flex items-center gap-3 mt-4 md:mt-0">
+            <DateRangePicker onChange={handleDateRangeChange} />
+            
+            <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
+              <Filter className="h-4 w-4" />
+              <span className="text-sm">Filtros</span>
+            </button>
+            
+            <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
+              <Download className="h-4 w-4" />
+              <span className="text-sm">Exportar</span>
+            </button>
           </div>
         </div>
         
