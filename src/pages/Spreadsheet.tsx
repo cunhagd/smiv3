@@ -33,9 +33,10 @@ const Spreadsheet = () => {
   const [error, setError] = useState(null);
 
   useEffect(() => {
+    console.log('useEffect iniciado');
     setIsLoading(true);
     setError(null);
-    fetch(`https://smi-api-production-fae2.up.railway.app/noticias`)
+    fetch('https://smi-api-production-fae2.up.railway.app/noticias')
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
@@ -57,34 +58,34 @@ const Spreadsheet = () => {
         setError(error.message);
         setNoticias([]);
       })
-      .finally(() => setIsLoading(false));
+      .finally(() => {
+        console.log('useEffect finalizado');
+        setIsLoading(false);
+      });
   }, []);
 
   const handleDateRangeChange = (range) => {
+    console.log('DateRange alterado:', range);
     setDateRange(range);
   };
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
       <Navbar />
-      
       <main className="p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
             <p className="text-gray-400">Gerenciamento e análise de notícias</p>
           </div>
-          
           <div className="flex items-center gap-3 mt-4 md:mt-0">
             <DateRangePicker onChange={handleDateRangeChange} />
-            
             <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
               <Download className="h-4 w-4" />
               <span className="text-sm">Exportar</span>
             </button>
           </div>
         </div>
-        
         <div className="dashboard-card">
           {isLoading ? (
             <div className="flex items-center justify-center h-[300px]">
