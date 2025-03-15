@@ -10,7 +10,7 @@ const columns = [
     header: 'Data',
     accessorKey: 'data',
     sortable: true,
-    cell: (info: any) => {
+    cell: (info) => {
       const date = new Date(info.getValue());
       return date.toLocaleDateString('pt-BR');
     },
@@ -35,7 +35,7 @@ const Spreadsheet = () => {
   useEffect(() => {
     setIsLoading(true);
     setError(null);
-    fetch(`https://smi-api-production-fae2.up.railway.app/noticias`)
+    fetch(`http://localhost:3000/noticias`)
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
