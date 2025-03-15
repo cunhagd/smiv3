@@ -6,7 +6,7 @@ function App() {
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Dashboard />} />
+        <Route path="/dashboard" element={<Dashboard />} /> {/* Alterado de "/" para "/dashboard" */}
         <Route path="/spreadsheet" element={<Spreadsheet />} />
       </Routes>
     </Router>
