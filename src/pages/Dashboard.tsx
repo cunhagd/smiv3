@@ -1,5 +1,4 @@
-
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
   Newspaper, 
@@ -16,7 +15,7 @@ import AreaChart from '@/components/charts/AreaChart';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
 
-// Mock data
+// Mock data (manteremos por enquanto para os gráficos)
 const areaChartData = [
   { name: 'Jan', value: 45 },
   { name: 'Fev', value: 52 },
@@ -64,6 +63,18 @@ const sentimentData = [
 ];
 
 const Dashboard = () => {
+  const [totalMencoes, setTotalMencoes] = useState(0);
+
+  useEffect(() => {
+    fetch('https://smi-api-production-fae2.up.railway.app/metrics') // Domínio real da sua API
+      .then(response => response.json())
+      .then(data => {
+        console.log('Dados recebidos da API:', data); // Adiciona log para debug
+        setTotalMencoes(data.total_mencoes || 0);
+      })
+      .catch(error => console.error('Erro ao buscar total de menções:', error));
+  }, []);
+
   return (
     <div className="min-h-screen bg-dark-bg text-white">
       <Navbar />
@@ -97,7 +108,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard 
             title="Total de Menções" 
-            value="1,254" 
+            value={totalMencoes.toString()} 
             change="+12.5% em relação ao mês anterior" 
             isPositive 
             icon={<Newspaper className="h-6 w-6" />} 
