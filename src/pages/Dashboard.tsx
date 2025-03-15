@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { format } from 'date-fns';
+import { ptBR } from 'date-fns/locale'; // Para usar o português
 import { 
   ArrowRight, 
   Newspaper, 
@@ -78,8 +80,14 @@ const Dashboard = () => {
       fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=mencoes-por-periodo&from=${from}&to=${to}`)
         .then(response => response.json())
         .then(data => {
-          console.log('Dados do gráfico recebidos da API:', data);
-          setAreaChartData(data);
+          console.log('Dados brutos do gráfico recebidos da API:', data);
+          // Formatar as datas para DD/MMM
+          const formattedData = data.map(item => ({
+            name: format(new Date(item.name), 'dd/MMM', { locale: ptBR }).toLowerCase(), // ex.: "01/mar"
+            value: item.value
+          }));
+          console.log('Dados formatados do gráfico:', formattedData);
+          setAreaChartData(formattedData);
         })
         .catch(error => console.error('Erro ao buscar dados do gráfico:', error));
     }
