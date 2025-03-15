@@ -5,6 +5,7 @@ import {
   TrendingUp, 
   TrendingDown, 
   BarChart as BarChartIcon,
+  Calendar,
   Filter,
   Download
 } from 'lucide-react';
@@ -13,7 +14,7 @@ import StatCard from '@/components/StatCard';
 import AreaChart from '@/components/charts/AreaChart';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
-import DateRangePicker from '@/components/DateRangePicker';
+import DateRangePicker from '@/components/DateRangePicker'; // Importe o componente
 
 // Mock data (manteremos por enquanto para os gráficos)
 const areaChartData = [
@@ -65,24 +66,30 @@ const sentimentData = [
 const Dashboard = () => {
   const [totalMencoes, setTotalMencoes] = useState(0);
   const [dateRange, setDateRange] = useState({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)),
+    from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
     to: new Date(),
   });
 
   useEffect(() => {
-    fetch('https://smi-api-production-fae2.up.railway.app/metrics') // Domínio real da sua API
-      .then(response => response.json())
-      .then(data => {
-        console.log('Dados recebidos da API:', data); // Adiciona log para debug
-        setTotalMencoes(data.total_mencoes || 0);
-      })
-      .catch(error => console.error('Erro ao buscar total de menções:', error));
-  }, []);
+    // Converte as datas para strings no formato ISO (ex.: 2025-03-14T00:00:00.000Z)
+    const from = dateRange.from?.toISOString().split('T')[0];
+    const to = dateRange.to?.toISOString().split('T')[0];
 
-  const handleDateRangeChange = (range) => {
-    setDateRange(range);
-    // Aqui você poderia fazer uma nova chamada à API com as datas selecionadas
-    console.log('Novo período selecionado:', range);
+    if (from && to) {
+      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?from=${from}&to=${to}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Dados recebidos da API:', data);
+          setTotalMencoes(data.total_mencoes || 0);
+        })
+        .catch(error => console.error('Erro ao buscar total de menções:', error));
+    }
+  }, [dateRange]); // Reexecuta quando o dateRange muda
+
+  const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
+    if (range.from && range.to) {
+      setDateRange({ from: range.from, to: range.to });
+    }
   };
 
   return (
@@ -114,7 +121,7 @@ const Dashboard = () => {
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard 
-            title="Total de Notícias" 
+            title="Total de Menções" 
             value={totalMencoes.toString()} 
             change="+12.5% em relação ao mês anterior" 
             isPositive 
@@ -122,7 +129,7 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Notícias Positivas" 
+            title="Menções Positivas" 
             value="527" 
             change="+8.2% em relação ao mês anterior" 
             isPositive 
@@ -130,7 +137,7 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Notícias Negativas" 
+            title="Menções Negativas" 
             value="251" 
             change="-5.3% em relação ao mês anterior" 
             isPositive 
@@ -138,9 +145,9 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Pontuação Total" 
+            title="Alcance Estimado" 
             value="2.7M" 
-            change="+15.8% em relação à pontuação histórica" 
+            change="+15.8% em relação ao mês anterior" 
             isPositive 
             icon={<BarChartIcon className="h-6 w-6" />} 
           />
@@ -250,4 +257,4 @@ const Dashboard = () => {
   );
 };
 
-export default Dashboard;
+export default Dashboard; 
