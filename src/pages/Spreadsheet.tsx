@@ -6,109 +6,49 @@ import DateRangePicker from '@/components/DateRangePicker';
 
 const columns = [
   {
-    id: 'data',
-    header: 'Data',
-    accessorKey: 'data',
-    sortable: true,
-    cell: (info: any) => {
-      const date = new Date(info.getValue());
-      return date.toLocaleDateString('pt-BR');
-    },
-  },
-  {
     id: 'portal',
     header: 'Portal',
     accessorKey: 'portal',
-    sortable: true,
-  },
-  {
-    id: 'titulo',
-    header: 'Título',
-    accessorKey: 'titulo',
-    sortable: true,
-  },
-  {
-    id: 'pontos',
-    header: 'Pontos',
-    accessorKey: 'pontos',
-    sortable: true,
-  },
-  {
-    id: 'sentimento',
-    header: 'Sentimento',
-    accessorKey: 'sentimento',
-    sortable: true,
-    cell: (info: any) => {
-      const sentiment = info.getValue();
-      let bgColor = 'bg-gray-400';
-      let textColor = 'text-black';
-      
-      if (sentiment === 'Positivo') {
-        bgColor = 'bg-brand-yellow';
-      } else if (sentiment === 'Negativo') {
-        bgColor = 'bg-brand-red';
-      } else if (sentiment === 'Neutro') {
-        bgColor = 'bg-gray-400';
-      }
-      
-      return (
-        <span className={`${bgColor} ${textColor} text-xs px-2 py-1 rounded-full`}>
-          {sentiment}
-        </span>
-      );
-    },
-  },
-  {
-    id: 'abrangencia',
-    header: 'Abrangência',
-    accessorKey: 'abrangencia',
     sortable: true,
   },
 ];
 
 const Spreadsheet = () => {
   const [dateRange, setDateRange] = useState({
-    from: new Date('2025-02-15'),
+    from: new Date('2025-03-01'),
     to: new Date('2025-03-15'),
   });
-  const [newsData, setNewsData] = useState([]);
+  const [portais, setPortais] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const from = dateRange.from?.toISOString().split('T')[0];
-    const to = dateRange.to?.toISOString().split('T')[0];
-
-    console.log('Intervalo de datas selecionado:', { from, to });
-
-    if (from && to) {
-      setIsLoading(true);
-      setError(null);
-      fetch(`https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}`)
-        .then(response => {
-          console.log('Resposta bruta da API:', response.status, response.statusText);
-          if (!response.ok) {
-            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Dados da planilha recebidos da API:', data);
-          if (Array.isArray(data)) {
-            setNewsData(data);
-          } else {
-            console.warn('A resposta da API não é um array:', data);
-            setNewsData([]);
-          }
-        })
-        .catch(error => {
-          console.error('Erro ao buscar dados da planilha:', error.message);
-          setError(error.message);
-          setNewsData([]);
-        })
-        .finally(() => setIsLoading(false));
-    }
-  }, [dateRange]);
+    setIsLoading(true);
+    setError(null);
+    fetch(`https://smi-api-production-fae2.up.railway.app/portais`)
+      .then(response => {
+        console.log('Resposta bruta da API:', response.status, response.statusText);
+        if (!response.ok) {
+          throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Dados dos portais recebidos da API:', data);
+        if (Array.isArray(data)) {
+          setPortais(data);
+        } else {
+          console.warn('A resposta da API não é um array:', data);
+          setPortais([]);
+        }
+      })
+      .catch(error => {
+        console.error('Erro ao buscar portais:', error.message);
+        setError(error.message);
+        setPortais([]);
+      })
+      .finally(() => setIsLoading(false));
+  }, []);
 
   const handleDateRangeChange = (range) => {
     setDateRange(range);
@@ -144,12 +84,12 @@ const Spreadsheet = () => {
             <div className="flex items-center justify-center h-[300px]">
               <p className="text-red-400">Erro ao carregar dados: {error}</p>
             </div>
-          ) : newsData.length === 0 ? (
+          ) : portais.length === 0 ? (
             <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Nenhum dado encontrado para o período selecionado</p>
+              <p className="text-gray-400">Nenhum portal encontrado</p>
             </div>
           ) : (
-            <DataTable data={newsData} columns={columns} />
+            <DataTable data={portais} columns={columns} />
           )}
         </div>
       </main>
