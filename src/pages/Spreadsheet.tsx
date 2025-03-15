@@ -58,12 +58,15 @@ const columns = [
     header: 'Tema',
     accessorKey: 'tema',
     sortable: true,
-    cell: (row) => {
+    cell: (info) => {
+      const { row, updateTema } = info;
       console.log('Dados da linha para tema:', row);
       const [temaSelecionado, setTemaSelecionado] = useState(row.tema || '');
+      const [isSaving, setIsSaving] = useState(false);
 
-      const handleSave = async () => {
-        if (temaSelecionado && temaSelecionado !== row.tema) {
+      const handleSave = async (novoTema) => {
+        if (novoTema && novoTema !== row.tema) {
+          setIsSaving(true);
           try {
             const response = await fetch(
               `https://smi-api-production-fae2.up.railway.app/noticias/${row.id}`,
@@ -72,15 +75,18 @@ const columns = [
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ tema: temaSelecionado }),
+                body: JSON.stringify({ tema: novoTema }),
               }
             );
             if (!response.ok) {
               throw new Error('Falha ao salvar o tema');
             }
-            console.log('Tema salvo com sucesso:', temaSelecionado);
+            console.log('Tema salvo com sucesso:', novoTema);
+            updateTema(row.id, novoTema);
           } catch (error) {
             console.error('Erro ao salvar o tema:', error.message);
+          } finally {
+            setIsSaving(false);
           }
         }
       };
@@ -89,12 +95,14 @@ const columns = [
         <select
           value={temaSelecionado}
           onChange={(e) => {
-            setTemaSelecionado(e.target.value);
-            handleSave();
+            const novoTema = e.target.value;
+            setTemaSelecionado(novoTema);
+            handleSave(novoTema);
           }}
+          disabled={isSaving}
           className="p-1 bg-dark-card border border-white/10 rounded text-sm text-white w-32"
         >
-          <option value="">Selecione</option>
+          <option value="">Selecione um tema...</option>
           {TEMAS.map((tema) => (
             <option key={tema} value={tema}>
               {tema}
@@ -114,6 +122,14 @@ const Spreadsheet = () => {
   const [noticias, setNoticias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  const updateTema = (id, novoTema) => {
+    setNoticias(prevNoticias =>
+      prevNoticias.map(noticia =>
+        noticia.id === id ? { ...noticia, tema: novoTema } : noticia
+      )
+    );
+  };
 
   useEffect(() => {
     console.log('useEffect iniciado');
@@ -195,7 +211,7 @@ const Spreadsheet = () => {
               <p className="text-gray-400">Nenhuma notícia encontrada</p>
             </div>
           ) : (
-            <DataTable data={noticias} columns={columns} />
+            <DataTable data={noticias} columns={columns} updateTema={updateTema} />
           )}
         </div>
       </main>
