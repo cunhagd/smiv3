@@ -10,10 +10,6 @@ const columns = [
     header: 'Data',
     accessorKey: 'data',
     sortable: true,
-    cell: (info) => {
-      const dateValue = info.getValue ? info.getValue() : (info.value || info);
-      return typeof dateValue === 'string' && dateValue.match(/^\d{2}\/\d{2}\/\d{4}$/) ? dateValue : 'Data Inválida';
-    },
   },
   {
     id: 'portal',
@@ -68,6 +64,8 @@ const Spreadsheet = () => {
     console.log('DateRange alterado:', range);
     setDateRange(range);
   };
+
+  console.log('Renderizando Spreadsheet, noticias:', noticias);
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
