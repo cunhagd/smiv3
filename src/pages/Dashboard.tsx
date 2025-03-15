@@ -19,14 +19,6 @@ import LineChart from '@/components/charts/LineChart';
 import DateRangePicker from '@/components/DateRangePicker';
 
 // Mock data (manteremos apenas para os outros gráficos por enquanto)
-const barChartData = [
-  { name: 'TV', positivo: 25, negativo: -10, neutro: 15 },
-  { name: 'Jornal', positivo: 40, negativo: -15, neutro: 20 },
-  { name: 'Rádio', positivo: 30, negativo: -20, neutro: 10 },
-  { name: 'Internet', positivo: 55, negativo: -25, neutro: 25 },
-  { name: 'Blog', positivo: 15, negativo: -5, neutro: 10 },
-];
-
 const lineChartData = [
   { name: '01/05', menções: 40 },
   { name: '02/05', menções: 30 },
@@ -54,6 +46,8 @@ const Dashboard = () => {
   const [totalMencoes, setTotalMencoes] = useState(0);
   const [areaChartData, setAreaChartData] = useState([]);
   const [totalPontuacao, setTotalPontuacao] = useState(0);
+  const [portaisRelevantes, setPortaisRelevantes] = useState({ top5: [], bottom5: [] });
+  const [selectedType, setSelectedType] = useState('positivas'); // Padrão para "Positivas"
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
@@ -82,7 +76,7 @@ const Dashboard = () => {
         .then(data => {
           console.log('Dados brutos do gráfico recebidos da API:', data);
           const formattedData = data.map(item => ({
-            name: format(new Date(item.name), 'dd/MMM', { locale: ptBR }).toLowerCase(), // ex.: "01/mar"
+            name: format(new Date(item.name), 'dd/MMM', { locale: ptBR }).toLowerCase(),
             value: item.value
           }));
           console.log('Dados formatados do gráfico:', formattedData);
@@ -97,15 +91,28 @@ const Dashboard = () => {
           console.log('Dados de pontuação total recebidos da API:', data);
           setTotalPontuacao(data.total_pontuacao || 0);
         })
-        .catch(error => console.error('Erro ao buscar pontuação total:', error))
+        .catch(error => console.error('Erro ao buscar pontuação total:', error));
+
+      // Buscar portais relevantes
+      fetch(`https://smi-api-production-fae2.up.railway.app/portais-relevantes?from=${from}&to=${to}&type=${selectedType}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Dados de portais relevantes recebidos da API:', data);
+          setPortaisRelevantes(data);
+        })
+        .catch(error => console.error('Erro ao buscar portais relevantes:', error))
         .finally(() => setIsLoading(false));
     }
-  }, [dateRange]);
+  }, [dateRange, selectedType]); // Reexecuta quando dateRange ou selectedType muda
 
   const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
     if (range.from && range.to) {
       setDateRange({ from: range.from, to: range.to });
     }
+  };
+
+  const handleTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+    setSelectedType(event.target.value);
   };
 
   return (
@@ -184,23 +191,32 @@ const Dashboard = () => {
           
           <div className="dashboard-card">
             <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Menções por Mídia</h3>
+              <h3 className="text-lg font-medium">Portais Relevantes</h3>
               <div className="flex items-center gap-2">
-                <select className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm">
-                  <option>Total</option>
-                  <option>Positivas</option>
-                  <option>Negativas</option>
+                <select 
+                  className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm"
+                  value={selectedType}
+                  onChange={handleTypeChange}
+                >
+                  <option value="positivas">Positivas</option>
+                  <option value="negativas">Negativas</option>
                 </select>
                 <button className="p-1 hover:bg-white/5 rounded-full">
                   <ArrowRight className="h-4 w-4 text-gray-400" />
                 </button>
               </div>
             </div>
-            <BarChart 
-              data={barChartData} 
-              height={300} 
-              yAxisKey="positivo" 
-            />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-gray-400">Carregando dados...</p>
+              </div>
+            ) : (
+              <BarChart 
+                data={selectedType === 'positivas' ? portaisRelevantes.top5 : portaisRelevantes.bottom5}
+                height={300}
+                yAxisKey="value"
+              />
+            )}
           </div>
         </div>
         
