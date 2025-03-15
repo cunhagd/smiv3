@@ -1,8 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download } from 'lucide-react';
+import { Filter, Download, ExternalLink } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
+
+const TEMAS = [
+  'Agricultura',
+  'Social',
+  'Segurança Pública',
+  'Saúde',
+  'Política',
+  'Meio Ambiente',
+  'Infraestrutura',
+  'Educação',
+  'Economia',
+  'Cultura',
+];
 
 const columns = [
   {
@@ -22,6 +35,74 @@ const columns = [
     header: 'Título',
     accessorKey: 'titulo',
     sortable: true,
+  },
+  {
+    id: 'link',
+    header: 'Link',
+    accessorKey: 'link',
+    sortable: false,
+    cell: (row) => (
+      <a
+        href={row.link}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
+      >
+        <ExternalLink className="h-4 w-4 mr-2" />
+        <span className="underline">Acessar</span>
+      </a>
+    ),
+  },
+  {
+    id: 'tema',
+    header: 'Tema',
+    accessorKey: 'tema',
+    sortable: true,
+    cell: (row) => {
+      console.log('Dados da linha para tema:', row);
+      const [temaSelecionado, setTemaSelecionado] = useState(row.tema || '');
+
+      const handleSave = async () => {
+        if (temaSelecionado && temaSelecionado !== row.tema) {
+          try {
+            const response = await fetch(
+              `https://smi-api-production-fae2.up.railway.app/noticias/${row.id}`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ tema: temaSelecionado }),
+              }
+            );
+            if (!response.ok) {
+              throw new Error('Falha ao salvar o tema');
+            }
+            console.log('Tema salvo com sucesso:', temaSelecionado);
+          } catch (error) {
+            console.error('Erro ao salvar o tema:', error.message);
+          }
+        }
+      };
+
+      return (
+        <select
+          value={temaSelecionado}
+          onChange={(e) => {
+            setTemaSelecionado(e.target.value);
+            handleSave();
+          }}
+          className="p-1 bg-dark-card border border-white/10 rounded text-sm text-white w-32"
+        >
+          <option value="">Selecione</option>
+          {TEMAS.map((tema) => (
+            <option key={tema} value={tema}>
+              {tema}
+            </option>
+          ))}
+        </select>
+      );
+    },
   },
 ];
 
@@ -52,7 +133,12 @@ const Spreadsheet = () => {
       .then(data => {
         console.log('Dados das notícias recebidos da API:', data);
         if (Array.isArray(data)) {
-          setNoticias(data);
+          // Garantir que todos os registros tenham um ID único para a seleção
+          const dataWithIds = data.map((item, index) => ({
+            ...item,
+            id: item.id || `noticia-${index}`
+          }));
+          setNoticias(dataWithIds);
         } else {
           console.warn('A resposta da API não é um array:', data);
           setNoticias([]);
