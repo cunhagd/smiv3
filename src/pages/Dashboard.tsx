@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
@@ -17,7 +16,7 @@ import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
 import DateRangePicker from '@/components/DateRangePicker';
 
-// Mock data (manteremos por enquanto para os outros gráficos)
+// Mock data (manteremos apenas para os outros gráficos por enquanto)
 const barChartData = [
   { name: 'TV', positivo: 25, negativo: -10, neutro: 15 },
   { name: 'Jornal', positivo: 40, negativo: -15, neutro: 20 },
@@ -59,15 +58,14 @@ const Dashboard = () => {
   });
 
   useEffect(() => {
-    // Converte as datas para strings no formato ISO (ex.: 2025-03-14T00:00:00.000Z)
     const from = dateRange.from?.toISOString().split('T')[0];
     const to = dateRange.to?.toISOString().split('T')[0];
 
     if (from && to) {
       setIsLoading(true);
-      
+
       // Buscar total de menções
-      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?from=${from}&to=${to}`)
+      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=total-mencoes&from=${from}&to=${to}`)
         .then(response => response.json())
         .then(data => {
           console.log('Dados de total de menções recebidos da API:', data);
@@ -75,81 +73,17 @@ const Dashboard = () => {
         })
         .catch(error => console.error('Erro ao buscar total de menções:', error))
         .finally(() => setIsLoading(false));
-      
-      // Gerar dados para o gráfico de área baseado no período selecionado
-      simulateAreaChartData(from, to);
-    }
-  }, [dateRange]); // Reexecuta quando o dateRange muda
 
-  const simulateAreaChartData = (from: string, to: string) => {
-    // Converter as strings de data para objetos Date
-    const fromDate = new Date(from);
-    const toDate = new Date(to);
-    
-    // Calcular a diferença em dias
-    const diffTime = Math.abs(toDate.getTime() - fromDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir o dia final
-    
-    const data = [];
-    
-    // Determinar automaticamente o melhor agrupamento com base no intervalo de datas
-    if (diffDays <= 31) {
-      // Dados diários para períodos de até 31 dias
-      for (let i = 0; i < diffDays; i++) {
-        const day = new Date(fromDate);
-        day.setDate(day.getDate() + i);
-        
-        // Formatar como "DD/MM"
-        const dayStr = day.getDate().toString().padStart(2, '0');
-        const monthStr = (day.getMonth() + 1).toString().padStart(2, '0');
-        
-        data.push({
-          name: `${dayStr}/${monthStr}`,
-          value: Math.floor(Math.random() * 30) + 5 // Valor aleatório entre 5 e 35
-        });
-      }
-    } else if (diffDays <= 92) {
-      // Dados semanais para períodos de até ~3 meses
-      const numWeeks = Math.ceil(diffDays / 7);
-      
-      for (let i = 0; i < numWeeks; i++) {
-        const weekStart = new Date(fromDate);
-        weekStart.setDate(weekStart.getDate() + (i * 7));
-        
-        // Formatar como "DD/MM"
-        const startDay = weekStart.getDate().toString().padStart(2, '0');
-        const startMonth = (weekStart.getMonth() + 1).toString().padStart(2, '0');
-        
-        data.push({
-          name: `${startDay}/${startMonth}`,
-          value: Math.floor(Math.random() * 50) + 10 // Valor aleatório entre 10 e 60
-        });
-      }
-    } else {
-      // Dados mensais para períodos mais longos
-      const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
-      
-      // Gerar dados para cada mês no intervalo
-      let currentDate = new Date(fromDate);
-      
-      while (currentDate <= toDate) {
-        const month = months[currentDate.getMonth()];
-        const year = currentDate.getFullYear();
-        const label = `${month}/${year.toString().slice(2)}`;
-        
-        data.push({
-          name: label,
-          value: Math.floor(Math.random() * 70) + 20 // Valor aleatório entre 20 e 90
-        });
-        
-        // Avançar para o próximo mês
-        currentDate.setMonth(currentDate.getMonth() + 1);
-      }
+      // Buscar dados para o gráfico de área
+      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=mencoes-por-periodo&from=${from}&to=${to}`)
+        .then(response => response.json())
+        .then(data => {
+          console.log('Dados do gráfico recebidos da API:', data);
+          setAreaChartData(data);
+        })
+        .catch(error => console.error('Erro ao buscar dados do gráfico:', error));
     }
-    
-    console.log('Dados simulados para o gráfico de área:', data);
-    setAreaChartData(data);
-  };
+  }, [dateRange]);
 
   const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
     if (range.from && range.to) {
