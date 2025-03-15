@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { 
   ArrowRight, 
@@ -14,24 +15,9 @@ import StatCard from '@/components/StatCard';
 import AreaChart from '@/components/charts/AreaChart';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
-import DateRangePicker from '@/components/DateRangePicker'; // Importe o componente
+import DateRangePicker from '@/components/DateRangePicker';
 
-// Mock data (manteremos por enquanto para os gráficos)
-const areaChartData = [
-  { name: 'Jan', value: 45 },
-  { name: 'Fev', value: 52 },
-  { name: 'Mar', value: 48 },
-  { name: 'Abr', value: 55 },
-  { name: 'Mai', value: 58 },
-  { name: 'Jun', value: 45 },
-  { name: 'Jul', value: 70 },
-  { name: 'Ago', value: 25 },
-  { name: 'Set', value: 32 },
-  { name: 'Out', value: 43 },
-  { name: 'Nov', value: 60 },
-  { name: 'Dez', value: 64 },
-];
-
+// Mock data (manteremos por enquanto para os outros gráficos)
 const barChartData = [
   { name: 'TV', positivo: 25, negativo: -10, neutro: 15 },
   { name: 'Jornal', positivo: 40, negativo: -15, neutro: 20 },
@@ -65,6 +51,9 @@ const sentimentData = [
 
 const Dashboard = () => {
   const [totalMencoes, setTotalMencoes] = useState(0);
+  const [areaChartData, setAreaChartData] = useState([]);
+  const [chartPeriodView, setChartPeriodView] = useState('mensal');
+  const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
     to: new Date(),
@@ -76,15 +65,111 @@ const Dashboard = () => {
     const to = dateRange.to?.toISOString().split('T')[0];
 
     if (from && to) {
+      setIsLoading(true);
+      
+      // Buscar total de menções
       fetch(`https://smi-api-production-fae2.up.railway.app/metrics?from=${from}&to=${to}`)
         .then(response => response.json())
         .then(data => {
-          console.log('Dados recebidos da API:', data);
+          console.log('Dados de total de menções recebidos da API:', data);
           setTotalMencoes(data.total_mencoes || 0);
         })
-        .catch(error => console.error('Erro ao buscar total de menções:', error));
+        .catch(error => console.error('Erro ao buscar total de menções:', error))
+        .finally(() => setIsLoading(false));
+      
+      // Buscar dados para o gráfico de área (simulado por enquanto)
+      // Normalmente aqui teríamos um endpoint como: 
+      // fetch(`https://smi-api-production-fae2.up.railway.app/mentions-by-period?from=${from}&to=${to}&period=${chartPeriodView}`)
+      
+      // Como não temos esse endpoint, vamos simular os dados com base no período selecionado
+      simulateAreaChartData(from, to, chartPeriodView);
     }
-  }, [dateRange]); // Reexecuta quando o dateRange muda
+  }, [dateRange, chartPeriodView]); // Reexecuta quando o dateRange ou chartPeriodView mudam
+
+  const simulateAreaChartData = (from, to, periodView) => {
+    // Converter as strings de data para objetos Date
+    const fromDate = new Date(from);
+    const toDate = new Date(to);
+    
+    // Calcular a diferença em dias
+    const diffTime = Math.abs(toDate - fromDate);
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 para incluir o dia final
+    
+    const data = [];
+    
+    // Dados mensais
+    if (periodView === 'mensal') {
+      const months = ['Jan', 'Fev', 'Mar', 'Abr', 'Mai', 'Jun', 'Jul', 'Ago', 'Set', 'Out', 'Nov', 'Dez'];
+      
+      // Se o período for mais de um ano, exibimos todos os meses entre as datas
+      const startMonth = fromDate.getMonth();
+      const startYear = fromDate.getFullYear();
+      const endMonth = toDate.getMonth();
+      const endYear = toDate.getFullYear();
+      
+      // Gerar dados para cada mês no intervalo
+      let currentDate = new Date(startYear, startMonth, 1);
+      
+      while (currentDate <= toDate) {
+        const month = months[currentDate.getMonth()];
+        const year = currentDate.getFullYear();
+        const label = `${month}/${year.toString().slice(2)}`;
+        
+        data.push({
+          name: label,
+          value: Math.floor(Math.random() * 70) + 20 // Valor aleatório entre 20 e 90
+        });
+        
+        // Avançar para o próximo mês
+        currentDate.setMonth(currentDate.getMonth() + 1);
+      }
+    } 
+    // Dados semanais (se o período for até ~3 meses)
+    else if (periodView === 'semanal' || (periodView === 'mensal' && diffDays <= 90)) {
+      // Dividir o período em semanas
+      const numWeeks = Math.ceil(diffDays / 7);
+      
+      for (let i = 0; i < numWeeks; i++) {
+        const weekStart = new Date(fromDate);
+        weekStart.setDate(weekStart.getDate() + (i * 7));
+        
+        const weekEnd = new Date(weekStart);
+        weekEnd.setDate(weekEnd.getDate() + 6);
+        
+        // Formatar como "DD/MM - DD/MM"
+        const startDay = weekStart.getDate().toString().padStart(2, '0');
+        const startMonth = (weekStart.getMonth() + 1).toString().padStart(2, '0');
+        
+        data.push({
+          name: `${startDay}/${startMonth}`,
+          value: Math.floor(Math.random() * 50) + 10 // Valor aleatório entre 10 e 60
+        });
+      }
+    } 
+    // Dados diários (se o período for até ~30 dias)
+    else if (periodView === 'diário' || diffDays <= 31) {
+      for (let i = 0; i < diffDays; i++) {
+        const day = new Date(fromDate);
+        day.setDate(day.getDate() + i);
+        
+        // Formatar como "DD/MM"
+        const dayStr = day.getDate().toString().padStart(2, '0');
+        const monthStr = (day.getMonth() + 1).toString().padStart(2, '0');
+        
+        data.push({
+          name: `${dayStr}/${monthStr}`,
+          value: Math.floor(Math.random() * 30) + 5 // Valor aleatório entre 5 e 35
+        });
+      }
+    }
+    
+    console.log('Dados simulados para o gráfico de área:', data);
+    setAreaChartData(data);
+  };
+
+  const handleChartPeriodChange = (e) => {
+    setChartPeriodView(e.target.value);
+  };
 
   const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
     if (range.from && range.to) {
@@ -117,7 +202,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard 
             title="Total de Menções" 
-            value={totalMencoes.toString()} 
+            value={isLoading ? "..." : totalMencoes.toString()} 
             change="+12.5% em relação ao mês anterior" 
             isPositive 
             icon={<Newspaper className="h-6 w-6" />} 
@@ -154,17 +239,27 @@ const Dashboard = () => {
             <div className="dashboard-card-header">
               <h3 className="text-lg font-medium">Menções por Período</h3>
               <div className="flex items-center gap-2">
-                <select className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm">
-                  <option>Mensal</option>
-                  <option>Semanal</option>
-                  <option>Diário</option>
+                <select 
+                  className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm"
+                  value={chartPeriodView}
+                  onChange={handleChartPeriodChange}
+                >
+                  <option value="mensal">Mensal</option>
+                  <option value="semanal">Semanal</option>
+                  <option value="diário">Diário</option>
                 </select>
                 <button className="p-1 hover:bg-white/5 rounded-full">
                   <ArrowRight className="h-4 w-4 text-gray-400" />
                 </button>
               </div>
             </div>
-            <AreaChart data={areaChartData} height={300} gradientColor="#CAF10A" />
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-gray-400">Carregando dados...</p>
+              </div>
+            ) : (
+              <AreaChart data={areaChartData} height={300} gradientColor="#CAF10A" />
+            )}
           </div>
           
           <div className="dashboard-card">
