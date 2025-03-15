@@ -1,12 +1,15 @@
-import { BrowserRouter } from 'react-router-dom';
-import Dashboard from './pages/Dashboard';
-import './App.css';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import Dashboard from './Dashboard'; // Supondo que este seja o componente do dashboard
+import Spreadsheet from './Spreadsheet';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Dashboard />
-    </BrowserRouter>
+    <Router>
+      <Routes>
+        <Route path="/" element={<Dashboard />} />
+        <Route path="/spreadsheet" element={<Spreadsheet />} />
+      </Routes>
+    </Router>
   );
 }
 
