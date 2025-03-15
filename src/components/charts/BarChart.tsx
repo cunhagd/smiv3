@@ -1,4 +1,3 @@
-
 import React from 'react';
 import {
   BarChart as ReChartsBarChart,
@@ -14,8 +13,7 @@ import {
 interface BarChartProps {
   data: any[];
   height?: number;
-  positiveColor?: string;
-  negativeColor?: string;
+  barColor?: string; // Nova prop para definir a cor das barras
   yAxisKey?: string;
   xAxisKey?: string;
   hideAxis?: boolean;
@@ -25,8 +23,7 @@ interface BarChartProps {
 const BarChart = ({
   data,
   height = 300,
-  positiveColor = "rgba(202, 241, 10, 0.9)",
-  negativeColor = "rgba(0, 116, 228, 0.7)",
+  barColor = "rgba(202, 241, 10, 0.9)", // Cor padrão
   yAxisKey = "value",
   xAxisKey = "name",
   hideAxis = false,
@@ -72,7 +69,7 @@ const BarChart = ({
           {data.map((entry, index) => (
             <Cell 
               key={`cell-${index}`} 
-              fill={entry[yAxisKey] >= 0 ? positiveColor : negativeColor} 
+              fill={barColor} // Usa a cor fornecida diretamente
             />
           ))}
         </Bar>

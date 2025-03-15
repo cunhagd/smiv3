@@ -47,7 +47,7 @@ const Dashboard = () => {
   const [areaChartData, setAreaChartData] = useState([]);
   const [totalPontuacao, setTotalPontuacao] = useState(0);
   const [portaisRelevantes, setPortaisRelevantes] = useState({ top5: [], bottom5: [] });
-  const [selectedType, setSelectedType] = useState('positivas'); // Padrão para "Positivas"
+  const [selectedType, setSelectedType] = useState('positivas');
   const [isLoading, setIsLoading] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
@@ -97,13 +97,13 @@ const Dashboard = () => {
       fetch(`https://smi-api-production-fae2.up.railway.app/portais-relevantes?from=${from}&to=${to}&type=${selectedType}`)
         .then(response => response.json())
         .then(data => {
-          console.log('Dados de portais relevantes recebidos da API:', data);
+          console.log(`Dados de portais relevantes (${selectedType}) recebidos da API:`, data);
           setPortaisRelevantes(data);
         })
         .catch(error => console.error('Erro ao buscar portais relevantes:', error))
         .finally(() => setIsLoading(false));
     }
-  }, [dateRange, selectedType]); // Reexecuta quando dateRange ou selectedType muda
+  }, [dateRange, selectedType]);
 
   const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
     if (range.from && range.to) {
@@ -210,11 +210,16 @@ const Dashboard = () => {
               <div className="flex items-center justify-center h-[300px]">
                 <p className="text-gray-400">Carregando dados...</p>
               </div>
+            ) : selectedType === 'negativas' && portaisRelevantes.bottom5.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-gray-400">Nenhuma notícia encontrada</p>
+              </div>
             ) : (
               <BarChart 
                 data={selectedType === 'positivas' ? portaisRelevantes.top5 : portaisRelevantes.bottom5}
                 height={300}
                 yAxisKey="value"
+                barColor={selectedType === 'positivas' ? '#CAF10A' : '#FF4D4D'} // Cor condicional
               />
             )}
           </div>
