@@ -203,11 +203,6 @@ const Spreadsheet = () => {
             <DateRangePicker onChange={handleDateRangeChange} />
             
             <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
-              <Filter className="h-4 w-4" />
-              <span className="text-sm">Filtros</span>
-            </button>
-            
-            <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
               <Download className="h-4 w-4" />
               <span className="text-sm">Exportar</span>
             </button>
