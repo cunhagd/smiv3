@@ -11,8 +11,9 @@ const columns = [
     accessorKey: 'data',
     sortable: true,
     cell: (info) => {
-      const date = new Date(info.getValue ? info.getValue() : info.value);
-      return date.toLocaleDateString('pt-BR');
+      const dateValue = info.getValue ? info.getValue() : info.value;
+      const date = new Date(dateValue);
+      return isNaN(date.getTime()) ? 'Data Inválida' : date.toLocaleDateString('pt-BR');
     },
   },
   {
