@@ -1,6 +1,6 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
-import Dashboard from './Dashboard'; // Supondo que este seja o componente do dashboard
-import Spreadsheet from './Spreadsheet';
+import Dashboard from './pages/Dashboard';
+import Spreadsheet from './pages/Spreadsheet';
 
 function App() {
   return (
