@@ -1,112 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
 import { Filter, Download } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
-
-// Mock data
-const newsData = [
-  {
-    id: '1',
-    data: '2023-05-15',
-    veiculo: 'Estado de Minas',
-    titulo: 'Governo anuncia investimento em infraestrutura',
-    editoria: 'Política',
-    autor: 'Carlos Silva',
-    sentimento: 'Positivo',
-    alcance: '250K',
-  },
-  {
-    id: '2',
-    data: '2023-05-14',
-    veiculo: 'O Tempo',
-    titulo: 'Secretaria de Saúde lança campanha de vacinação',
-    editoria: 'Saúde',
-    autor: 'Maria Oliveira',
-    sentimento: 'Positivo',
-    alcance: '180K',
-  },
-  {
-    id: '3',
-    data: '2023-05-13',
-    veiculo: 'Globo Minas',
-    titulo: 'Atraso em obras gera reclamações',
-    editoria: 'Cidade',
-    autor: 'Pedro Souza',
-    sentimento: 'Negativo',
-    alcance: '350K',
-  },
-  {
-    id: '4',
-    data: '2023-05-12',
-    veiculo: 'Rádio Itatiaia',
-    titulo: 'Audiência pública debate orçamento estadual',
-    editoria: 'Economia',
-    autor: 'Ana Pereira',
-    sentimento: 'Neutro',
-    alcance: '120K',
-  },
-  {
-    id: '5',
-    data: '2023-05-11',
-    veiculo: 'Portal UAI',
-    titulo: 'Governo apresenta resultados do primeiro trimestre',
-    editoria: 'Economia',
-    autor: 'Roberto Lima',
-    sentimento: 'Positivo',
-    alcance: '90K',
-  },
-  {
-    id: '6',
-    data: '2023-05-10',
-    veiculo: 'Band Minas',
-    titulo: 'Protesto contra aumento de impostos',
-    editoria: 'Política',
-    autor: 'Juliana Costa',
-    sentimento: 'Negativo',
-    alcance: '200K',
-  },
-  {
-    id: '7',
-    data: '2023-05-09',
-    veiculo: 'Jornal Hoje em Dia',
-    titulo: 'Inauguração de nova escola estadual',
-    editoria: 'Educação',
-    autor: 'Marcos Santos',
-    sentimento: 'Positivo',
-    alcance: '150K',
-  },
-  {
-    id: '8',
-    data: '2023-05-08',
-    veiculo: 'TV Alterosa',
-    titulo: 'Entrevista com o Governador sobre planos futuros',
-    editoria: 'Política',
-    autor: 'Carla Diniz',
-    sentimento: 'Neutro',
-    alcance: '280K',
-  },
-  {
-    id: '9',
-    data: '2023-05-07',
-    veiculo: 'Rádio CBN',
-    titulo: 'Debate sobre reforma administrativa',
-    editoria: 'Política',
-    autor: 'Lucas Oliveira',
-    sentimento: 'Neutro',
-    alcance: '100K',
-  },
-  {
-    id: '10',
-    data: '2023-05-06',
-    veiculo: 'G1 Minas',
-    titulo: 'Obras na Linha Verde causam congestionamento',
-    editoria: 'Trânsito',
-    autor: 'Fernanda Dias',
-    sentimento: 'Negativo',
-    alcance: '220K',
-  },
-];
 
 const columns = [
   {
@@ -115,14 +11,14 @@ const columns = [
     accessorKey: 'data',
     sortable: true,
     cell: (info: any) => {
-      const date = new Date(info.data);
+      const date = new Date(info.getValue());
       return date.toLocaleDateString('pt-BR');
     },
   },
   {
-    id: 'veiculo',
-    header: 'Veículo',
-    accessorKey: 'veiculo',
+    id: 'portal',
+    header: 'Portal',
+    accessorKey: 'portal',
     sortable: true,
   },
   {
@@ -132,15 +28,9 @@ const columns = [
     sortable: true,
   },
   {
-    id: 'editoria',
-    header: 'Editoria',
-    accessorKey: 'editoria',
-    sortable: true,
-  },
-  {
-    id: 'autor',
-    header: 'Autor',
-    accessorKey: 'autor',
+    id: 'pontos',
+    header: 'Pontos',
+    accessorKey: 'pontos',
     sortable: true,
   },
   {
@@ -149,7 +39,7 @@ const columns = [
     accessorKey: 'sentimento',
     sortable: true,
     cell: (info: any) => {
-      const sentiment = info.sentimento;
+      const sentiment = info.getValue();
       let bgColor = 'bg-gray-400';
       let textColor = 'text-black';
       
@@ -169,23 +59,59 @@ const columns = [
     },
   },
   {
-    id: 'alcance',
-    header: 'Alcance',
-    accessorKey: 'alcance',
+    id: 'abrangencia',
+    header: 'Abrangência',
+    accessorKey: 'abrangencia',
     sortable: true,
   },
 ];
 
 const Spreadsheet = () => {
   const [dateRange, setDateRange] = useState({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)),
-    to: new Date(),
+    from: new Date('2025-02-15'),
+    to: new Date('2025-03-15'),
   });
+  const [newsData, setNewsData] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const from = dateRange.from?.toISOString().split('T')[0];
+    const to = dateRange.to?.toISOString().split('T')[0];
+
+    console.log('Intervalo de datas selecionado:', { from, to });
+
+    if (from && to) {
+      setIsLoading(true);
+      setError(null);
+      fetch(`https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}`)
+        .then(response => {
+          console.log('Resposta bruta da API:', response.status, response.statusText);
+          if (!response.ok) {
+            throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          console.log('Dados da planilha recebidos da API:', data);
+          if (Array.isArray(data)) {
+            setNewsData(data);
+          } else {
+            console.warn('A resposta da API não é um array:', data);
+            setNewsData([]);
+          }
+        })
+        .catch(error => {
+          console.error('Erro ao buscar dados da planilha:', error.message);
+          setError(error.message);
+          setNewsData([]);
+        })
+        .finally(() => setIsLoading(false));
+    }
+  }, [dateRange]);
 
   const handleDateRangeChange = (range) => {
     setDateRange(range);
-    // Aqui você poderia fazer uma nova chamada à API com as datas selecionadas
-    console.log('Novo período selecionado:', range);
   };
 
   return (
@@ -210,7 +136,21 @@ const Spreadsheet = () => {
         </div>
         
         <div className="dashboard-card">
-          <DataTable data={newsData} columns={columns} />
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Carregando dados...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-red-400">Erro ao carregar dados: {error}</p>
+            </div>
+          ) : newsData.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Nenhum dado encontrado para o período selecionado</p>
+            </div>
+          ) : (
+            <DataTable data={newsData} columns={columns} />
+          )}
         </div>
       </main>
     </div>
