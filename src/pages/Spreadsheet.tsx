@@ -17,6 +17,12 @@ const columns = [
     accessorKey: 'portal',
     sortable: true,
   },
+  {
+    id: 'titulo',
+    header: 'Título',
+    accessorKey: 'titulo',
+    sortable: true,
+  },
 ];
 
 const Spreadsheet = () => {
@@ -91,24 +97,24 @@ const Spreadsheet = () => {
         </div>
         <div className="dashboard-card">
           {isLoading ? (
-                       <div className="flex items-center justify-center h-[300px]">
-                       <p className="text-gray-400">Carregando dados...</p>
-                     </div>
-                   ) : error ? (
-                     <div className="flex items-center justify-center h-[300px]">
-                       <p className="text-red-400">Erro ao carregar dados: {error}</p>
-                     </div>
-                   ) : noticias.length === 0 ? (
-                     <div className="flex items-center justify-center h-[300px]">
-                       <p className="text-gray-400">Nenhuma notícia encontrada</p>
-                     </div>
-                   ) : (
-                     <DataTable data={noticias} columns={columns} />
-                   )}
-                 </div>
-               </main>
-             </div>
-           );
-         };
-         
-         export default Spreadsheet;
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Carregando dados...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-red-400">Erro ao carregar dados: {error}</p>
+            </div>
+          ) : noticias.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Nenhuma notícia encontrada</p>
+            </div>
+          ) : (
+            <DataTable data={noticias} columns={columns} />
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Spreadsheet;
