@@ -11,7 +11,7 @@ const columns = [
     accessorKey: 'data',
     sortable: true,
     cell: (info) => {
-      const date = new Date(info.getValue());
+      const date = new Date(info.getValue ? info.getValue() : info.value);
       return date.toLocaleDateString('pt-BR');
     },
   },
