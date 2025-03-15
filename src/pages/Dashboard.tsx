@@ -107,7 +107,7 @@ const Dashboard = () => {
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard 
-            title="Total de Menções" 
+            title="Total de Notícias" 
             value={totalMencoes.toString()} 
             change="+12.5% em relação ao mês anterior" 
             isPositive 
@@ -115,7 +115,7 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Menções Positivas" 
+            title="Notícias Positivas" 
             value="527" 
             change="+8.2% em relação ao mês anterior" 
             isPositive 
@@ -123,7 +123,7 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Menções Negativas" 
+            title="Notícias Negativas" 
             value="251" 
             change="-5.3% em relação ao mês anterior" 
             isPositive 
@@ -131,9 +131,9 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Alcance Estimado" 
+            title="Pontuação Total" 
             value="2.7M" 
-            change="+15.8% em relação ao mês anterior" 
+            change="+15.8% em relação à pontuação histórica" 
             isPositive 
             icon={<BarChartIcon className="h-6 w-6" />} 
           />
