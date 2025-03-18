@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -197,6 +198,33 @@ const columns = [
       );
     },
   },
+  {
+    id: 'pontos',
+    header: 'Pontos',
+    accessorKey: 'pontos',
+    sortable: true,
+    cell: (info) => {
+      const { row } = info;
+      // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
+      const pontos = row.pontos || 0;
+      const avaliacao = row.avaliacao || '';
+      
+      // Se a avaliação for negativa, mostramos o valor como negativo
+      const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos) : pontos;
+      
+      return (
+        <span className={`font-medium ${
+          valorPontos < 0 
+            ? 'text-red-500' 
+            : valorPontos > 0 
+            ? 'text-green-500' 
+            : 'text-gray-400'
+        }`}>
+          {valorPontos}
+        </span>
+      );
+    },
+  },
 ];
 
 const Spreadsheet = () => {
@@ -224,6 +252,31 @@ const Spreadsheet = () => {
     );
   };
 
+  // Função para buscar os pontos das notícias
+  const buscarPontosDasNoticias = async (noticias) => {
+    try {
+      const response = await fetch('https://smi-api-production-fae2.up.railway.app/noticias/pontos');
+      if (!response.ok) {
+        throw new Error('Falha ao buscar pontos das notícias');
+      }
+      const pontos = await response.json();
+      
+      // Adicionamos os pontos às notícias correspondentes
+      const noticiasComPontos = noticias.map(noticia => {
+        const noticiaPontos = pontos.find(p => p.id === noticia.id);
+        return {
+          ...noticia,
+          pontos: noticiaPontos ? noticiaPontos.pontos : 0
+        };
+      });
+      
+      return noticiasComPontos;
+    } catch (error) {
+      console.error('Erro ao buscar pontos das notícias:', error.message);
+      return noticias; // Retorna as notícias sem pontos em caso de erro
+    }
+  };
+
   useEffect(() => {
     console.log('useEffect iniciado');
     setIsLoading(true);
@@ -231,6 +284,7 @@ const Spreadsheet = () => {
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
     console.log('Chamando API com from:', from, 'e to:', to);
+    
     fetch(`https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}`)
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
@@ -239,7 +293,7 @@ const Spreadsheet = () => {
         }
         return response.json();
       })
-      .then(data => {
+      .then(async data => {
         console.log('Dados das notícias recebidos da API:', data);
         if (Array.isArray(data)) {
           // Garantir que todos os registros tenham um ID único para a seleção
@@ -247,7 +301,10 @@ const Spreadsheet = () => {
             ...item,
             id: item.id || `noticia-${index}`
           }));
-          setNoticias(dataWithIds);
+          
+          // Buscar os pontos para cada notícia
+          const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
+          setNoticias(noticiasComPontos);
         } else {
           console.warn('A resposta da API não é um array:', data);
           setNoticias([]);
