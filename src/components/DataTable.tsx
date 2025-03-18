@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   ChevronDown, 
@@ -23,9 +24,10 @@ interface DataTableProps {
   data: any[];
   columns: Column[];
   updateTema?: (id: string, novoTema: string) => void;
+  updateAvaliacao?: (id: string, novaAvaliacao: string) => void;
 }
 
-const DataTable = ({ data, columns, updateTema }: DataTableProps) => {
+const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
@@ -216,7 +218,7 @@ const DataTable = ({ data, columns, updateTema }: DataTableProps) => {
                 </td>
                 {columns.map(column => (
                   <td key={column.id} className="p-3">
-                    {column.cell ? column.cell({ row, updateTema }) : row[column.accessorKey]}
+                    {column.cell ? column.cell({ row, updateTema, updateAvaliacao }) : row[column.accessorKey]}
                   </td>
                 ))}
                 <td className="p-3">

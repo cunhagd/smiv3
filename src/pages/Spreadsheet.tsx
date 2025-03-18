@@ -1,7 +1,8 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download, ExternalLink } from 'lucide-react';
+import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 
 const TEMAS = [
@@ -15,6 +16,12 @@ const TEMAS = [
   'Educação',
   'Economia',
   'Cultura',
+];
+
+const AVALIACOES = [
+  { valor: 'Positiva', cor: '#F2FCE2', icone: ThumbsUp },
+  { valor: 'Neutra', cor: '#F1F0FB', icone: Minus },
+  { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
 ];
 
 const columns = [
@@ -112,6 +119,88 @@ const columns = [
       );
     },
   },
+  {
+    id: 'avaliacao',
+    header: 'Avaliação',
+    accessorKey: 'avaliacao',
+    sortable: true,
+    cell: (info) => {
+      const { row, updateAvaliacao } = info;
+      const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(row.avaliacao || '');
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleSave = async (novaAvaliacao) => {
+        if (novaAvaliacao && novaAvaliacao !== row.avaliacao) {
+          setIsSaving(true);
+          try {
+            const response = await fetch(
+              `https://smi-api-production-fae2.up.railway.app/noticias/${row.id}`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ avaliacao: novaAvaliacao }),
+              }
+            );
+            if (!response.ok) {
+              throw new Error('Falha ao salvar a avaliação');
+            }
+            console.log('Avaliação salva com sucesso:', novaAvaliacao);
+            updateAvaliacao(row.id, novaAvaliacao);
+          } catch (error) {
+            console.error('Erro ao salvar a avaliação:', error.message);
+          } finally {
+            setIsSaving(false);
+          }
+        }
+      };
+
+      const avaliacaoObj = AVALIACOES.find(a => a.valor === avaliacaoSelecionada);
+      const IconeAvaliacao = avaliacaoObj?.icone;
+      
+      return (
+        <div className="relative">
+          <select
+            value={avaliacaoSelecionada}
+            onChange={(e) => {
+              const novaAvaliacao = e.target.value;
+              setAvaliacaoSelecionada(novaAvaliacao);
+              handleSave(novaAvaliacao);
+            }}
+            disabled={isSaving}
+            className={`p-1 px-8 border rounded text-sm w-32 ${
+              avaliacaoSelecionada === 'Positiva' 
+                ? 'bg-[#F2FCE2] text-green-800 border-green-300' 
+                : avaliacaoSelecionada === 'Negativa' 
+                ? 'bg-[#FFDEE2] text-red-800 border-red-300' 
+                : avaliacaoSelecionada === 'Neutra' 
+                ? 'bg-[#F1F0FB] text-gray-800 border-gray-300' 
+                : 'bg-dark-card border-white/10 text-white'
+            }`}
+          >
+            <option value="">Selecione...</option>
+            {AVALIACOES.map((avaliacao) => (
+              <option key={avaliacao.valor} value={avaliacao.valor}>
+                {avaliacao.valor}
+              </option>
+            ))}
+          </select>
+          {IconeAvaliacao && (
+            <span className="absolute left-2 top-1/2 transform -translate-y-1/2">
+              <IconeAvaliacao className={`h-4 w-4 ${
+                avaliacaoSelecionada === 'Positiva' 
+                  ? 'text-green-600' 
+                  : avaliacaoSelecionada === 'Negativa' 
+                  ? 'text-red-600' 
+                  : 'text-gray-600'
+              }`} />
+            </span>
+          )}
+        </div>
+      );
+    },
+  },
 ];
 
 const Spreadsheet = () => {
@@ -127,6 +216,14 @@ const Spreadsheet = () => {
     setNoticias(prevNoticias =>
       prevNoticias.map(noticia =>
         noticia.id === id ? { ...noticia, tema: novoTema } : noticia
+      )
+    );
+  };
+
+  const updateAvaliacao = (id, novaAvaliacao) => {
+    setNoticias(prevNoticias =>
+      prevNoticias.map(noticia =>
+        noticia.id === id ? { ...noticia, avaliacao: novaAvaliacao } : noticia
       )
     );
   };
@@ -211,7 +308,7 @@ const Spreadsheet = () => {
               <p className="text-gray-400">Nenhuma notícia encontrada</p>
             </div>
           ) : (
-            <DataTable data={noticias} columns={columns} updateTema={updateTema} />
+            <DataTable data={noticias} columns={columns} updateTema={updateTema} updateAvaliacao={updateAvaliacao} />
           )}
         </div>
       </main>
