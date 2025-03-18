@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -42,23 +41,20 @@ const columns = [
     header: 'Título',
     accessorKey: 'titulo',
     sortable: true,
-  },
-  {
-    id: 'link',
-    header: 'Link',
-    accessorKey: 'link',
-    sortable: false,
-    cell: (row) => (
-      <a
-        href={row.link}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="flex items-center text-blue-400 hover:text-blue-300 transition-colors"
-      >
-        <ExternalLink className="h-4 w-4 mr-2" />
-        <span className="underline">Acessar</span>
-      </a>
-    ),
+    cell: (info) => {
+      const { row } = info;
+      return (
+        <a
+          href={row.link}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-blue-400 hover:text-blue-300 transition-colors flex items-center"
+        >
+          {row.titulo}
+          <ExternalLink className="h-4 w-4 ml-2 inline-block" />
+        </a>
+      );
+    },
   },
   {
     id: 'tema',
