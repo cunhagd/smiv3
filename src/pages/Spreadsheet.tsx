@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -24,7 +23,8 @@ const AVALIACOES = [
   { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
 ];
 
-const columns = [
+// Definimos os columns fora do componente para evitar rerenders desnecessários
+const getColumns = (noticias, setNoticias) => [
   {
     id: 'data',
     header: 'Data',
@@ -144,7 +144,22 @@ const columns = [
               throw new Error('Falha ao salvar a avaliação');
             }
             console.log('Avaliação salva com sucesso:', novaAvaliacao);
+            
+            // Atualizamos a avaliação na notícia
             updateAvaliacao(row.id, novaAvaliacao);
+            
+            // Agora também atualizamos os pontos na lista de notícias para refletir a mudança imediatamente
+            // Isso força a rerenferização da coluna de pontos
+            setNoticias(prevNoticias => 
+              prevNoticias.map(noticia => 
+                noticia.id === row.id 
+                  ? { 
+                      ...noticia, 
+                      avaliacao: novaAvaliacao 
+                    } 
+                  : noticia
+              )
+            );
           } catch (error) {
             console.error('Erro ao salvar a avaliação:', error.message);
           } finally {
@@ -235,6 +250,9 @@ const Spreadsheet = () => {
   const [noticias, setNoticias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+
+  // Criamos as colunas dentro do componente para ter acesso ao setNoticias
+  const columns = getColumns(noticias, setNoticias);
 
   const updateTema = (id, novoTema) => {
     setNoticias(prevNoticias =>
