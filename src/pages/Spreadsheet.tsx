@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -46,12 +47,12 @@ const getColumns = (noticias, setNoticias) => [
       const { row } = info;
       return (
         <a
-          href={row.link}
+          href={row.original.link}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-400 hover:text-blue-300 transition-colors flex items-center"
         >
-          {row.titulo}
+          {row.original.titulo}
           <ExternalLink className="h-4 w-4 ml-2 inline-block" />
         </a>
       );
@@ -64,16 +65,15 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row, updateTema } = info;
-      console.log('Dados da linha para tema:', row);
-      const [temaSelecionado, setTemaSelecionado] = useState(row.tema || '');
+      const [temaSelecionado, setTemaSelecionado] = useState(row.original.tema || '');
       const [isSaving, setIsSaving] = useState(false);
 
       const handleSave = async (novoTema) => {
-        if (novoTema && novoTema !== row.tema) {
+        if (novoTema && novoTema !== row.original.tema) {
           setIsSaving(true);
           try {
             const response = await fetch(
-              `https://smi-api-production-fae2.up.railway.app/noticias/${row.id}`,
+              `https://smi-api-production-fae2.up.railway.app/noticias/${row.original.id}`,
               {
                 method: 'PUT',
                 headers: {
@@ -86,7 +86,7 @@ const getColumns = (noticias, setNoticias) => [
               throw new Error('Falha ao salvar o tema');
             }
             console.log('Tema salvo com sucesso:', novoTema);
-            updateTema(row.id, novoTema);
+            updateTema(row.original.id, novoTema);
           } catch (error) {
             console.error('Erro ao salvar o tema:', error.message);
           } finally {
@@ -123,15 +123,15 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row, updateAvaliacao } = info;
-      const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(row.avaliacao || '');
+      const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(row.original.avaliacao || '');
       const [isSaving, setIsSaving] = useState(false);
 
       const handleSave = async (novaAvaliacao) => {
-        if (novaAvaliacao && novaAvaliacao !== row.avaliacao) {
+        if (novaAvaliacao && novaAvaliacao !== row.original.avaliacao) {
           setIsSaving(true);
           try {
             const response = await fetch(
-              `https://smi-api-production-fae2.up.railway.app/noticias/${row.id}`,
+              `https://smi-api-production-fae2.up.railway.app/noticias/${row.original.id}`,
               {
                 method: 'PUT',
                 headers: {
@@ -145,17 +145,21 @@ const getColumns = (noticias, setNoticias) => [
             }
             console.log('Avaliação salva com sucesso:', novaAvaliacao);
             
+            // Calculamos o valor correto dos pontos baseado na nova avaliação
+            const pontosBrutos = Math.abs(row.original.pontos || 0);
+            const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
+            
             // Atualizamos a avaliação na notícia
-            updateAvaliacao(row.id, novaAvaliacao);
+            updateAvaliacao(row.original.id, novaAvaliacao);
             
             // Agora também atualizamos os pontos na lista de notícias para refletir a mudança imediatamente
-            // Isso força a rerenferização da coluna de pontos
             setNoticias(prevNoticias => 
               prevNoticias.map(noticia => 
-                noticia.id === row.id 
+                noticia.id === row.original.id 
                   ? { 
                       ...noticia, 
-                      avaliacao: novaAvaliacao 
+                      avaliacao: novaAvaliacao,
+                      pontos: novosPontos
                     } 
                   : noticia
               )
@@ -221,8 +225,8 @@ const getColumns = (noticias, setNoticias) => [
     cell: (info) => {
       const { row } = info;
       // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
-      const pontos = row.pontos || 0;
-      const avaliacao = row.avaliacao || '';
+      const pontos = row.original.pontos || 0;
+      const avaliacao = row.original.avaliacao || '';
       
       // Se a avaliação for negativa, mostramos o valor como negativo
       const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos) : pontos;
@@ -264,9 +268,20 @@ const Spreadsheet = () => {
 
   const updateAvaliacao = (id, novaAvaliacao) => {
     setNoticias(prevNoticias =>
-      prevNoticias.map(noticia =>
-        noticia.id === id ? { ...noticia, avaliacao: novaAvaliacao } : noticia
-      )
+      prevNoticias.map(noticia => {
+        if (noticia.id === id) {
+          // Calculamos o valor correto dos pontos baseado na nova avaliação
+          const pontosBrutos = Math.abs(noticia.pontos || 0);
+          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
+          
+          return { 
+            ...noticia, 
+            avaliacao: novaAvaliacao,
+            pontos: novosPontos 
+          };
+        }
+        return noticia;
+      })
     );
   };
 
@@ -282,9 +297,16 @@ const Spreadsheet = () => {
       // Adicionamos os pontos às notícias correspondentes
       const noticiasComPontos = noticias.map(noticia => {
         const noticiaPontos = pontos.find(p => p.id === noticia.id);
+        let pontosNoticia = noticiaPontos ? noticiaPontos.pontos : 0;
+        
+        // Aplica a regra de pontos negativos se a avaliação for negativa
+        if (noticia.avaliacao === 'Negativa') {
+          pontosNoticia = -Math.abs(pontosNoticia);
+        }
+        
         return {
           ...noticia,
-          pontos: noticiaPontos ? noticiaPontos.pontos : 0
+          pontos: pontosNoticia
         };
       });
       
