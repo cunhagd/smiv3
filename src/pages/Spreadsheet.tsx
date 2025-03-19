@@ -4,6 +4,7 @@ import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
 import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const TEMAS = [
   'Agricultura',
@@ -45,6 +46,11 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row } = info;
+      // Verificar se row e row.original existem para evitar erros
+      if (!row || !row.original) {
+        return null;
+      }
+      
       return (
         <a
           href={row.original.link}
@@ -65,6 +71,11 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row, updateTema } = info;
+      // Verificar se row e row.original existem para evitar erros
+      if (!row || !row.original) {
+        return null;
+      }
+      
       const [temaSelecionado, setTemaSelecionado] = useState(row.original.tema || '');
       const [isSaving, setIsSaving] = useState(false);
 
@@ -123,6 +134,11 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row, updateAvaliacao } = info;
+      // Verificar se row e row.original existem para evitar erros
+      if (!row || !row.original) {
+        return null;
+      }
+      
       const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(row.original.avaliacao || '');
       const [isSaving, setIsSaving] = useState(false);
 
@@ -224,6 +240,11 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row } = info;
+      // Verificar se row e row.original existem para evitar erros
+      if (!row || !row.original) {
+        return null;
+      }
+      
       // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
       const pontos = row.original.pontos || 0;
       const avaliacao = row.original.avaliacao || '';
