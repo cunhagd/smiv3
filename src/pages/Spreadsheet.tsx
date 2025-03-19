@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -259,9 +258,16 @@ const getColumns = (noticias, setNoticias) => [
       // Usamos row.original se existir, senão usamos row diretamente
       const data = row.original || row;
       
+      // Verificamos se uma avaliação foi selecionada
+      const avaliacao = data.avaliacao || '';
+      
+      // Se não houver avaliação selecionada, não exibimos pontos
+      if (!avaliacao) {
+        return <span className="text-gray-400">-</span>;
+      }
+      
       // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
       const pontos = data.pontos || 0;
-      const avaliacao = data.avaliacao || '';
       
       // Se a avaliação for negativa, mostramos o valor como negativo
       const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos) : pontos;
