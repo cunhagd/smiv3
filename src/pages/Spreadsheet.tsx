@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
+import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
@@ -25,6 +24,9 @@ const AVALIACOES = [
   { valor: 'Neutra', cor: '#F1F0FB', icone: Minus },
   { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
 ];
+
+// Mensagem padrão para os dropdowns
+const MENSAGEM_PADRAO = "Selecionar";
 
 // Definimos os columns fora do componente para evitar rerenders desnecessários
 const getColumns = (noticias, setNoticias) => [
@@ -115,23 +117,28 @@ const getColumns = (noticias, setNoticias) => [
       };
 
       return (
-        <select
-          value={temaSelecionado}
-          onChange={(e) => {
-            const novoTema = e.target.value;
-            setTemaSelecionado(novoTema);
-            handleSave(novoTema);
-          }}
-          disabled={isSaving}
-          className="p-1 bg-dark-card border border-white/10 rounded text-sm text-white w-32"
-        >
-          <option value="">Selecione um tema...</option>
-          {TEMAS.map((tema) => (
-            <option key={tema} value={tema}>
-              {tema}
-            </option>
-          ))}
-        </select>
+        <div className="relative">
+          <select
+            value={temaSelecionado}
+            onChange={(e) => {
+              const novoTema = e.target.value;
+              setTemaSelecionado(novoTema);
+              handleSave(novoTema);
+            }}
+            disabled={isSaving}
+            className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
+          >
+            <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
+            {TEMAS.map((tema) => (
+              <option key={tema} value={tema} className="text-left">
+                {tema}
+              </option>
+            ))}
+          </select>
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+            <ChevronDown className="h-4 w-4" />
+          </div>
+        </div>
       );
     },
   },
@@ -225,25 +232,25 @@ const getColumns = (noticias, setNoticias) => [
               handleSave(novaAvaliacao);
             }}
             disabled={isSaving}
-            className={`p-1 px-8 border rounded text-sm w-32 ${
+            className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
               avaliacaoSelecionada === 'Positiva' 
-                ? 'bg-[#F2FCE2] text-green-800 border-green-300' 
+                ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
                 : avaliacaoSelecionada === 'Negativa' 
-                ? 'bg-[#FFDEE2] text-red-800 border-red-300' 
+                ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
                 : avaliacaoSelecionada === 'Neutra' 
-                ? 'bg-[#F1F0FB] text-gray-800 border-gray-300' 
-                : 'bg-dark-card border-white/10 text-white'
+                ? 'bg-[#F1F0FB] text-gray-800 border-gray-300 focus:border-gray-400 focus:ring-gray-400/30 hover:border-gray-400' 
+                : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
             }`}
           >
-            <option value="">Selecione...</option>
+            <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
             {AVALIACOES.map((avaliacao) => (
-              <option key={avaliacao.valor} value={avaliacao.valor}>
+              <option key={avaliacao.valor} value={avaliacao.valor} className="text-left">
                 {avaliacao.valor}
               </option>
             ))}
           </select>
           {IconeAvaliacao && (
-            <span className="absolute left-2 top-1/2 transform -translate-y-1/2">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
               <IconeAvaliacao className={`h-4 w-4 ${
                 avaliacaoSelecionada === 'Positiva' 
                   ? 'text-green-600' 
@@ -251,8 +258,13 @@ const getColumns = (noticias, setNoticias) => [
                   ? 'text-red-600' 
                   : 'text-gray-600'
               }`} />
-            </span>
+            </div>
           )}
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+            <ChevronDown className={`h-4 w-4 ${
+              avaliacaoSelecionada ? 'text-gray-600' : 'text-white/60'
+            }`} />
+          </div>
         </div>
       );
     },
