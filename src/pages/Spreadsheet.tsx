@@ -46,19 +46,22 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row } = info;
-      // Verificar se row e row.original existem para evitar erros
-      if (!row || !row.original) {
+      // Verificar se row existe para evitar erros
+      if (!row) {
         return null;
       }
       
+      // Usamos row.original se existir, senão usamos row diretamente
+      const data = row.original || row;
+      
       return (
         <a
-          href={row.original.link}
+          href={data.link}
           target="_blank"
           rel="noopener noreferrer"
           className="text-blue-400 hover:text-blue-300 transition-colors flex items-center"
         >
-          {row.original.titulo}
+          {data.titulo}
           <ExternalLink className="h-4 w-4 ml-2 inline-block" />
         </a>
       );
@@ -71,20 +74,24 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row, updateTema } = info;
-      // Verificar se row e row.original existem para evitar erros
-      if (!row || !row.original) {
+      // Verificar se row existe para evitar erros
+      if (!row) {
         return null;
       }
       
-      const [temaSelecionado, setTemaSelecionado] = useState(row.original.tema || '');
+      // Usamos row.original se existir, senão usamos row diretamente
+      const data = row.original || row;
+      const id = data.id;
+      
+      const [temaSelecionado, setTemaSelecionado] = useState(data.tema || '');
       const [isSaving, setIsSaving] = useState(false);
 
       const handleSave = async (novoTema) => {
-        if (novoTema && novoTema !== row.original.tema) {
+        if (novoTema && novoTema !== data.tema) {
           setIsSaving(true);
           try {
             const response = await fetch(
-              `https://smi-api-production-fae2.up.railway.app/noticias/${row.original.id}`,
+              `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
               {
                 method: 'PUT',
                 headers: {
@@ -97,7 +104,7 @@ const getColumns = (noticias, setNoticias) => [
               throw new Error('Falha ao salvar o tema');
             }
             console.log('Tema salvo com sucesso:', novoTema);
-            updateTema(row.original.id, novoTema);
+            updateTema(id, novoTema);
           } catch (error) {
             console.error('Erro ao salvar o tema:', error.message);
           } finally {
@@ -134,20 +141,24 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row, updateAvaliacao } = info;
-      // Verificar se row e row.original existem para evitar erros
-      if (!row || !row.original) {
+      // Verificar se row existe para evitar erros
+      if (!row) {
         return null;
       }
       
-      const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(row.original.avaliacao || '');
+      // Usamos row.original se existir, senão usamos row diretamente
+      const data = row.original || row;
+      const id = data.id;
+      
+      const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(data.avaliacao || '');
       const [isSaving, setIsSaving] = useState(false);
 
       const handleSave = async (novaAvaliacao) => {
-        if (novaAvaliacao && novaAvaliacao !== row.original.avaliacao) {
+        if (novaAvaliacao && novaAvaliacao !== data.avaliacao) {
           setIsSaving(true);
           try {
             const response = await fetch(
-              `https://smi-api-production-fae2.up.railway.app/noticias/${row.original.id}`,
+              `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
               {
                 method: 'PUT',
                 headers: {
@@ -162,16 +173,16 @@ const getColumns = (noticias, setNoticias) => [
             console.log('Avaliação salva com sucesso:', novaAvaliacao);
             
             // Calculamos o valor correto dos pontos baseado na nova avaliação
-            const pontosBrutos = Math.abs(row.original.pontos || 0);
+            const pontosBrutos = Math.abs(data.pontos || 0);
             const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
             
             // Atualizamos a avaliação na notícia
-            updateAvaliacao(row.original.id, novaAvaliacao);
+            updateAvaliacao(id, novaAvaliacao);
             
             // Agora também atualizamos os pontos na lista de notícias para refletir a mudança imediatamente
             setNoticias(prevNoticias => 
               prevNoticias.map(noticia => 
-                noticia.id === row.original.id 
+                noticia.id === id 
                   ? { 
                       ...noticia, 
                       avaliacao: novaAvaliacao,
@@ -240,14 +251,17 @@ const getColumns = (noticias, setNoticias) => [
     sortable: true,
     cell: (info) => {
       const { row } = info;
-      // Verificar se row e row.original existem para evitar erros
-      if (!row || !row.original) {
+      // Verificar se row existe para evitar erros
+      if (!row) {
         return null;
       }
       
+      // Usamos row.original se existir, senão usamos row diretamente
+      const data = row.original || row;
+      
       // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
-      const pontos = row.original.pontos || 0;
-      const avaliacao = row.original.avaliacao || '';
+      const pontos = data.pontos || 0;
+      const avaliacao = data.avaliacao || '';
       
       // Se a avaliação for negativa, mostramos o valor como negativo
       const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos) : pontos;
