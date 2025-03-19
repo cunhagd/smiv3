@@ -1,9 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
 import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { Skeleton } from '@/components/ui/skeleton';
+import { useToast } from "@/hooks/use-toast";
 
 const TEMAS = [
   'Agricultura',
@@ -148,6 +150,7 @@ const getColumns = (noticias, setNoticias) => [
       // Usamos row.original se existir, senão usamos row diretamente
       const data = row.original || row;
       const id = data.id;
+      const { toast } = useToast();
       
       const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(data.avaliacao || '');
       const [isSaving, setIsSaving] = useState(false);
@@ -175,23 +178,15 @@ const getColumns = (noticias, setNoticias) => [
             const pontosBrutos = Math.abs(data.pontos || 0);
             const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
             
-            // Atualizamos a avaliação na notícia
+            // Atualizamos a avaliação e os pontos da notícia no estado global
             updateAvaliacao(id, novaAvaliacao);
-            
-            // Agora também atualizamos os pontos na lista de notícias para refletir a mudança imediatamente
-            setNoticias(prevNoticias => 
-              prevNoticias.map(noticia => 
-                noticia.id === id 
-                  ? { 
-                      ...noticia, 
-                      avaliacao: novaAvaliacao,
-                      pontos: novosPontos
-                    } 
-                  : noticia
-              )
-            );
           } catch (error) {
             console.error('Erro ao salvar a avaliação:', error.message);
+            toast({
+              title: "Erro ao salvar",
+              description: "Não foi possível salvar a avaliação. Tente novamente.",
+              variant: "destructive",
+            });
           } finally {
             setIsSaving(false);
           }
@@ -208,6 +203,25 @@ const getColumns = (noticias, setNoticias) => [
             onChange={(e) => {
               const novaAvaliacao = e.target.value;
               setAvaliacaoSelecionada(novaAvaliacao);
+              
+              // Atualizamos localmente os pontos da notícia para mostrar em tempo real
+              const pontosBrutos = Math.abs(data.pontos || 0);
+              const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
+              
+              // Atualizamos a lista de notícias para refletir a mudança imediatamente
+              setNoticias(prevNoticias => 
+                prevNoticias.map(noticia => 
+                  noticia.id === id 
+                    ? { 
+                        ...noticia, 
+                        avaliacao: novaAvaliacao,
+                        pontos: novosPontos
+                      } 
+                    : noticia
+                )
+              );
+              
+              // Enviamos para o servidor em segundo plano
               handleSave(novaAvaliacao);
             }}
             disabled={isSaving}
@@ -295,6 +309,7 @@ const Spreadsheet = () => {
   const [noticias, setNoticias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
+  const { toast } = useToast();
 
   // Criamos as colunas dentro do componente para ter acesso ao setNoticias
   const columns = getColumns(noticias, setNoticias);
@@ -354,6 +369,11 @@ const Spreadsheet = () => {
       return noticiasComPontos;
     } catch (error) {
       console.error('Erro ao buscar pontos das notícias:', error.message);
+      toast({
+        title: "Erro ao buscar pontos",
+        description: "Não foi possível carregar os pontos das notícias.",
+        variant: "destructive",
+      });
       return noticias; // Retorna as notícias sem pontos em caso de erro
     }
   };
@@ -394,13 +414,18 @@ const Spreadsheet = () => {
       .catch(error => {
         console.error('Erro ao buscar notícias:', error.message);
         setError(error.message);
+        toast({
+          title: "Erro ao buscar notícias",
+          description: error.message,
+          variant: "destructive",
+        });
         setNoticias([]);
       })
       .finally(() => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange]);
+  }, [dateRange, toast]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
