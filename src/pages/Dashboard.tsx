@@ -20,20 +20,20 @@ import DateRangePicker from '@/components/DateRangePicker';
 
 // Mock data (manteremos apenas para os outros gráficos por enquanto)
 const lineChartData = [
-  { name: '01/05', menções: 40 },
-  { name: '02/05', menções: 30 },
-  { name: '03/05', menções: 35 },
-  { name: '04/05', menções: 55 },
-  { name: '05/05', menções: 25 },
-  { name: '06/05', menções: 40 },
-  { name: '07/05', menções: 45 },
-  { name: '08/05', menções: 60 },
-  { name: '09/05', menções: 35 },
-  { name: '10/05', menções: 50 },
-  { name: '11/05', menções: 45 },
-  { name: '12/05', menções: 40 },
-  { name: '13/05', menções: 55 },
-  { name: '14/05', menções: 70 },
+  { name: '01/05', notícias: 40 },
+  { name: '02/05', notícias: 30 },
+  { name: '03/05', notícias: 35 },
+  { name: '04/05', notícias: 55 },
+  { name: '05/05', notícias: 25 },
+  { name: '06/05', notícias: 40 },
+  { name: '07/05', notícias: 45 },
+  { name: '08/05', notícias: 60 },
+  { name: '09/05', notícias: 35 },
+  { name: '10/05', notícias: 50 },
+  { name: '11/05', notícias: 45 },
+  { name: '12/05', notícias: 40 },
+  { name: '13/05', notícias: 55 },
+  { name: '14/05', notícias: 70 },
 ];
 
 const sentimentData = [
@@ -43,7 +43,7 @@ const sentimentData = [
 ];
 
 const Dashboard = () => {
-  const [totalMencoes, setTotalMencoes] = useState(0);
+  const [totalNoticias, setTotalNoticias] = useState(0);
   const [areaChartData, setAreaChartData] = useState([]);
   const [totalPontuacao, setTotalPontuacao] = useState(0);
   const [portaisRelevantes, setPortaisRelevantes] = useState({ top5: [], bottom5: [] });
@@ -61,17 +61,17 @@ const Dashboard = () => {
     if (from && to) {
       setIsLoading(true);
 
-      // Buscar total de menções
-      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=total-mencoes&from=${from}&to=${to}`)
+      // Buscar total de notícias
+      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=total-noticias&from=${from}&to=${to}`)
         .then(response => response.json())
         .then(data => {
-          console.log('Dados de total de menções recebidos da API:', data);
-          setTotalMencoes(data.total_mencoes || 0);
+          console.log('Dados de total de notícias recebidos da API:', data);
+          setTotalNoticias(data.total_noticias || 0);
         })
-        .catch(error => console.error('Erro ao buscar total de menções:', error));
+        .catch(error => console.error('Erro ao buscar total de notícias:', error));
 
       // Buscar dados para o gráfico de área
-      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=mencoes-por-periodo&from=${from}&to=${to}`)
+      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=noticias-por-periodo&from=${from}&to=${to}`)
         .then(response => response.json())
         .then(data => {
           console.log('Dados brutos do gráfico recebidos da API:', data);
@@ -139,15 +139,15 @@ const Dashboard = () => {
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard 
-            title="Total de Menções" 
-            value={isLoading ? "..." : totalMencoes.toString()} 
+            title="Total de Notícias" 
+            value={isLoading ? "..." : totalNoticias.toString()} 
             change="+12.5% em relação ao mês anterior" 
             isPositive 
             icon={<Newspaper className="h-6 w-6" />} 
           />
           
           <StatCard 
-            title="Menções Positivas" 
+            title="Notícias Positivas" 
             value="527" 
             change="+8.2% em relação ao mês anterior" 
             isPositive 
@@ -155,7 +155,7 @@ const Dashboard = () => {
           />
           
           <StatCard 
-            title="Menções Negativas" 
+            title="Notícias Negativas" 
             value="251" 
             change="-5.3% em relação ao mês anterior" 
             isPositive 
@@ -175,7 +175,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="dashboard-card">
             <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Menções por Período</h3>
+              <h3 className="text-lg font-medium">Notícias por Período</h3>
               <button className="p-1 hover:bg-white/5 rounded-full">
                 <ArrowRight className="h-4 w-4 text-gray-400" />
               </button>
@@ -229,7 +229,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="dashboard-card lg:col-span-2">
             <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Evolução de Menções</h3>
+              <h3 className="text-lg font-medium">Evolução de Notícias</h3>
               <button className="p-1 hover:bg-white/5 rounded-full">
                 <ArrowRight className="h-4 w-4 text-gray-400" />
               </button>
@@ -238,13 +238,13 @@ const Dashboard = () => {
               data={lineChartData} 
               height={300} 
               lineColor="#CAF10A" 
-              yAxisKey="menções" 
+              yAxisKey="notícias" 
             />
           </div>
           
           <div className="dashboard-card">
             <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Sentimento das Menções</h3>
+              <h3 className="text-lg font-medium">Sentimento das Notícias</h3>
               <button className="p-1 hover:bg-white/5 rounded-full">
                 <ArrowRight className="h-4 w-4 text-gray-400" />
               </button>
