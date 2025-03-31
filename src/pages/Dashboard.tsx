@@ -48,70 +48,148 @@ const Dashboard = () => {
   const [totalPontuacao, setTotalPontuacao] = useState(0);
   const [portaisRelevantes, setPortaisRelevantes] = useState({ top5: [], bottom5: [] });
   const [selectedType, setSelectedType] = useState('positivas');
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingNoticias, setIsLoadingNoticias] = useState(true);
+  const [isLoadingPontuacao, setIsLoadingPontuacao] = useState(true);
+  const [isLoadingAreaChart, setIsLoadingAreaChart] = useState(true);
+  const [isLoadingPortais, setIsLoadingPortais] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
     to: new Date(),
   });
+
+  // Memoizar os valores de totalNoticias e totalPontuacao
+  const totalNoticiasMemo = React.useMemo(() => {
+    console.log('Memoizando totalNoticias:', totalNoticias);
+    return totalNoticias;
+  }, [totalNoticias]);
+
+  const totalPontuacaoMemo = React.useMemo(() => {
+    console.log('Memoizando totalPontuacao:', totalPontuacao);
+    return totalPontuacao;
+  }, [totalPontuacao]);
 
   useEffect(() => {
     const from = dateRange.from?.toISOString().split('T')[0];
     const to = dateRange.to?.toISOString().split('T')[0];
 
     if (from && to) {
-      setIsLoading(true);
-
       // Buscar total de notícias
+      const startTimeNoticias = Date.now();
       fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=total-noticias&from=${from}&to=${to}`)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           console.log('Dados de total de notícias recebidos da API:', data);
+          console.log(`Tempo para buscar total de notícias: ${(Date.now() - startTimeNoticias) / 1000} segundos`);
           setTotalNoticias(data.total_noticias || 0);
         })
-        .catch(error => console.error('Erro ao buscar total de notícias:', error));
-
-      // Buscar dados para o gráfico de área
-      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=noticias-por-periodo&from=${from}&to=${to}`)
-        .then(response => response.json())
-        .then(data => {
-          console.log('Dados brutos do gráfico recebidos da API:', data);
-          const formattedData = data.map(item => ({
-            name: format(new Date(item.name), 'dd/MMM', { locale: ptBR }).toLowerCase(),
-            value: item.value
-          }));
-          console.log('Dados formatados do gráfico:', formattedData);
-          setAreaChartData(formattedData);
+        .catch(error => {
+          console.error('Erro ao buscar total de notícias:', error.message);
         })
-        .catch(error => console.error('Erro ao buscar dados do gráfico:', error));
+        .finally(() => {
+          setIsLoadingNoticias(false);
+          console.log(`Total de Notícias atualizado na UI: ${totalNoticias}`);
+        });
 
       // Buscar total de pontuação
+      const startTimePontuacao = Date.now();
       fetch(`https://smi-api-production-fae2.up.railway.app/pontuacao-total?from=${from}&to=${to}`)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           console.log('Dados de pontuação total recebidos da API:', data);
+          console.log(`Tempo para buscar pontuação total: ${(Date.now() - startTimePontuacao) / 1000} segundos`);
           setTotalPontuacao(data.total_pontuacao || 0);
         })
-        .catch(error => console.error('Erro ao buscar pontuação total:', error));
+        .catch(error => {
+          console.error('Erro ao buscar pontuação total:', error.message);
+        })
+        .finally(() => {
+          setIsLoadingPontuacao(false);
+          console.log(`Pontuação Total atualizada na UI: ${totalPontuacao}`);
+        });
+
+      // Buscar dados para o gráfico de área
+      const startTimeAreaChart = Date.now();
+      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=noticias-por-periodo&from=${from}&to=${to}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+            console.log('Dados brutos do gráfico recebidos da API:', data);
+            const formattedData = data.map(item => {
+              // Converter a data de DD/MM/YYYY para um formato que o new Date() entende (YYYY-MM-DD)
+              const [day, month, year] = item.name.split('/');
+              const isoDate = `${year}-${month}-${day}`; // Ex.: "2025-03-26"
+              const date = new Date(isoDate);
+              if (isNaN(date.getTime())) {
+                throw new Error(`Data inválida após conversão: ${isoDate}`);
+              }
+              return {
+                name: format(date, 'dd/MMM', { locale: ptBR }).toLowerCase(),
+                value: item.value
+              };
+            });
+            console.log('Dados formatados do gráfico:', formattedData);
+            console.log(`Tempo para buscar dados do gráfico: ${(Date.now() - startTimeAreaChart) / 1000} segundos`);
+            setAreaChartData(formattedData);
+        })
+        .catch(error => {
+          console.error('Erro ao buscar dados do gráfico:', error.message);
+          console.error('Stack trace:', error.stack);
+        })
+        .finally(() => {
+          setIsLoadingAreaChart(false);
+        });
 
       // Buscar portais relevantes
+      const startTimePortais = Date.now();
       fetch(`https://smi-api-production-fae2.up.railway.app/portais-relevantes?from=${from}&to=${to}&type=${selectedType}`)
-        .then(response => response.json())
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        })
         .then(data => {
           console.log(`Dados de portais relevantes (${selectedType}) recebidos da API:`, data);
+          console.log(`Tempo para buscar portais relevantes: ${(Date.now() - startTimePortais) / 1000} segundos`);
           setPortaisRelevantes(data);
         })
-        .catch(error => console.error('Erro ao buscar portais relevantes:', error))
-        .finally(() => setIsLoading(false));
+        .catch(error => {
+          console.error('Erro ao buscar portais relevantes:', error.message);
+        })
+        .finally(() => {
+          setIsLoadingPortais(false);
+        });
     }
   }, [dateRange, selectedType]);
 
-  const handleDateRangeChange = (range: { from: Date | undefined; to: Date | undefined }) => {
+  const lineChartDataFromApi = React.useMemo(() => {
+    return areaChartData.map(item => ({
+      name: item.name,
+      notícias: item.value
+    }));
+  }, [areaChartData]);
+
+  const handleDateRangeChange = (range) => {
     if (range.from && range.to) {
       setDateRange({ from: range.from, to: range.to });
     }
   };
 
-  const handleTypeChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
+  const handleTypeChange = (event) => {
     setSelectedType(event.target.value);
   };
 
@@ -140,7 +218,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <StatCard 
             title="Total de Notícias" 
-            value={isLoading ? "..." : totalNoticias.toString()} 
+            value={isLoadingNoticias ? "..." : totalNoticiasMemo.toString()} 
             change="+12.5% em relação ao mês anterior" 
             isPositive 
             icon={<Newspaper className="h-6 w-6" />} 
@@ -164,7 +242,7 @@ const Dashboard = () => {
           
           <StatCard 
             title="Pontuação" 
-            value={isLoading ? "..." : totalPontuacao.toString()} 
+            value={isLoadingPontuacao ? "..." : totalPontuacaoMemo.toString()} 
             change="+15.8% em relação ao mês anterior" 
             isPositive 
             icon={<BarChartIcon className="h-6 w-6" />} 
@@ -180,7 +258,7 @@ const Dashboard = () => {
                 <ArrowRight className="h-4 w-4 text-gray-400" />
               </button>
             </div>
-            {isLoading ? (
+            {isLoadingAreaChart ? (
               <div className="flex items-center justify-center h-[300px]">
                 <p className="text-gray-400">Carregando dados...</p>
               </div>
@@ -206,7 +284,7 @@ const Dashboard = () => {
                 </button>
               </div>
             </div>
-            {isLoading ? (
+            {isLoadingPortais ? (
               <div className="flex items-center justify-center h-[300px]">
                 <p className="text-gray-400">Carregando dados...</p>
               </div>
@@ -219,7 +297,7 @@ const Dashboard = () => {
                 data={selectedType === 'positivas' ? portaisRelevantes.top5 : portaisRelevantes.bottom5}
                 height={300}
                 yAxisKey="value"
-                barColor={selectedType === 'positivas' ? '#CAF10A' : '#FF4D4D'} // Cor condicional
+                barColor={selectedType === 'positivas' ? '#CAF10A' : '#FF4D4D'}
               />
             )}
           </div>
@@ -235,7 +313,7 @@ const Dashboard = () => {
               </button>
             </div>
             <LineChart 
-              data={lineChartData} 
+              data={lineChartDataFromApi} 
               height={300} 
               lineColor="#CAF10A" 
               yAxisKey="notícias" 
