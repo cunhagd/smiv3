@@ -314,9 +314,13 @@ const getColumns = (noticias, setNoticias) => [
 ];
 
 const Spreadsheet = () => {
+  const today = new Date(); 
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+
   const [dateRange, setDateRange] = useState({
-    from: new Date('2025-03-01'),
-    to: new Date('2025-03-15'),
+    from: thirtyDaysAgo, 
+    to: today, 
   });
   const [noticias, setNoticias] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
