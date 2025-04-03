@@ -90,7 +90,9 @@ const getColumns = (noticias, setNoticias) => [
       const [isSaving, setIsSaving] = useState(false);
 
       const handleSave = async (novoTema) => {
-        if (novoTema && novoTema !== data.tema) {
+        const valorEnviado = novoTema === "" ? null : novoTema; // Converter "" para null
+      
+        if (valorEnviado !== data.tema) {
           setIsSaving(true);
           try {
             const response = await fetch(
@@ -100,21 +102,21 @@ const getColumns = (noticias, setNoticias) => [
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ tema: novoTema }),
+                body: JSON.stringify({ tema: valorEnviado }), // Enviar null corretamente
               }
             );
             if (!response.ok) {
-              throw new Error('Falha ao salvar o tema');
+              throw new Error('Falha ao salvar');
             }
-            console.log('Tema salvo com sucesso:', novoTema);
-            updateTema(id, novoTema);
+            console.log('Salvo com sucesso:', valorEnviado);
+            updateTema(id, valorEnviado);
           } catch (error) {
-            console.error('Erro ao salvar o tema:', error.message);
+            console.error('Erro ao salvar:', error.message);
           } finally {
             setIsSaving(false);
           }
         }
-      };
+      };      
 
       return (
         <div className="relative">
@@ -163,7 +165,9 @@ const getColumns = (noticias, setNoticias) => [
       const [isSaving, setIsSaving] = useState(false);
 
       const handleSave = async (novaAvaliacao) => {
-        if (novaAvaliacao && novaAvaliacao !== data.avaliacao) {
+        const valorEnviado = novaAvaliacao === "" ? null : novaAvaliacao; // Converter "" para null
+      
+        if (valorEnviado !== data.avaliacao) {
           setIsSaving(true);
           try {
             const response = await fetch(
@@ -173,20 +177,24 @@ const getColumns = (noticias, setNoticias) => [
                 headers: {
                   'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ avaliacao: novaAvaliacao }),
+                body: JSON.stringify({ avaliacao: valorEnviado }), // Enviar null corretamente
               }
             );
             if (!response.ok) {
               throw new Error('Falha ao salvar a avaliação');
             }
-            console.log('Avaliação salva com sucesso:', novaAvaliacao);
-            
-            // Calculamos o valor correto dos pontos baseado na nova avaliação
-            const pontosBrutos = Math.abs(data.pontos || 0);
-            const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-            
+      
+            console.log('Avaliação salva com sucesso:', valorEnviado);
+      
+            // Atualizar os pontos somente se a avaliação não for nula
+            let novosPontos = 0;
+            if (valorEnviado) {
+              const pontosBrutos = Math.abs(data.pontos || 0);
+              novosPontos = valorEnviado === 'Negativa' ? -pontosBrutos : pontosBrutos;
+            }
+      
             // Atualizamos a avaliação e os pontos da notícia no estado global
-            updateAvaliacao(id, novaAvaliacao);
+            updateAvaliacao(id, valorEnviado, novosPontos);
           } catch (error) {
             console.error('Erro ao salvar a avaliação:', error.message);
             toast({
@@ -198,7 +206,7 @@ const getColumns = (noticias, setNoticias) => [
             setIsSaving(false);
           }
         }
-      };
+      };      
 
       const avaliacaoObj = AVALIACOES.find(a => a.valor === avaliacaoSelecionada);
       const IconeAvaliacao = avaliacaoObj?.icone;
