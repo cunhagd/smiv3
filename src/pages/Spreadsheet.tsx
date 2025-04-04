@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -25,11 +26,115 @@ const AVALIACOES = [
   { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
 ];
 
+// Adicionar opções de relevância
+const RELEVANCIA = [
+  { valor: 'Relevante', cor: '#F2FCE2' },
+  { valor: 'Irrelevante', cor: '#FFDEE2' },
+];
+
 // Mensagem padrão para os dropdowns
 const MENSAGEM_PADRAO = "Selecionar";
 
 // Definimos os columns fora do componente para evitar rerenders desnecessários
 const getColumns = (noticias, setNoticias) => [
+  {
+    id: 'relevancia',
+    header: 'Relevância',
+    accessorKey: 'relevancia',
+    sortable: true,
+    cell: (info) => {
+      const { row } = info;
+      // Verificar se row existe para evitar erros
+      if (!row) {
+        return null;
+      }
+      
+      // Usamos row diretamente
+      const data = row;
+      const id = data.id;
+      
+      const [relevSelecionada, setRelevSelecionada] = useState(data.relevancia || '');
+      const [isSaving, setIsSaving] = useState(false);
+
+      const handleSave = async (novaRelevancia) => {
+        const valorEnviado = novaRelevancia === "" ? null : novaRelevancia;
+      
+        if (valorEnviado !== data.relevancia) {
+          setIsSaving(true);
+          try {
+            const response = await fetch(
+              `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+              {
+                method: 'PUT',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ relevancia: valorEnviado }),
+              }
+            );
+            if (!response.ok) {
+              throw new Error('Falha ao salvar relevância');
+            }
+            
+            // Atualizamos a lista de notícias para refletir a mudança imediatamente
+            setNoticias(prevNoticias => 
+              prevNoticias.map(noticia => 
+                noticia.id === id 
+                  ? { ...noticia, relevancia: valorEnviado } 
+                  : noticia
+              )
+            );
+            
+            console.log('Relevância salva com sucesso:', valorEnviado);
+          } catch (error) {
+            console.error('Erro ao salvar relevância:', error.message);
+          } finally {
+            setIsSaving(false);
+          }
+        }
+      };
+
+      return (
+        <div className="relative">
+          <select
+            value={relevSelecionada}
+            onChange={(e) => {
+              const novaRelevancia = e.target.value;
+              setRelevSelecionada(novaRelevancia);
+              handleSave(novaRelevancia);
+            }}
+            disabled={isSaving}
+            className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
+          >
+            <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
+            {RELEVANCIA.map((rel) => (
+              <option key={rel.valor} value={rel.valor} className="text-left">
+                {rel.valor}
+              </option>
+            ))}
+          </select>
+          
+          {relevSelecionada && (
+            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+                relevSelecionada === 'Relevante' 
+                  ? 'bg-green-500/80 text-black' 
+                  : relevSelecionada === 'Irrelevante' 
+                  ? 'bg-red-500/80 text-white'
+                  : ''
+              }`}>
+                {relevSelecionada}
+              </span>
+            </div>
+          )}
+          
+          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+            <ChevronDown className="h-4 w-4" />
+          </div>
+        </div>
+      );
+    },
+  },
   {
     id: 'data',
     header: 'Data',
