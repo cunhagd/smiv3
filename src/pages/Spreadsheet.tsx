@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, Check, X } from 'lucide-react';
+import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleCheck, CircleX } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
@@ -29,8 +29,8 @@ const AVALIACOES = [
 
 // Adicionar opções de relevância com ícones
 const RELEVANCIA = [
-  { valor: 'Relevante', cor: '#F2FCE2', icone: Check },
-  { valor: 'Irrelevante', cor: '#FFDEE2', icone: X },
+  { valor: 'Relevante', cor: '#F2FCE2', icone: CircleCheck },
+  { valor: 'Irrelevante', cor: '#FFDEE2', icone: CircleX },
 ];
 
 // Mensagem padrão para os dropdowns
@@ -619,7 +619,7 @@ const Spreadsheet = () => {
               }
             >
               {filtroRelevancia === 'Irrelevante' ? 'Abrir Relevantes' : 'Abrir Irrelevantes'}
-              {filtroRelevancia === 'Irrelevante' ? <Check className="ml-2 h-4 w-4" /> : <X className="ml-2 h-4 w-4" />}
+              {filtroRelevancia === 'Irrelevante' ? <CircleCheck className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
             </Button>
             <DateRangePicker onChange={handleDateRangeChange} />
             <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
