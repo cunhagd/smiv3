@@ -1,8 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown } from 'lucide-react';
+import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, Check, X } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
@@ -26,10 +25,10 @@ const AVALIACOES = [
   { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
 ];
 
-// Adicionar opções de relevância
+// Adicionar opções de relevância com ícones
 const RELEVANCIA = [
-  { valor: 'Relevante', cor: '#F2FCE2' },
-  { valor: 'Irrelevante', cor: '#FFDEE2' },
+  { valor: 'Relevante', cor: '#F2FCE2', icone: Check },
+  { valor: 'Irrelevante', cor: '#FFDEE2', icone: X },
 ];
 
 // Mensagem padrão para os dropdowns
@@ -55,6 +54,7 @@ const getColumns = (noticias, setNoticias) => [
       
       const [relevSelecionada, setRelevSelecionada] = useState(data.relevancia || '');
       const [isSaving, setIsSaving] = useState(false);
+      const { toast } = useToast();
 
       const handleSave = async (novaRelevancia) => {
         const valorEnviado = novaRelevancia === "" ? null : novaRelevancia;
@@ -88,12 +88,20 @@ const getColumns = (noticias, setNoticias) => [
             console.log('Relevância salva com sucesso:', valorEnviado);
           } catch (error) {
             console.error('Erro ao salvar relevância:', error.message);
+            toast({
+              title: "Erro ao salvar",
+              description: "Não foi possível salvar a relevância. Tente novamente.",
+              variant: "destructive",
+            });
           } finally {
             setIsSaving(false);
           }
         }
       };
 
+      const relevanciaObj = RELEVANCIA.find(r => r.valor === relevSelecionada);
+      const IconeRelevancia = relevanciaObj?.icone;
+      
       return (
         <div className="relative">
           <select
@@ -104,32 +112,36 @@ const getColumns = (noticias, setNoticias) => [
               handleSave(novaRelevancia);
             }}
             disabled={isSaving}
-            className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
+            className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
+              relevSelecionada === 'Relevante' 
+                ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
+                : relevSelecionada === 'Irrelevante' 
+                ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
+                : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
+            }`}
           >
             <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
-            {RELEVANCIA.map((rel) => (
-              <option key={rel.valor} value={rel.valor} className="text-left">
-                {rel.valor}
+            {RELEVANCIA.map((relevancia) => (
+              <option key={relevancia.valor} value={relevancia.valor} className="text-left">
+                {relevancia.valor}
               </option>
             ))}
           </select>
-          
-          {relevSelecionada && (
-            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-              <span className={`px-3 py-1 rounded-full text-xs font-medium ${
+          {IconeRelevancia && (
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
+              <IconeRelevancia className={`h-4 w-4 ${
                 relevSelecionada === 'Relevante' 
-                  ? 'bg-green-500/80 text-black' 
+                  ? 'text-green-600' 
                   : relevSelecionada === 'Irrelevante' 
-                  ? 'bg-red-500/80 text-white'
-                  : ''
-              }`}>
-                {relevSelecionada}
-              </span>
+                  ? 'text-red-600' 
+                  : 'text-gray-600'
+              }`} />
             </div>
           )}
-          
           <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-            <ChevronDown className="h-4 w-4" />
+            <ChevronDown className={`h-4 w-4 ${
+              relevSelecionada ? 'text-gray-600' : 'text-white/60'
+            }`} />
           </div>
         </div>
       );
