@@ -613,12 +613,12 @@ const Spreadsheet = () => {
               variant="default"
               onClick={toggleFiltroRelevancia}
               className={
-                filtroRelevancia === 'Irrelevante' 
+                filtroRelevancia === 'Abrir Irrelevantes'
                   ? "bg-[#F2FCE2] hover:bg-[#F2FCE2]/90 text-green-800"
                   : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
               }
             >
-              {filtroRelevancia === 'Irrelevante' ? 'Relevante' : 'Irrelevante'}
+              {filtroRelevancia === 'Irrelevante' ? 'Abrir Relevantes' : 'Irrelevante'}
               {filtroRelevancia === 'Irrelevante' ? <Check className="ml-2 h-4 w-4" /> : <X className="ml-2 h-4 w-4" />}
             </Button>
             <DateRangePicker onChange={handleDateRangeChange} />
