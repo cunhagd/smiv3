@@ -614,8 +614,8 @@ const Spreadsheet = () => {
               onClick={toggleFiltroRelevancia}
               className={
                 filtroRelevancia === 'Irrelevante' 
-                  ? "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
-                  : "bg-[#F2FCE2] hover:bg-[#F2FCE2]/90 text-green-800"
+                  ? "bg-[#F2FCE2] hover:bg-[#F2FCE2]/90 text-green-800"
+                  : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
               }
             >
               {filtroRelevancia === 'Irrelevante' ? 'Relevante' : 'Irrelevante'}
