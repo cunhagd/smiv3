@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleCheck, CircleX } from 'lucide-react';
+import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleX } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
@@ -29,7 +29,7 @@ const AVALIACOES = [
 
 // Adicionar opções de relevância com ícones
 const RELEVANCIA = [
-  { valor: 'Relevante', cor: '#F2FCE2', icone: CircleCheck },
+  { valor: 'Relevante', cor: '#F2FCE2', icone: CircleArrowLeft },
   { valor: 'Irrelevante', cor: '#FFDEE2', icone: CircleX },
 ];
 
@@ -614,12 +614,12 @@ const Spreadsheet = () => {
               onClick={toggleFiltroRelevancia}
               className={
                 filtroRelevancia === 'Irrelevante' 
-                  ? "bg-[#F2FCE2] hover:bg-[#F2FCE2]/90 text-green-800"
+                  ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-green-800"
                   : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
               }
             >
-              {filtroRelevancia === 'Irrelevante' ? 'Abrir Relevantes' : 'Abrir Irrelevantes'}
-              {filtroRelevancia === 'Irrelevante' ? <CircleCheck className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
+              {filtroRelevancia === 'Irrelevante' ? 'Voltar' : 'Abrir Irrelevantes'}
+              {filtroRelevancia === 'Irrelevante' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
             </Button>
             <DateRangePicker onChange={handleDateRangeChange} />
             <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
