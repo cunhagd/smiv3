@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -5,6 +6,7 @@ import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDow
 import DateRangePicker from '@/components/DateRangePicker';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
 
 const TEMAS = [
   'Agricultura',
@@ -451,9 +453,32 @@ const Spreadsheet = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const { toast } = useToast();
+  const [filtroRelevancia, setFiltroRelevancia] = useState(null); // null = todas, 'Relevante', 'Irrelevante'
+  
+  // Toggle para alternar entre mostrar irrelevantes ou relevantes
+  const toggleFiltroRelevancia = () => {
+    if (filtroRelevancia === 'Irrelevante') {
+      setFiltroRelevancia('Relevante');
+    } else {
+      setFiltroRelevancia('Irrelevante');
+    }
+  };
 
   // Criamos as colunas dentro do componente para ter acesso ao setNoticias
   const columns = getColumns(noticias, setNoticias);
+
+  // Filtramos as notícias de acordo com o filtro de relevância
+  const noticiasFiltradas = React.useMemo(() => {
+    if (!filtroRelevancia) {
+      return noticias;
+    } else if (filtroRelevancia === 'Irrelevante') {
+      return noticias.filter(noticia => noticia.relevancia === 'Irrelevante');
+    } else if (filtroRelevancia === 'Relevante') {
+      // Mostrar 'Relevante' ou sem classificação (não mostrar 'Irrelevante')
+      return noticias.filter(noticia => noticia.relevancia !== 'Irrelevante');
+    }
+    return noticias;
+  }, [noticias, filtroRelevancia]);
 
   const updateTema = (id, novoTema) => {
     setNoticias(prevNoticias =>
@@ -587,6 +612,18 @@ const Spreadsheet = () => {
             <p className="text-gray-400">Gerenciamento e análise de notícias</p>
           </div>
           <div className="flex items-center gap-3 mt-4 md:mt-0">
+            <Button 
+              variant="default"
+              onClick={toggleFiltroRelevancia}
+              className={
+                filtroRelevancia === 'Irrelevante' 
+                  ? "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
+                  : "bg-[#F2FCE2] hover:bg-[#F2FCE2]/90 text-green-800"
+              }
+            >
+              {filtroRelevancia === 'Irrelevante' ? 'Relevante' : 'Irrelevante'}
+              {filtroRelevancia === 'Irrelevante' ? <Check className="ml-2 h-4 w-4" /> : <X className="ml-2 h-4 w-4" />}
+            </Button>
             <DateRangePicker onChange={handleDateRangeChange} />
             <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
               <Download className="h-4 w-4" />
@@ -608,7 +645,12 @@ const Spreadsheet = () => {
               <p className="text-gray-400">Nenhuma notícia encontrada</p>
             </div>
           ) : (
-            <DataTable data={noticias} columns={columns} updateTema={updateTema} updateAvaliacao={updateAvaliacao} />
+            <DataTable 
+              data={noticiasFiltradas} 
+              columns={columns} 
+              updateTema={updateTema} 
+              updateAvaliacao={updateAvaliacao} 
+            />
           )}
         </div>
       </main>
