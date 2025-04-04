@@ -36,7 +36,343 @@ const RELEVANCIA = [
 // Mensagem padrão para os dropdowns
 const MENSAGEM_PADRAO = "Selecionar";
 
-// Definimos os columns fora do componente para evitar rerenders desnecessários
+// Componente para a célula de Relevância
+function RelevanciaCell({ row, setNoticias }) {
+  // Garantir que temos os dados necessários
+  const data = row || {};
+  const id = data.id;
+  
+  const [relevSelecionada, setRelevSelecionada] = useState(data.relevancia || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async (novaRelevancia) => {
+    const valorEnviado = novaRelevancia === "" ? null : novaRelevancia;
+  
+    if (valorEnviado !== data.relevancia) {
+      setIsSaving(true);
+      try {
+        const response = await fetch(
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ relevancia: valorEnviado }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error('Falha ao salvar relevância');
+        }
+        
+        // Atualizamos a lista de notícias para refletir a mudança imediatamente
+        setNoticias(prevNoticias => 
+          prevNoticias.map(noticia => 
+            noticia.id === id 
+              ? { ...noticia, relevancia: valorEnviado } 
+              : noticia
+          )
+        );
+        
+        console.log('Relevância salva com sucesso:', valorEnviado);
+      } catch (error) {
+        console.error('Erro ao salvar relevância:', error.message);
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar a relevância. Tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const relevanciaObj = RELEVANCIA.find(r => r.valor === relevSelecionada);
+  const IconeRelevancia = relevanciaObj?.icone;
+  
+  return (
+    <div className="relative">
+      <select
+        value={relevSelecionada}
+        onChange={(e) => {
+          const novaRelevancia = e.target.value;
+          setRelevSelecionada(novaRelevancia);
+          handleSave(novaRelevancia);
+        }}
+        disabled={isSaving}
+        className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
+          relevSelecionada === 'Relevante' 
+            ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
+            : relevSelecionada === 'Irrelevante' 
+            ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
+            : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
+        }`}
+      >
+        <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
+        {RELEVANCIA.map((relevancia) => (
+          <option key={relevancia.valor} value={relevancia.valor} className="text-left">
+            {relevancia.valor}
+          </option>
+        ))}
+      </select>
+      {IconeRelevancia && (
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
+          <IconeRelevancia className={`h-4 w-4 ${
+            relevSelecionada === 'Relevante' 
+              ? 'text-green-600' 
+              : relevSelecionada === 'Irrelevante' 
+              ? 'text-red-600' 
+              : 'text-gray-600'
+          }`} />
+        </div>
+      )}
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+        <ChevronDown className={`h-4 w-4 ${
+          relevSelecionada ? 'text-gray-600' : 'text-white/60'
+        }`} />
+      </div>
+    </div>
+  );
+}
+
+// Componente para a célula de Tema
+function TemaCell({ row, updateTema }) {
+  // Garantir que temos os dados necessários
+  const data = row || {};
+  const id = data.id;
+  
+  const [temaSelecionado, setTemaSelecionado] = useState(data.tema || '');
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSave = async (novoTema) => {
+    const valorEnviado = novoTema === "" ? null : novoTema;
+  
+    if (valorEnviado !== data.tema) {
+      setIsSaving(true);
+      try {
+        const response = await fetch(
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ tema: valorEnviado }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error('Falha ao salvar');
+        }
+        console.log('Salvo com sucesso:', valorEnviado);
+        updateTema(id, valorEnviado);
+      } catch (error) {
+        console.error('Erro ao salvar:', error.message);
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  return (
+    <div className="relative">
+      <select
+        value={temaSelecionado}
+        onChange={(e) => {
+          const novoTema = e.target.value;
+          setTemaSelecionado(novoTema);
+          handleSave(novoTema);
+        }}
+        disabled={isSaving}
+        className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
+      >
+        <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
+        {TEMAS.map((tema) => (
+          <option key={tema} value={tema} className="text-left">
+            {tema}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+        <ChevronDown className="h-4 w-4" />
+      </div>
+    </div>
+  );
+}
+
+// Componente para a célula de Avaliação
+function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
+  // Garantir que temos os dados necessários
+  const data = row || {};
+  const id = data.id;
+  
+  const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(data.avaliacao || '');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async (novaAvaliacao) => {
+    const valorEnviado = novaAvaliacao === "" ? null : novaAvaliacao;
+  
+    if (valorEnviado !== data.avaliacao) {
+      setIsSaving(true);
+      try {
+        const response = await fetch(
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ avaliacao: valorEnviado }),
+          }
+        );
+        if (!response.ok) {
+          throw new Error('Falha ao salvar a avaliação');
+        }
+  
+        console.log('Avaliação salva com sucesso:', valorEnviado);
+  
+        // Atualizar os pontos somente se a avaliação não for nula
+        let novosPontos = 0;
+        if (valorEnviado) {
+          const pontosBrutos = Math.abs(data.pontos || 0);
+          novosPontos = valorEnviado === 'Negativa' ? -pontosBrutos : pontosBrutos;
+        }
+  
+        // Atualizamos a avaliação e os pontos da notícia no estado global
+        updateAvaliacao(id, valorEnviado, novosPontos);
+      } catch (error) {
+        console.error('Erro ao salvar a avaliação:', error.message);
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar a avaliação. Tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  const avaliacaoObj = AVALIACOES.find(a => a.valor === avaliacaoSelecionada);
+  const IconeAvaliacao = avaliacaoObj?.icone;
+  
+  return (
+    <div className="relative">
+      <select
+        value={avaliacaoSelecionada}
+        onChange={(e) => {
+          const novaAvaliacao = e.target.value;
+          setAvaliacaoSelecionada(novaAvaliacao);
+          
+          // Atualizamos localmente os pontos da notícia para mostrar em tempo real
+          const pontosBrutos = Math.abs(data.pontos || 0);
+          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
+          
+          // Atualizamos a lista de notícias para refletir a mudança imediatamente
+          setNoticias(prevNoticias => 
+            prevNoticias.map(noticia => 
+              noticia.id === id 
+                ? { 
+                    ...noticia, 
+                    avaliacao: novaAvaliacao,
+                    pontos: novosPontos
+                  } 
+                : noticia
+            )
+          );
+          
+          // Enviamos para o servidor em segundo plano
+          handleSave(novaAvaliacao);
+        }}
+        disabled={isSaving}
+        className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
+          avaliacaoSelecionada === 'Positiva' 
+            ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
+            : avaliacaoSelecionada === 'Negativa' 
+            ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
+            : avaliacaoSelecionada === 'Neutra' 
+            ? 'bg-[#F1F0FB] text-gray-800 border-gray-300 focus:border-gray-400 focus:ring-gray-400/30 hover:border-gray-400' 
+            : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
+        }`}
+      >
+        <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
+        {AVALIACOES.map((avaliacao) => (
+          <option key={avaliacao.valor} value={avaliacao.valor} className="text-left">
+            {avaliacao.valor}
+          </option>
+        ))}
+      </select>
+      {IconeAvaliacao && (
+        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
+          <IconeAvaliacao className={`h-4 w-4 ${
+            avaliacaoSelecionada === 'Positiva' 
+              ? 'text-green-600' 
+              : avaliacaoSelecionada === 'Negativa' 
+              ? 'text-red-600' 
+              : 'text-gray-600'
+          }`} />
+        </div>
+      )}
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+        <ChevronDown className={`h-4 w-4 ${
+          avaliacaoSelecionada ? 'text-gray-600' : 'text-white/60'
+        }`} />
+      </div>
+    </div>
+  );
+}
+
+// Componente para a célula de Título
+function TituloCell({ row }) {
+  const data = row || {};
+  
+  return (
+    <a
+      href={data.link}
+      target="_blank"
+      rel="noopener noreferrer"
+      className="text-blue-400 hover:text-blue-300 transition-colors flex items-center"
+    >
+      {data.titulo}
+      <ExternalLink className="h-4 w-4 ml-2 inline-block" />
+    </a>
+  );
+}
+
+// Componente para a célula de Pontos
+function PontosCell({ row }) {
+  const data = row || {};
+  
+  // Verificamos se uma avaliação foi selecionada
+  const avaliacao = data.avaliacao || '';
+  
+  // Se não houver avaliação selecionada, não exibimos pontos
+  if (!avaliacao) {
+    return <span className="text-gray-400">-</span>;
+  }
+  
+  // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
+  const pontos = data.pontos || 0;
+  
+  // Se a avaliação for negativa, mostramos o valor como negativo
+  const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos) : pontos;
+  
+  return (
+    <span className={`font-medium ${
+      valorPontos < 0 
+        ? 'text-red-500' 
+        : valorPontos > 0 
+        ? 'text-green-500' 
+        : 'text-gray-400'
+    }`}>
+      {valorPontos}
+    </span>
+  );
+}
+
+// Definimos a função getColumns para retornar as colunas configuradas
 const getColumns = (noticias, setNoticias) => [
   {
     id: 'relevancia',
@@ -44,109 +380,7 @@ const getColumns = (noticias, setNoticias) => [
     accessorKey: 'relevancia',
     sortable: true,
     cell: (info) => {
-      const { row } = info;
-      // Verificar se row existe para evitar erros
-      if (!row) {
-        return null;
-      }
-      
-      // Usamos row diretamente
-      const data = row;
-      const id = data.id;
-      
-      const [relevSelecionada, setRelevSelecionada] = useState(data.relevancia || '');
-      const [isSaving, setIsSaving] = useState(false);
-      const { toast } = useToast();
-
-      const handleSave = async (novaRelevancia) => {
-        const valorEnviado = novaRelevancia === "" ? null : novaRelevancia;
-      
-        if (valorEnviado !== data.relevancia) {
-          setIsSaving(true);
-          try {
-            const response = await fetch(
-              `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
-              {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ relevancia: valorEnviado }),
-              }
-            );
-            if (!response.ok) {
-              throw new Error('Falha ao salvar relevância');
-            }
-            
-            // Atualizamos a lista de notícias para refletir a mudança imediatamente
-            setNoticias(prevNoticias => 
-              prevNoticias.map(noticia => 
-                noticia.id === id 
-                  ? { ...noticia, relevancia: valorEnviado } 
-                  : noticia
-              )
-            );
-            
-            console.log('Relevância salva com sucesso:', valorEnviado);
-          } catch (error) {
-            console.error('Erro ao salvar relevância:', error.message);
-            toast({
-              title: "Erro ao salvar",
-              description: "Não foi possível salvar a relevância. Tente novamente.",
-              variant: "destructive",
-            });
-          } finally {
-            setIsSaving(false);
-          }
-        }
-      };
-
-      const relevanciaObj = RELEVANCIA.find(r => r.valor === relevSelecionada);
-      const IconeRelevancia = relevanciaObj?.icone;
-      
-      return (
-        <div className="relative">
-          <select
-            value={relevSelecionada}
-            onChange={(e) => {
-              const novaRelevancia = e.target.value;
-              setRelevSelecionada(novaRelevancia);
-              handleSave(novaRelevancia);
-            }}
-            disabled={isSaving}
-            className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
-              relevSelecionada === 'Relevante' 
-                ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
-                : relevSelecionada === 'Irrelevante' 
-                ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
-                : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
-            }`}
-          >
-            <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
-            {RELEVANCIA.map((relevancia) => (
-              <option key={relevancia.valor} value={relevancia.valor} className="text-left">
-                {relevancia.valor}
-              </option>
-            ))}
-          </select>
-          {IconeRelevancia && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
-              <IconeRelevancia className={`h-4 w-4 ${
-                relevSelecionada === 'Relevante' 
-                  ? 'text-green-600' 
-                  : relevSelecionada === 'Irrelevante' 
-                  ? 'text-red-600' 
-                  : 'text-gray-600'
-              }`} />
-            </div>
-          )}
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-            <ChevronDown className={`h-4 w-4 ${
-              relevSelecionada ? 'text-gray-600' : 'text-white/60'
-            }`} />
-          </div>
-        </div>
-      );
+      return <RelevanciaCell row={info.row} setNoticias={setNoticias} />;
     },
   },
   {
@@ -167,26 +401,7 @@ const getColumns = (noticias, setNoticias) => [
     accessorKey: 'titulo',
     sortable: true,
     cell: (info) => {
-      const { row } = info;
-      // Verificar se row existe para evitar erros
-      if (!row) {
-        return null;
-      }
-      
-      // Usamos row.original se existir, senão usamos row diretamente
-      const data = row.original || row;
-      
-      return (
-        <a
-          href={data.link}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="text-blue-400 hover:text-blue-300 transition-colors flex items-center"
-        >
-          {data.titulo}
-          <ExternalLink className="h-4 w-4 ml-2 inline-block" />
-        </a>
-      );
+      return <TituloCell row={info.row} />;
     },
   },
   {
@@ -195,72 +410,7 @@ const getColumns = (noticias, setNoticias) => [
     accessorKey: 'tema',
     sortable: true,
     cell: (info) => {
-      const { row, updateTema } = info;
-      // Verificar se row existe para evitar erros
-      if (!row) {
-        return null;
-      }
-      
-      // Usamos row.original se existir, senão usamos row diretamente
-      const data = row.original || row;
-      const id = data.id;
-      
-      const [temaSelecionado, setTemaSelecionado] = useState(data.tema || '');
-      const [isSaving, setIsSaving] = useState(false);
-
-      const handleSave = async (novoTema) => {
-        const valorEnviado = novoTema === "" ? null : novoTema; // Converter "" para null
-      
-        if (valorEnviado !== data.tema) {
-          setIsSaving(true);
-          try {
-            const response = await fetch(
-              `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
-              {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ tema: valorEnviado }), // Enviar null corretamente
-              }
-            );
-            if (!response.ok) {
-              throw new Error('Falha ao salvar');
-            }
-            console.log('Salvo com sucesso:', valorEnviado);
-            updateTema(id, valorEnviado);
-          } catch (error) {
-            console.error('Erro ao salvar:', error.message);
-          } finally {
-            setIsSaving(false);
-          }
-        }
-      };      
-
-      return (
-        <div className="relative">
-          <select
-            value={temaSelecionado}
-            onChange={(e) => {
-              const novoTema = e.target.value;
-              setTemaSelecionado(novoTema);
-              handleSave(novoTema);
-            }}
-            disabled={isSaving}
-            className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
-          >
-            <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
-            {TEMAS.map((tema) => (
-              <option key={tema} value={tema} className="text-left">
-                {tema}
-              </option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-            <ChevronDown className="h-4 w-4" />
-          </div>
-        </div>
-      );
+      return <TemaCell row={info.row} updateTema={info.updateTema} />;
     },
   },
   {
@@ -269,131 +419,11 @@ const getColumns = (noticias, setNoticias) => [
     accessorKey: 'avaliacao',
     sortable: true,
     cell: (info) => {
-      const { row, updateAvaliacao } = info;
-      // Verificar se row existe para evitar erros
-      if (!row) {
-        return null;
-      }
-      
-      // Usamos row.original se existir, senão usamos row diretamente
-      const data = row.original || row;
-      const id = data.id;
-      const { toast } = useToast();
-      
-      const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState(data.avaliacao || '');
-      const [isSaving, setIsSaving] = useState(false);
-
-      const handleSave = async (novaAvaliacao) => {
-        const valorEnviado = novaAvaliacao === "" ? null : novaAvaliacao; // Converter "" para null
-      
-        if (valorEnviado !== data.avaliacao) {
-          setIsSaving(true);
-          try {
-            const response = await fetch(
-              `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
-              {
-                method: 'PUT',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ avaliacao: valorEnviado }), // Enviar null corretamente
-              }
-            );
-            if (!response.ok) {
-              throw new Error('Falha ao salvar a avaliação');
-            }
-      
-            console.log('Avaliação salva com sucesso:', valorEnviado);
-      
-            // Atualizar os pontos somente se a avaliação não for nula
-            let novosPontos = 0;
-            if (valorEnviado) {
-              const pontosBrutos = Math.abs(data.pontos || 0);
-              novosPontos = valorEnviado === 'Negativa' ? -pontosBrutos : pontosBrutos;
-            }
-      
-            // Atualizamos a avaliação e os pontos da notícia no estado global
-            updateAvaliacao(id, valorEnviado, novosPontos);
-          } catch (error) {
-            console.error('Erro ao salvar a avaliação:', error.message);
-            toast({
-              title: "Erro ao salvar",
-              description: "Não foi possível salvar a avaliação. Tente novamente.",
-              variant: "destructive",
-            });
-          } finally {
-            setIsSaving(false);
-          }
-        }
-      };      
-
-      const avaliacaoObj = AVALIACOES.find(a => a.valor === avaliacaoSelecionada);
-      const IconeAvaliacao = avaliacaoObj?.icone;
-      
-      return (
-        <div className="relative">
-          <select
-            value={avaliacaoSelecionada}
-            onChange={(e) => {
-              const novaAvaliacao = e.target.value;
-              setAvaliacaoSelecionada(novaAvaliacao);
-              
-              // Atualizamos localmente os pontos da notícia para mostrar em tempo real
-              const pontosBrutos = Math.abs(data.pontos || 0);
-              const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-              
-              // Atualizamos a lista de notícias para refletir a mudança imediatamente
-              setNoticias(prevNoticias => 
-                prevNoticias.map(noticia => 
-                  noticia.id === id 
-                    ? { 
-                        ...noticia, 
-                        avaliacao: novaAvaliacao,
-                        pontos: novosPontos
-                      } 
-                    : noticia
-                )
-              );
-              
-              // Enviamos para o servidor em segundo plano
-              handleSave(novaAvaliacao);
-            }}
-            disabled={isSaving}
-            className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
-              avaliacaoSelecionada === 'Positiva' 
-                ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
-                : avaliacaoSelecionada === 'Negativa' 
-                ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
-                : avaliacaoSelecionada === 'Neutra' 
-                ? 'bg-[#F1F0FB] text-gray-800 border-gray-300 focus:border-gray-400 focus:ring-gray-400/30 hover:border-gray-400' 
-                : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
-            }`}
-          >
-            <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
-            {AVALIACOES.map((avaliacao) => (
-              <option key={avaliacao.valor} value={avaliacao.valor} className="text-left">
-                {avaliacao.valor}
-              </option>
-            ))}
-          </select>
-          {IconeAvaliacao && (
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
-              <IconeAvaliacao className={`h-4 w-4 ${
-                avaliacaoSelecionada === 'Positiva' 
-                  ? 'text-green-600' 
-                  : avaliacaoSelecionada === 'Negativa' 
-                  ? 'text-red-600' 
-                  : 'text-gray-600'
-              }`} />
-            </div>
-          )}
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-            <ChevronDown className={`h-4 w-4 ${
-              avaliacaoSelecionada ? 'text-gray-600' : 'text-white/60'
-            }`} />
-          </div>
-        </div>
-      );
+      return <AvaliacaoCell 
+        row={info.row} 
+        updateAvaliacao={info.updateAvaliacao} 
+        setNoticias={setNoticias} 
+      />;
     },
   },
   {
@@ -402,40 +432,7 @@ const getColumns = (noticias, setNoticias) => [
     accessorKey: 'pontos',
     sortable: true,
     cell: (info) => {
-      const { row } = info;
-      // Verificar se row existe para evitar erros
-      if (!row) {
-        return null;
-      }
-      
-      // Usamos row.original se existir, senão usamos row diretamente
-      const data = row.original || row;
-      
-      // Verificamos se uma avaliação foi selecionada
-      const avaliacao = data.avaliacao || '';
-      
-      // Se não houver avaliação selecionada, não exibimos pontos
-      if (!avaliacao) {
-        return <span className="text-gray-400">-</span>;
-      }
-      
-      // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
-      const pontos = data.pontos || 0;
-      
-      // Se a avaliação for negativa, mostramos o valor como negativo
-      const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos) : pontos;
-      
-      return (
-        <span className={`font-medium ${
-          valorPontos < 0 
-            ? 'text-red-500' 
-            : valorPontos > 0 
-            ? 'text-green-500' 
-            : 'text-gray-400'
-        }`}>
-          {valorPontos}
-        </span>
-      );
+      return <PontosCell row={info.row} />;
     },
   },
 ];
