@@ -95,16 +95,16 @@ const DateRangePicker = ({ onChange }: DateRangePickerProps) => {
       <PopoverTrigger asChild>
         <Button 
           variant="outline" 
-          className="flex items-center gap-2 px-3 py-2 bg-dark-card border border-blue/10 rounded-lg hover:bg-dark-card-hover"
+          className="flex items-center gap-2 px-3 py-2 bg-dark-card border border-white/10 rounded-lg hover:bg-dark-card-hover"
         >
           <Calendar className="h-4 w-4 text-gray-400" />
           <span className="text-sm whitespace-nowrap">{formatDateRange()}</span>
           <ChevronDown className="h-4 w-4 text-gray-400" />
         </Button>
       </PopoverTrigger>
-      <PopoverContent className="w-auto p-0 bg-dark-card border border-red/10 text-white" align="start">
+      <PopoverContent className="w-auto p-0 bg-dark-card border border-white/10 text-white" align="start">
         <div className="flex flex-col md:flex-row">
-          <div className="border-b md:border-b-0 md:border-r border-black/10 p-3 space-y-2 md:w-48">
+          <div className="border-b md:border-b-0 md:border-r border-white/10 p-3 space-y-2 md:w-48">
             <h3 className="font-medium mb-2">Períodos</h3>
             <RadioGroup 
               value={selectedPreset}
@@ -134,7 +134,7 @@ const DateRangePicker = ({ onChange }: DateRangePickerProps) => {
                   onClick={resetSelection} 
                   className="text-xs py-1 h-7"
                 >
-                  Limpar Filtro
+                  Limpar Seleção
                 </Button>
               </div>
             )}
