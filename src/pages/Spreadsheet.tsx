@@ -38,104 +38,117 @@ const MENSAGEM_PADRAO = "Selecionar";
 
 // Componente para a célula de Relevância
 function RelevanciaCell({ row, setNoticias }) {
-  // Garantir que temos os dados necessários
-  const data = row || {};
-  const id = data.id;
+    const data = row || {};
+    const id = data.id;
   
-  const [relevSelecionada, setRelevSelecionada] = useState(data.relevancia || '');
-  const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
-
-  const handleSave = async (novaRelevancia) => {
-    const valorEnviado = novaRelevancia === "" ? null : novaRelevancia;
+    // Mapear o valor booleano da API para string no front-end
+    const mapRelevanciaToString = (relevancia) => {
+      if (relevancia === true) return 'Relevante';
+      if (relevancia === false) return 'Irrelevante';
+      return '';
+    };
   
-    if (valorEnviado !== data.relevancia) {
-      setIsSaving(true);
-      try {
-        const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
-          {
-            method: 'PUT',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ relevancia: valorEnviado }),
+    // Mapear a string selecionada para o valor booleano esperado pela API
+    const mapStringToRelevancia = (valor) => {
+      if (valor === 'Relevante') return true;
+      if (valor === 'Irrelevante') return false;
+      return null;
+    };
+  
+    const [relevSelecionada, setRelevSelecionada] = useState(mapRelevanciaToString(data.relevancia));
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+  
+    const handleSave = async (novaRelevancia) => {
+      const valorEnviado = mapStringToRelevancia(novaRelevancia);
+  
+      if (valorEnviado !== data.relevancia) {
+        setIsSaving(true);
+        try {
+          const response = await fetch(
+            `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+            {
+              method: 'PUT',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({ relevancia: valorEnviado }),
+            }
+          );
+          if (!response.ok) {
+            throw new Error('Falha ao salvar relevância');
           }
-        );
-        if (!response.ok) {
-          throw new Error('Falha ao salvar relevância');
-        }
-        
-        // Atualizamos a lista de notícias para refletir a mudança imediatamente
-        setNoticias(prevNoticias => 
-          prevNoticias.map(noticia => 
-            noticia.id === id 
-              ? { ...noticia, relevancia: valorEnviado } 
-              : noticia
-          )
-        );
-        
-        console.log('Relevância salva com sucesso:', valorEnviado);
-      } catch (error) {
-        console.error('Erro ao salvar relevância:', error.message);
-        toast({
-          title: "Erro ao salvar",
-          description: "Não foi possível salvar a relevância. Tente novamente.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    }
-  };
-
-  const relevanciaObj = RELEVANCIA.find(r => r.valor === relevSelecionada);
-  const IconeRelevancia = relevanciaObj?.icone;
   
-  return (
-    <div className="relative">
-      <select
-        value={relevSelecionada}
-        onChange={(e) => {
-          const novaRelevancia = e.target.value;
-          setRelevSelecionada(novaRelevancia);
-          handleSave(novaRelevancia);
-        }}
-        disabled={isSaving}
-        className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
-          relevSelecionada === 'Relevante' 
-            ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
-            : relevSelecionada === 'Irrelevante' 
-            ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
-            : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
-        }`}
-      >
-        <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
-        {RELEVANCIA.map((relevancia) => (
-          <option key={relevancia.valor} value={relevancia.valor} className="text-left">
-            {relevancia.valor}
-          </option>
-        ))}
-      </select>
-      {IconeRelevancia && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
-          <IconeRelevancia className={`h-4 w-4 ${
+          // Atualizamos a lista de notícias para refletir a mudança imediatamente
+          setNoticias(prevNoticias =>
+            prevNoticias.map(noticia =>
+              noticia.id === id
+                ? { ...noticia, relevancia: valorEnviado }
+                : noticia
+            )
+          );
+  
+          console.log('Relevância salva com sucesso:', valorEnviado);
+        } catch (error) {
+          console.error('Erro ao salvar relevância:', error.message);
+          toast({
+            title: "Erro ao salvar",
+            description: "Não foi possível salvar a relevância. Tente novamente.",
+            variant: "destructive",
+          });
+        } finally {
+          setIsSaving(false);
+        }
+      }
+    };
+  
+    const relevanciaObj = RELEVANCIA.find(r => r.valor === relevSelecionada);
+    const IconeRelevancia = relevanciaObj?.icone;
+  
+    return (
+      <div className="relative">
+        <select
+          value={relevSelecionada}
+          onChange={(e) => {
+            const novaRelevancia = e.target.value;
+            setRelevSelecionada(novaRelevancia);
+            handleSave(novaRelevancia);
+          }}
+          disabled={isSaving}
+          className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
             relevSelecionada === 'Relevante' 
-              ? 'text-green-600' 
+              ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
               : relevSelecionada === 'Irrelevante' 
-              ? 'text-red-600' 
-              : 'text-gray-600'
+              ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
+              : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
+          }`}
+        >
+          <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
+          {RELEVANCIA.map((relevancia) => (
+            <option key={relevancia.valor} value={relevancia.valor} className="text-left">
+              {relevancia.valor}
+            </option>
+          ))}
+        </select>
+        {IconeRelevancia && (
+          <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
+            <IconeRelevancia className={`h-4 w-4 ${
+              relevSelecionada === 'Relevante' 
+                ? 'text-green-600' 
+                : relevSelecionada === 'Irrelevante' 
+                ? 'text-red-600' 
+                : 'text-gray-600'
+            }`} />
+          </div>
+        )}
+        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+          <ChevronDown className={`h-4 w-4 ${
+            relevSelecionada ? 'text-gray-600' : 'text-white/60'
           }`} />
         </div>
-      )}
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-        <ChevronDown className={`h-4 w-4 ${
-          relevSelecionada ? 'text-gray-600' : 'text-white/60'
-        }`} />
       </div>
-    </div>
-  );
-}
+    );
+  }
 
 // Componente para a célula de Tema
 function TemaCell({ row, updateTema }) {
@@ -464,18 +477,18 @@ const Spreadsheet = () => {
   // Criamos as colunas dentro do componente para ter acesso ao setNoticias
   const columns = getColumns(noticias, setNoticias);
 
-  // Filtramos as notícias de acordo com o filtro de relevância
-  const noticiasFiltradas = React.useMemo(() => {
-    if (!filtroRelevancia) {
-      return noticias;
-    } else if (filtroRelevancia === 'Irrelevante') {
-      return noticias.filter(noticia => noticia.relevancia === 'Irrelevante');
-    } else if (filtroRelevancia === 'Relevante') {
-      // Mostrar 'Relevante' ou sem classificação (não mostrar 'Irrelevante')
-      return noticias.filter(noticia => noticia.relevancia !== 'Irrelevante');
-    }
-    return noticias;
-  }, [noticias, filtroRelevancia]);
+//   // Filtramos as notícias de acordo com o filtro de relevância
+//   const noticiasFiltradas = React.useMemo(() => {
+//     if (!filtroRelevancia) {
+//       return noticias;
+//     } else if (filtroRelevancia === 'Irrelevante') {
+//       return noticias.filter(noticia => noticia.relevancia === 'Irrelevante');
+//     } else if (filtroRelevancia === 'Relevante') {
+//       // Mostrar 'Relevante' ou sem classificação (não mostrar 'Irrelevante')
+//       return noticias.filter(noticia => noticia.relevancia !== 'Irrelevante');
+//     }
+//     return noticias;
+//   }, [noticias, filtroRelevancia]);
 
   const updateTema = (id, novoTema) => {
     setNoticias(prevNoticias =>
@@ -548,8 +561,14 @@ const Spreadsheet = () => {
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
     console.log('Chamando API com from:', from, 'e to:', to);
-    
-    fetch(`https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}`)
+  
+    // Adicionar o parâmetro mostrarIrrelevantes na query
+    let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}`;
+    if (filtroRelevancia === 'Irrelevante') {
+      url += '&mostrarIrrelevantes=true';
+    }
+  
+    fetch(url)
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
@@ -560,13 +579,10 @@ const Spreadsheet = () => {
       .then(async data => {
         console.log('Dados das notícias recebidos da API:', data);
         if (Array.isArray(data)) {
-          // Garantir que todos os registros tenham um ID único para a seleção
           const dataWithIds = data.map((item, index) => ({
             ...item,
             id: item.id || `noticia-${index}`
           }));
-          
-          // Buscar os pontos para cada notícia
           const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
           setNoticias(noticiasComPontos);
         } else {
@@ -588,7 +604,7 @@ const Spreadsheet = () => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange, toast]);
+  }, [dateRange, filtroRelevancia, toast]); // Adicionar filtroRelevancia como dependência
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
@@ -643,7 +659,7 @@ const Spreadsheet = () => {
             </div>
           ) : (
             <DataTable 
-              data={noticiasFiltradas} 
+              data={noticias} 
               columns={columns} 
               updateTema={updateTema} 
               updateAvaliacao={updateAvaliacao} 
