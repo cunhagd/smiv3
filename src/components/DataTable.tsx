@@ -24,54 +24,21 @@ interface DataTableProps {
   columns: Column[];
   updateTema?: (id: string, novoTema: string) => void;
   updateAvaliacao?: (id: string, novaAvaliacao: string) => void;
+  cursor: string | null;
+  setCursor: (cursor: string | null) => void;
+  nextCursor: string | null;
+  limit: number;
+  total: number;
 }
 
-const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProps) => {
+const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCursor, nextCursor, limit, total }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
   const [showFilters, setShowFilters] = useState(false);
 
-  // Sort function
-  const sortedData = React.useMemo(() => {
-    let sortableData = [...data];
-    if (sortConfig !== null) {
-      sortableData.sort((a, b) => {
-        if (a[sortConfig.key] < b[sortConfig.key]) {
-          return sortConfig.direction === 'asc' ? -1 : 1;
-        }
-        if (a[sortConfig.key] > b[sortConfig.key]) {
-          return sortConfig.direction === 'asc' ? 1 : -1;
-        }
-        return 0;
-      });
-    }
-    return sortableData;
-  }, [data, sortConfig]);
+  const displayedData = data;
 
-  // Filter function
-  const filteredData = React.useMemo(() => {
-    return sortedData.filter(item => {
-      return Object.values(item).some(value => 
-        String(value).toLowerCase().includes(searchTerm.toLowerCase())
-      );
-    });
-  }, [sortedData, searchTerm]);
-
-  // Request sort
-  const requestSort = (key: string) => {
-    let direction: 'asc' | 'desc' = 'asc';
-    if (
-      sortConfig &&
-      sortConfig.key === key &&
-      sortConfig.direction === 'asc'
-    ) {
-      direction = 'desc';
-    }
-    setSortConfig({ key, direction });
-  };
-
-  // Toggle row selection
   const toggleRowSelection = (id: string) => {
     const newSelected = new Set(selectedRows);
     if (newSelected.has(id)) {
@@ -82,13 +49,22 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
     setSelectedRows(newSelected);
   };
 
-  // Toggle all rows
   const toggleAllRows = () => {
-    if (selectedRows.size === filteredData.length) {
+    if (selectedRows.size === displayedData.length) {
       setSelectedRows(new Set());
     } else {
-      setSelectedRows(new Set(filteredData.map(row => row.id)));
+      setSelectedRows(new Set(displayedData.map(row => row.id)));
     }
+  };
+
+  const handleNextPage = () => {
+    if (nextCursor) {
+      setCursor(nextCursor);
+    }
+  };
+
+  const handleReset = () => {
+    setCursor(null);
   };
 
   return (
@@ -102,6 +78,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="form-input pl-10 pr-4"
+            disabled
           />
         </div>
         
@@ -127,7 +104,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             <div>
               <label className="block text-sm text-gray-400 mb-1">Veículo</label>
-              <select className="form-input">
+              <select className="form-input" disabled>
                 <option>Todos</option>
                 <option>Estado de Minas</option>
                 <option>O Tempo</option>
@@ -136,7 +113,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Período</label>
-              <select className="form-input">
+              <select className="form-input" disabled>
                 <option>Últimos 7 dias</option>
                 <option>Últimos 30 dias</option>
                 <option>Este mês</option>
@@ -145,7 +122,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
             </div>
             <div>
               <label className="block text-sm text-gray-400 mb-1">Sentimento</label>
-              <select className="form-input">
+              <select className="form-input" disabled>
                 <option>Todos</option>
                 <option>Positivo</option>
                 <option>Neutro</option>
@@ -165,11 +142,11 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
                   <div 
                     className={cn(
                       "h-5 w-5 rounded border border-white/20 flex items-center justify-center cursor-pointer",
-                      selectedRows.size > 0 && selectedRows.size === filteredData.length && "bg-brand-yellow border-brand-yellow"
+                      selectedRows.size > 0 && selectedRows.size === displayedData.length && "bg-brand-yellow border-brand-yellow"
                     )}
                     onClick={toggleAllRows}
                   >
-                    {selectedRows.size > 0 && selectedRows.size === filteredData.length && (
+                    {selectedRows.size > 0 && selectedRows.size === displayedData.length && (
                       <Check className="h-3 w-3 text-black" />
                     )}
                   </div>
@@ -181,8 +158,8 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
                     <span className="text-sm font-medium">{column.header}</span>
                     {column.sortable && (
                       <button 
-                        onClick={() => requestSort(column.accessorKey)}
                         className="focus:outline-none"
+                        disabled
                       >
                         <ArrowUpDown className="h-4 w-4 text-gray-400" />
                       </button>
@@ -194,7 +171,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
             </tr>
           </thead>
           <tbody>
-            {filteredData.map((row, rowIndex) => (
+            {displayedData.map((row, rowIndex) => (
               <tr 
                 key={rowIndex} 
                 className={cn(
@@ -219,7 +196,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
                   <td key={column.id} className="p-3">
                     {column.cell 
                       ? column.cell({ 
-                          row, // Pass the row directly, not as row.original
+                          row,
                           updateTema, 
                           updateAvaliacao 
                         }) 
@@ -236,7 +213,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
           </tbody>
         </table>
         
-        {filteredData.length === 0 && (
+        {displayedData.length === 0 && (
           <div className="py-16 text-center">
             <p className="text-gray-400">Nenhum resultado encontrado</p>
           </div>
@@ -245,14 +222,21 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao }: DataTableProp
       
       <div className="mt-4 flex justify-between items-center text-sm text-gray-400">
         <div>
-          {selectedRows.size > 0 ? `${selectedRows.size} item(s) selecionado(s)` : `Mostrando ${filteredData.length} de ${data.length} itens`}
+          {selectedRows.size > 0 ? `${selectedRows.size} item(s) selecionado(s)` : `Mostrando ${displayedData.length} de ${total} itens`}
         </div>
         <div className="flex items-center gap-2">
-          <button className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50" disabled={true}>
-            Anterior
+          <button 
+            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
+            disabled={cursor === null}
+            onClick={handleReset}
+          >
+            Voltar ao início
           </button>
-          <span className="px-3 py-1 rounded bg-brand-yellow text-black font-medium">1</span>
-          <button className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover">
+          <button 
+            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
+            disabled={!nextCursor}
+            onClick={handleNextPage}
+          >
             Próximo
           </button>
         </div>
