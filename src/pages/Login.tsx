@@ -155,10 +155,10 @@ const Login = () => {
               Acompanhe, analise e gerencie as notícias sobre o Governo do Estado de Minas Gerais através da plataforma integrada de Monitoramento de Imprensa.
             </p>
             <div className="flex flex-wrap gap-3">
-              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Análise de Dados</div>
-              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Relatórios</div>
-              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Calssificações</div>
-              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Gestão de Notícias</div>
+              <div className="px-3 py-1 bg-[#D4F437] rounded-full text-sm text-black">Análise de Dados</div>
+              <div className="px-3 py-1 bg-[#D4F437] rounded-full text-sm text-black">Relatórios</div>
+              <div className="px-3 py-1 bg-[#D4F437] rounded-full text-sm text-black">Calssificações</div>
+              <div className="px-3 py-1 bg-[#D4F437] rounded-full text-sm text-black">Gestão de Notícias</div>
             </div>
           </div>
         </div>
