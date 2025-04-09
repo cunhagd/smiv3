@@ -379,32 +379,54 @@ function PontosCell({ row }) {
 function EstrategicaCell({ row, setNoticias }) {
   const data = row || {};
   const id = data.id;
-  const [estrategicaSelecionada, setEstrategicaSelecionada] = useState(data.estrategica || 'Selecionar');
+
+  // Mapeia o valor booleano do banco para o texto do dropdown
+  const mapEstrategicaToString = (estrategica) => {
+    if (estrategica === true) return 'Sim';
+    if (estrategica === false) return 'Não';
+    return 'Selecionar';
+  };
+
+  // Mapeia o texto do dropdown para o valor booleano ou null
+  const mapStringToEstrategica = (valor) => {
+    if (valor === 'Sim') return true;
+    if (valor === 'Não') return false;
+    return null;
+  };
+
+  const [estrategicaSelecionada, setEstrategicaSelecionada] = useState(mapEstrategicaToString(data.estrategica));
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const handleSave = async (novaEstrategica) => {
-    const valorEnviado = novaEstrategica === 'Selecionar' ? null : novaEstrategica;
+    const valorEnviado = mapStringToEstrategica(novaEstrategica);
     if (valorEnviado !== data.estrategica) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`, // Use http://localhost:3000 para testes locais
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ estrategica: valorEnviado }),
           }
         );
-        if (!response.ok) throw new Error('Falha ao salvar estratégica');
-        setNoticias(prevNoticias =>
-          prevNoticias.map(noticia =>
+        if (!response.ok) {
+          throw new Error('Falha ao salvar estratégica');
+        }
+        setNoticias((prevNoticias) =>
+          prevNoticias.map((noticia) =>
             noticia.id === id ? { ...noticia, estrategica: valorEnviado } : noticia
           )
         );
+        console.log('Estratégica salva com sucesso:', valorEnviado);
       } catch (error) {
         console.error('Erro ao salvar estratégica:', error.message);
-        toast({ title: "Erro ao salvar", description: "Não foi possível salvar.", variant: "destructive" });
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar a estratégica. Tente novamente.",
+          variant: "destructive",
+        });
       } finally {
         setIsSaving(false);
       }
@@ -439,9 +461,14 @@ function EstrategicaCell({ row, setNoticias }) {
 function CategoriaCell({ row, setNoticias }) {
   const data = row || {};
   const id = data.id;
+  const dataNoticia = data.data; // Data da notícia no formato DD/MM/YYYY
+  const categoriaSemana = data.categoria_semana || null; // Categoria retornada pela semana_estrategica
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(data.categoria || 'Selecionar');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  // Define as opções do dropdown: "Selecionar" e a categoria da semana_estrategica (se disponível)
+  const opcoesCategoria = categoriaSemana ? ['Selecionar', categoriaSemana] : ['Selecionar'];
 
   const handleSave = async (novaCategoria) => {
     const valorEnviado = novaCategoria === 'Selecionar' ? null : novaCategoria;
@@ -449,22 +476,29 @@ function CategoriaCell({ row, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`, // Corrigido para atualizar a notícia
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ categoria: valorEnviado }),
           }
         );
-        if (!response.ok) throw new Error('Falha ao salvar categoria');
-        setNoticias(prevNoticias =>
-          prevNoticias.map(noticia =>
+        if (!response.ok) {
+          throw new Error('Falha ao salvar categoria');
+        }
+        setNoticias((prevNoticias) =>
+          prevNoticias.map((noticia) =>
             noticia.id === id ? { ...noticia, categoria: valorEnviado } : noticia
           )
         );
+        console.log('Categoria salva com sucesso:', valorEnviado);
       } catch (error) {
         console.error('Erro ao salvar categoria:', error.message);
-        toast({ title: "Erro ao salvar", description: "Não foi possível salvar.", variant: "destructive" });
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar a categoria. Tente novamente.",
+          variant: "destructive",
+        });
       } finally {
         setIsSaving(false);
       }
@@ -483,7 +517,7 @@ function CategoriaCell({ row, setNoticias }) {
         disabled={isSaving}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
-        {CATEGORIA.map((categoria) => (
+        {opcoesCategoria.map((categoria) => (
           <option key={categoria} value={categoria} className="text-left">
             {categoria}
           </option>
@@ -550,13 +584,6 @@ const getColumns = (noticias, setNoticias) => [
     accessorKey: 'estrategica',
     sortable: true,
     cell: (info) => <EstrategicaCell row={info.row} setNoticias={setNoticias} />,
-  },
-  {
-    id: 'categoria',
-    header: 'Categoria',
-    accessorKey: 'categoria',
-    sortable: true,
-    cell: (info) => <CategoriaCell row={info.row} setNoticias={setNoticias} />,
   },
 ];
 
