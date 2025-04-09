@@ -120,7 +120,7 @@ const Login = () => {
           </form>
           
           <p className="mt-8 text-sm text-center text-gray-400">
-            © 2023 Governo do Estado de Minas Gerais. Todos os direitos reservados.
+            © 2025 Governo do Estado de Minas Gerais. Todos os direitos reservados.
           </p>
         </div>
       </div>
@@ -150,13 +150,13 @@ const Login = () => {
             </div>
             <h2 className="text-2xl font-bold mb-4 gradient-text">Sistema de Monitoramento de Imprensa</h2>
             <p className="text-white/80 mb-6">
-              Acompanhe, analise e gerencie a presença da sua instituição na mídia com nossa plataforma integrada de monitoramento de imprensa.
+              Acompanhe, analise e gerencie as notícias sobre o Governo do Estado de Minas Gerais através da plataforma integrada de Monitoramento de Imprensa.
             </p>
             <div className="flex flex-wrap gap-3">
-              <div className="px-3 py-1 bg-white/10 rounded-full text-sm">Análise de Dados</div>
-              <div className="px-3 py-1 bg-white/10 rounded-full text-sm">Relatórios</div>
-              <div className="px-3 py-1 bg-white/10 rounded-full text-sm">Dashboards</div>
-              <div className="px-3 py-1 bg-white/10 rounded-full text-sm">Gestão de Mídia</div>
+              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Análise de Dados</div>
+              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Relatórios</div>
+              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Calssificações</div>
+              <div className="px-3 py-1 bg-green-100 rounded-full text-sm text-black">Gestão de Notícias</div>
             </div>
           </div>
         </div>
