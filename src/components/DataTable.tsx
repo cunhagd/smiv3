@@ -1,10 +1,8 @@
+
 import React, { useState } from 'react';
 import { 
   ChevronDown, 
   ChevronUp, 
-  Search, 
-  Filter, 
-  Download,
   ArrowUpDown,
   MoreHorizontal,
   Check
@@ -33,9 +31,7 @@ interface DataTableProps {
 
 const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCursor, nextCursor, limit, total }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-  const [searchTerm, setSearchTerm] = useState('');
   const [selectedRows, setSelectedRows] = useState<Set<string>>(new Set());
-  const [showFilters, setShowFilters] = useState(false);
 
   const displayedData = data;
 
@@ -68,71 +64,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCurs
   };
 
   return (
-    <div className="w-full">
-      <div className="mb-4 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Buscar..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="form-input pl-10 pr-4"
-            disabled
-          />
-        </div>
-        
-        <div className="flex items-center gap-2">
-          <button 
-            onClick={() => setShowFilters(!showFilters)}
-            className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover"
-          >
-            <Filter className="h-4 w-4" />
-            <span>Filtros</span>
-            {showFilters ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-          </button>
-          
-          <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
-            <Download className="h-4 w-4" />
-            <span>Exportar</span>
-          </button>
-        </div>
-      </div>
-      
-      {showFilters && (
-        <div className="mb-4 p-4 bg-dark-card border border-white/10 rounded-xl animate-fade-in">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Veículo</label>
-              <select className="form-input" disabled>
-                <option>Todos</option>
-                <option>Estado de Minas</option>
-                <option>O Tempo</option>
-                <option>Globo Minas</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Período</label>
-              <select className="form-input" disabled>
-                <option>Últimos 7 dias</option>
-                <option>Últimos 30 dias</option>
-                <option>Este mês</option>
-                <option>Personalizado</option>
-              </select>
-            </div>
-            <div>
-              <label className="block text-sm text-gray-400 mb-1">Sentimento</label>
-              <select className="form-input" disabled>
-                <option>Todos</option>
-                <option>Positivo</option>
-                <option>Neutro</option>
-                <option>Negativo</option>
-              </select>
-            </div>
-          </div>
-        </div>
-      )}
-      
+    <div className="w-full">      
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
