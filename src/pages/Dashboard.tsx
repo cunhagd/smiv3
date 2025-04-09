@@ -6,10 +6,7 @@ import {
   Newspaper, 
   TrendingUp, 
   TrendingDown, 
-  BarChart as BarChartIcon,
-  Calendar,
-  Filter,
-  Download
+  BarChart as BarChartIcon
 } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import StatCard from '@/components/StatCard';
@@ -206,11 +203,6 @@ const Dashboard = () => {
           
           <div className="flex items-center gap-3 mt-4 md:mt-0">
             <DateRangePicker onChange={handleDateRangeChange} />
-            
-            <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
-              <Download className="h-4 w-4" />
-              <span className="text-sm">Exportar</span>
-            </button>
           </div>
         </div>
         

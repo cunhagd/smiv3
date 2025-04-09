@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleX } from 'lucide-react';
+import { Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleX } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -610,10 +610,6 @@ const Spreadsheet = () => {
               {filtroRelevancia === 'Irrelevante' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
             </Button>
             <DateRangePicker onChange={handleDateRangeChange} />
-            <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
-              <Download className="h-4 w-4" />
-              <span className="text-sm">Exportar</span>
-            </button>
           </div>
         </div>
         <div className="dashboard-card">
