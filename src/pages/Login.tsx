@@ -65,7 +65,7 @@ const Login = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="seu.email@mg.gov.br"
+                placeholder="seu.email@governo.mg.gov.br"
                 className="form-input"
                 required
               />
