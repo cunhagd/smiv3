@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleX } from 'lucide-react';
+import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -27,7 +27,7 @@ const AVALIACOES = [
 ];
 
 const RELEVANCIA = [
-  { valor: 'Relevante', cor: '#F2FCE2', icone: CircleArrowLeft },
+  { valor: 'Relevante', cor: '#F2FCE2', icone: CircleCheckBig },
   { valor: 'Irrelevante', cor: '#FFDEE2', icone: CircleX },
 ];
 
