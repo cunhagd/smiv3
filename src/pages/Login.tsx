@@ -19,6 +19,8 @@ const Login = () => {
     // Simulating authentication
     setTimeout(() => {
       if (email && password) {
+        // Set authentication status
+        localStorage.setItem('isAuthenticated', 'true');
         navigate('/dashboard');
         toast({
           title: "Login realizado com sucesso",
