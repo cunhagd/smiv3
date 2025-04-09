@@ -30,17 +30,34 @@ interface DataTableProps {
 
 const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCursor, nextCursor, limit, total }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [previousCursors, setPreviousCursors] = useState<string[]>([]);
 
   const displayedData = data;
 
   const handleNextPage = () => {
     if (nextCursor) {
+      // Salva o cursor atual para poder voltar depois
+      if (cursor) {
+        setPreviousCursors(prev => [...prev, cursor]);
+      }
       setCursor(nextCursor);
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (previousCursors.length > 0) {
+      // Pega o último cursor do histórico
+      const lastCursor = previousCursors[previousCursors.length - 1];
+      // Remove o último cursor do histórico
+      setPreviousCursors(prev => prev.slice(0, -1));
+      // Define o cursor para o último cursor do histórico
+      setCursor(lastCursor);
     }
   };
 
   const handleReset = () => {
     setCursor(null);
+    setPreviousCursors([]);
   };
 
   // Calcula informações de paginação
@@ -119,6 +136,13 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCurs
             onClick={handleReset}
           >
             Voltar ao início
+          </button>
+          <button 
+            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
+            disabled={previousCursors.length === 0}
+            onClick={handlePreviousPage}
+          >
+            Voltar
           </button>
           <button 
             className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
