@@ -82,6 +82,23 @@ const DateRangePicker = ({ onChange }: DateRangePickerProps) => {
     setDateRange({ from: undefined, to: undefined });
   };
 
+  // Função para limpar completamente o filtro
+  const clearFilter = () => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+    
+    const defaultRange = {
+      from: thirtyDaysAgo,
+      to: today,
+    };
+    
+    setDateRange(defaultRange);
+    setSelectedPreset('last30');
+    onChange(defaultRange);
+    setIsOpen(false);
+  };
+
   const formatDateRange = () => {
     if (!dateRange.from || !dateRange.to) {
       return 'Selecione um período';
@@ -134,7 +151,7 @@ const DateRangePicker = ({ onChange }: DateRangePickerProps) => {
                   onClick={resetSelection} 
                   className="text-xs py-1 h-7"
                 >
-                  Limpar Filtro
+                  Limpar Seleção
                 </Button>
               </div>
             )}
@@ -146,6 +163,14 @@ const DateRangePicker = ({ onChange }: DateRangePickerProps) => {
               numberOfMonths={2}
               locale={ptBR}
             />
+            <div className="mt-4 flex justify-end">
+              <Button 
+                variant="clearFilter"
+                onClick={clearFilter}
+              >
+                Limpar filtro
+              </Button>
+            </div>
           </div>
         </div>
       </PopoverContent>

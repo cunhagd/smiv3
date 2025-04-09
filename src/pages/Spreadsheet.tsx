@@ -2,9 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { Filter, Download, ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleX } from 'lucide-react';
+import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleX } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
-import { Skeleton } from '@/components/ui/skeleton';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 
@@ -27,28 +26,36 @@ const AVALIACOES = [
   { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
 ];
 
-// Adicionar opções de relevância com ícones
 const RELEVANCIA = [
   { valor: 'Relevante', cor: '#F2FCE2', icone: CircleArrowLeft },
   { valor: 'Irrelevante', cor: '#FFDEE2', icone: CircleX },
 ];
 
-// Mensagem padrão para os dropdowns
 const MENSAGEM_PADRAO = "Selecionar";
 
-// Componente para a célula de Relevância
 function RelevanciaCell({ row, setNoticias }) {
-  // Garantir que temos os dados necessários
   const data = row || {};
   const id = data.id;
-  
-  const [relevSelecionada, setRelevSelecionada] = useState(data.relevancia || '');
+
+  const mapRelevanciaToString = (relevancia) => {
+    if (relevancia === true) return 'Relevante';
+    if (relevancia === false) return 'Irrelevante';
+    return '';
+  };
+
+  const mapStringToRelevancia = (valor) => {
+    if (valor === 'Relevante') return true;
+    if (valor === 'Irrelevante') return false;
+    return null;
+  };
+
+  const [relevSelecionada, setRelevSelecionada] = useState(mapRelevanciaToString(data.relevancia));
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
   const handleSave = async (novaRelevancia) => {
-    const valorEnviado = novaRelevancia === "" ? null : novaRelevancia;
-  
+    const valorEnviado = mapStringToRelevancia(novaRelevancia);
+
     if (valorEnviado !== data.relevancia) {
       setIsSaving(true);
       try {
@@ -65,16 +72,15 @@ function RelevanciaCell({ row, setNoticias }) {
         if (!response.ok) {
           throw new Error('Falha ao salvar relevância');
         }
-        
-        // Atualizamos a lista de notícias para refletir a mudança imediatamente
-        setNoticias(prevNoticias => 
-          prevNoticias.map(noticia => 
-            noticia.id === id 
-              ? { ...noticia, relevancia: valorEnviado } 
+
+        setNoticias(prevNoticias =>
+          prevNoticias.map(noticia =>
+            noticia.id === id
+              ? { ...noticia, relevancia: valorEnviado }
               : noticia
           )
         );
-        
+
         console.log('Relevância salva com sucesso:', valorEnviado);
       } catch (error) {
         console.error('Erro ao salvar relevância:', error.message);
@@ -91,7 +97,7 @@ function RelevanciaCell({ row, setNoticias }) {
 
   const relevanciaObj = RELEVANCIA.find(r => r.valor === relevSelecionada);
   const IconeRelevancia = relevanciaObj?.icone;
-  
+
   return (
     <div className="relative">
       <select
@@ -137,9 +143,7 @@ function RelevanciaCell({ row, setNoticias }) {
   );
 }
 
-// Componente para a célula de Tema
 function TemaCell({ row, updateTema }) {
-  // Garantir que temos os dados necessários
   const data = row || {};
   const id = data.id;
   
@@ -201,9 +205,7 @@ function TemaCell({ row, updateTema }) {
   );
 }
 
-// Componente para a célula de Avaliação
 function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
-  // Garantir que temos os dados necessários
   const data = row || {};
   const id = data.id;
   
@@ -233,14 +235,12 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
   
         console.log('Avaliação salva com sucesso:', valorEnviado);
   
-        // Atualizar os pontos somente se a avaliação não for nula
         let novosPontos = 0;
         if (valorEnviado) {
           const pontosBrutos = Math.abs(data.pontos || 0);
           novosPontos = valorEnviado === 'Negativa' ? -pontosBrutos : pontosBrutos;
         }
   
-        // Atualizamos a avaliação e os pontos da notícia no estado global
         updateAvaliacao(id, valorEnviado, novosPontos);
       } catch (error) {
         console.error('Erro ao salvar a avaliação:', error.message);
@@ -266,11 +266,9 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
           const novaAvaliacao = e.target.value;
           setAvaliacaoSelecionada(novaAvaliacao);
           
-          // Atualizamos localmente os pontos da notícia para mostrar em tempo real
           const pontosBrutos = Math.abs(data.pontos || 0);
           const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
           
-          // Atualizamos a lista de notícias para refletir a mudança imediatamente
           setNoticias(prevNoticias => 
             prevNoticias.map(noticia => 
               noticia.id === id 
@@ -283,7 +281,6 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
             )
           );
           
-          // Enviamos para o servidor em segundo plano
           handleSave(novaAvaliacao);
         }}
         disabled={isSaving}
@@ -324,7 +321,6 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
   );
 }
 
-// Componente para a célula de Título
 function TituloCell({ row }) {
   const data = row || {};
   
@@ -341,22 +337,16 @@ function TituloCell({ row }) {
   );
 }
 
-// Componente para a célula de Pontos
 function PontosCell({ row }) {
   const data = row || {};
   
-  // Verificamos se uma avaliação foi selecionada
   const avaliacao = data.avaliacao || '';
   
-  // Se não houver avaliação selecionada, não exibimos pontos
   if (!avaliacao) {
     return <span className="text-gray-400">-</span>;
   }
   
-  // Verificamos a avaliação da notícia para determinar se os pontos são positivos ou negativos
   const pontos = data.pontos || 0;
-  
-  // Se a avaliação for negativa, mostramos o valor como negativo
   const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos) : pontos;
   
   return (
@@ -372,7 +362,6 @@ function PontosCell({ row }) {
   );
 }
 
-// Definimos a função getColumns para retornar as colunas configuradas
 const getColumns = (noticias, setNoticias) => [
   {
     id: 'relevancia',
@@ -447,35 +436,26 @@ const Spreadsheet = () => {
     to: today, 
   });
   const [noticias, setNoticias] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [cursor, setCursor] = useState(null);
+  const [nextCursor, setNextCursor] = useState(null);
+  const [limit] = useState(80);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const { toast } = useToast();
-  const [filtroRelevancia, setFiltroRelevancia] = useState(null); // null = todas, 'Relevante', 'Irrelevante'
+  const [filtroRelevancia, setFiltroRelevancia] = useState('Relevante');
   
-  // Toggle para alternar entre mostrar irrelevantes ou relevantes
   const toggleFiltroRelevancia = () => {
     if (filtroRelevancia === 'Irrelevante') {
       setFiltroRelevancia('Relevante');
+      setCursor(null); // Resetar o cursor ao mudar o filtro
     } else {
       setFiltroRelevancia('Irrelevante');
+      setCursor(null); // Resetar o cursor ao mudar o filtro
     }
   };
 
-  // Criamos as colunas dentro do componente para ter acesso ao setNoticias
   const columns = getColumns(noticias, setNoticias);
-
-  // Filtramos as notícias de acordo com o filtro de relevância
-  const noticiasFiltradas = React.useMemo(() => {
-    if (!filtroRelevancia) {
-      return noticias;
-    } else if (filtroRelevancia === 'Irrelevante') {
-      return noticias.filter(noticia => noticia.relevancia === 'Irrelevante');
-    } else if (filtroRelevancia === 'Relevante') {
-      // Mostrar 'Relevante' ou sem classificação (não mostrar 'Irrelevante')
-      return noticias.filter(noticia => noticia.relevancia !== 'Irrelevante');
-    }
-    return noticias;
-  }, [noticias, filtroRelevancia]);
 
   const updateTema = (id, novoTema) => {
     setNoticias(prevNoticias =>
@@ -489,7 +469,6 @@ const Spreadsheet = () => {
     setNoticias(prevNoticias =>
       prevNoticias.map(noticia => {
         if (noticia.id === id) {
-          // Calculamos o valor correto dos pontos baseado na nova avaliação
           const pontosBrutos = Math.abs(noticia.pontos || 0);
           const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
           
@@ -504,7 +483,6 @@ const Spreadsheet = () => {
     );
   };
 
-  // Função para buscar os pontos das notícias
   const buscarPontosDasNoticias = async (noticias) => {
     try {
       const response = await fetch('https://smi-api-production-fae2.up.railway.app/noticias/pontos');
@@ -513,12 +491,10 @@ const Spreadsheet = () => {
       }
       const pontos = await response.json();
       
-      // Adicionamos os pontos às notícias correspondentes
       const noticiasComPontos = noticias.map(noticia => {
         const noticiaPontos = pontos.find(p => p.id === noticia.id);
         let pontosNoticia = noticiaPontos ? noticiaPontos.pontos : 0;
         
-        // Aplica a regra de pontos negativos se a avaliação for negativa
         if (noticia.avaliacao === 'Negativa') {
           pontosNoticia = -Math.abs(pontosNoticia);
         }
@@ -537,7 +513,7 @@ const Spreadsheet = () => {
         description: "Não foi possível carregar os pontos das notícias.",
         variant: "destructive",
       });
-      return noticias; // Retorna as notícias sem pontos em caso de erro
+      return noticias;
     }
   };
 
@@ -547,9 +523,17 @@ const Spreadsheet = () => {
     setError(null);
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
-    console.log('Chamando API com from:', from, 'e to:', to);
-    
-    fetch(`https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}`)
+    console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
+
+    let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
+    if (filtroRelevancia === 'Irrelevante') {
+      url += '&mostrarIrrelevantes=true';
+    }
+    if (cursor) {
+      url += `&after=${cursor}`;
+    }
+
+    fetch(url)
       .then(response => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
@@ -557,21 +541,23 @@ const Spreadsheet = () => {
         }
         return response.json();
       })
-      .then(async data => {
-        console.log('Dados das notícias recebidos da API:', data);
+      .then(async response => {
+        console.log('Dados recebidos da API:', response);
+        const { data, nextCursor, total } = response;
         if (Array.isArray(data)) {
-          // Garantir que todos os registros tenham um ID único para a seleção
           const dataWithIds = data.map((item, index) => ({
             ...item,
             id: item.id || `noticia-${index}`
           }));
-          
-          // Buscar os pontos para cada notícia
           const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
           setNoticias(noticiasComPontos);
+          setNextCursor(nextCursor);
+          setTotal(total);
         } else {
-          console.warn('A resposta da API não é um array:', data);
+          console.warn('A resposta da API não contém um array de dados:', response);
           setNoticias([]);
+          setNextCursor(null);
+          setTotal(0);
         }
       })
       .catch(error => {
@@ -583,17 +569,20 @@ const Spreadsheet = () => {
           variant: "destructive",
         });
         setNoticias([]);
+        setNextCursor(null);
+        setTotal(0);
       })
       .finally(() => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange, toast]);
+  }, [dateRange, filtroRelevancia, cursor, limit, toast]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
     if (range.from && range.to) {
       setDateRange({ from: range.from, to: range.to });
+      setCursor(null); // Resetar o cursor ao mudar o intervalo de datas
     }
   };
 
@@ -622,10 +611,6 @@ const Spreadsheet = () => {
               {filtroRelevancia === 'Irrelevante' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
             </Button>
             <DateRangePicker onChange={handleDateRangeChange} />
-            <button className="px-3 py-2 rounded-lg border border-white/10 bg-dark-card flex items-center gap-2 hover:bg-dark-card-hover">
-              <Download className="h-4 w-4" />
-              <span className="text-sm">Exportar</span>
-            </button>
           </div>
         </div>
         <div className="dashboard-card">
@@ -643,10 +628,15 @@ const Spreadsheet = () => {
             </div>
           ) : (
             <DataTable 
-              data={noticiasFiltradas} 
+              data={noticias} 
               columns={columns} 
               updateTema={updateTema} 
               updateAvaliacao={updateAvaliacao} 
+              cursor={cursor}
+              setCursor={setCursor}
+              nextCursor={nextCursor}
+              limit={limit}
+              total={total}
             />
           )}
         </div>
