@@ -31,6 +31,20 @@ const RELEVANCIA = [
   { valor: 'Irrelevante', cor: '#FFDEE2', icone: CircleX },
 ];
 
+const ESTRATEGICA = [
+  'Selecionar',
+  'Sim',
+  'Não',
+];
+
+const CATEGORIA = [
+  'Selecionar',
+  'Educação',
+  'Saúde',
+  'Infraestrutura',
+  'Social',
+];
+
 const MENSAGEM_PADRAO = "Selecionar";
 
 function RelevanciaCell({ row, setNoticias }) {
@@ -362,15 +376,133 @@ function PontosCell({ row }) {
   );
 }
 
+function EstrategicaCell({ row, setNoticias }) {
+  const data = row || {};
+  const id = data.id;
+  const [estrategicaSelecionada, setEstrategicaSelecionada] = useState(data.estrategica || 'Selecionar');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async (novaEstrategica) => {
+    const valorEnviado = novaEstrategica === 'Selecionar' ? null : novaEstrategica;
+    if (valorEnviado !== data.estrategica) {
+      setIsSaving(true);
+      try {
+        const response = await fetch(
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ estrategica: valorEnviado }),
+          }
+        );
+        if (!response.ok) throw new Error('Falha ao salvar estratégica');
+        setNoticias(prevNoticias =>
+          prevNoticias.map(noticia =>
+            noticia.id === id ? { ...noticia, estrategica: valorEnviado } : noticia
+          )
+        );
+      } catch (error) {
+        console.error('Erro ao salvar estratégica:', error.message);
+        toast({ title: "Erro ao salvar", description: "Não foi possível salvar.", variant: "destructive" });
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  return (
+    <div className="relative">
+      <select
+        value={estrategicaSelecionada}
+        onChange={(e) => {
+          const novaEstrategica = e.target.value;
+          setEstrategicaSelecionada(novaEstrategica);
+          handleSave(novaEstrategica);
+        }}
+        disabled={isSaving}
+        className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
+      >
+        {ESTRATEGICA.map((estrategica) => (
+          <option key={estrategica} value={estrategica} className="text-left">
+            {estrategica}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+        <ChevronDown className="h-4 w-4" />
+      </div>
+    </div>
+  );
+}
+
+function CategoriaCell({ row, setNoticias }) {
+  const data = row || {};
+  const id = data.id;
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState(data.categoria || 'Selecionar');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async (novaCategoria) => {
+    const valorEnviado = novaCategoria === 'Selecionar' ? null : novaCategoria;
+    if (valorEnviado !== data.categoria) {
+      setIsSaving(true);
+      try {
+        const response = await fetch(
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ categoria: valorEnviado }),
+          }
+        );
+        if (!response.ok) throw new Error('Falha ao salvar categoria');
+        setNoticias(prevNoticias =>
+          prevNoticias.map(noticia =>
+            noticia.id === id ? { ...noticia, categoria: valorEnviado } : noticia
+          )
+        );
+      } catch (error) {
+        console.error('Erro ao salvar categoria:', error.message);
+        toast({ title: "Erro ao salvar", description: "Não foi possível salvar.", variant: "destructive" });
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  return (
+    <div className="relative">
+      <select
+        value={categoriaSelecionada}
+        onChange={(e) => {
+          const novaCategoria = e.target.value;
+          setCategoriaSelecionada(novaCategoria);
+          handleSave(novaCategoria);
+        }}
+        disabled={isSaving}
+        className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
+      >
+        {CATEGORIA.map((categoria) => (
+          <option key={categoria} value={categoria} className="text-left">
+            {categoria}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+        <ChevronDown className="h-4 w-4" />
+      </div>
+    </div>
+  );
+}
+
 const getColumns = (noticias, setNoticias) => [
   {
     id: 'relevancia',
     header: 'Relevância',
     accessorKey: 'relevancia',
     sortable: true,
-    cell: (info) => {
-      return <RelevanciaCell row={info.row} setNoticias={setNoticias} />;
-    },
+    cell: (info) => <RelevanciaCell row={info.row} setNoticias={setNoticias} />,
   },
   {
     id: 'data',
@@ -389,40 +521,42 @@ const getColumns = (noticias, setNoticias) => [
     header: 'Título',
     accessorKey: 'titulo',
     sortable: true,
-    cell: (info) => {
-      return <TituloCell row={info.row} />;
-    },
+    cell: (info) => <TituloCell row={info.row} />,
   },
   {
     id: 'tema',
     header: 'Tema',
     accessorKey: 'tema',
     sortable: true,
-    cell: (info) => {
-      return <TemaCell row={info.row} updateTema={info.updateTema} />;
-    },
+    cell: (info) => <TemaCell row={info.row} updateTema={info.updateTema} />,
   },
   {
     id: 'avaliacao',
     header: 'Avaliação',
     accessorKey: 'avaliacao',
     sortable: true,
-    cell: (info) => {
-      return <AvaliacaoCell 
-        row={info.row} 
-        updateAvaliacao={info.updateAvaliacao} 
-        setNoticias={setNoticias} 
-      />;
-    },
+    cell: (info) => <AvaliacaoCell row={info.row} updateAvaliacao={info.updateAvaliacao} setNoticias={setNoticias} />,
   },
   {
     id: 'pontos',
     header: 'Pontos',
     accessorKey: 'pontos',
     sortable: true,
-    cell: (info) => {
-      return <PontosCell row={info.row} />;
-    },
+    cell: (info) => <PontosCell row={info.row} />,
+  },
+  {
+    id: 'estrategica',
+    header: 'Estratégica',
+    accessorKey: 'estrategica',
+    sortable: true,
+    cell: (info) => <EstrategicaCell row={info.row} setNoticias={setNoticias} />,
+  },
+  {
+    id: 'categoria',
+    header: 'Categoria',
+    accessorKey: 'categoria',
+    sortable: true,
+    cell: (info) => <CategoriaCell row={info.row} setNoticias={setNoticias} />,
   },
 ];
 
