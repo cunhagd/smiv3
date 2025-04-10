@@ -32,8 +32,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCurs
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [previousCursors, setPreviousCursors] = useState<string[]>([]);
 
-  // Ensure data is always an array, even if undefined is passed
-  const displayedData = Array.isArray(data) ? data : [];
+  const displayedData = data;
 
   const handleNextPage = () => {
     if (nextCursor) {

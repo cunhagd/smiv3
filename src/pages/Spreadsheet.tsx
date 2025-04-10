@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX, Star } from 'lucide-react';
+import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -43,15 +43,6 @@ const CATEGORIA = [
   'Saúde',
   'Infraestrutura',
   'Social',
-];
-
-const SUB_CATEGORIA = [
-  'Selecionar',
-  'Campanha',
-  'Investimento',
-  'Obras',
-  'Projeto',
-  'Outro',
 ];
 
 const MENSAGEM_PADRAO = "Selecionar";
@@ -344,65 +335,6 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
   );
 }
 
-function SubCategoriaCell({ row, setNoticias }) {
-  const data = row || {};
-  const id = data.id;
-  const [subCategoriaSelecionada, setSubCategoriaSelecionada] = useState(data.subcategoria || 'Selecionar');
-  const [isSaving, setIsSaving] = useState(false);
-  const { toast } = useToast();
-
-  const handleSave = async (novaSubCategoria) => {
-    const valorEnviado = novaSubCategoria === 'Selecionar' ? null : novaSubCategoria;
-    if (valorEnviado !== data.subcategoria) {
-      setIsSaving(true);
-      try {
-        const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
-          {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subcategoria: valorEnviado }),
-          }
-        );
-        if (!response.ok) {
-          throw new Error('Falha ao salvar subcategoria');
-        }
-        setNoticias((prevNoticias) =>
-          prevNoticias.map((noticia) =>
-            noticia.id === id ? { ...noticia, subcategoria: valorEnviado } : noticia
-          )
-        );
-        console.log('Subcategoria salva com sucesso:', valorEnviado);
-      } catch (error) {
-        console.error('Erro ao salvar subcategoria:', error.message);
-        toast({
-          title: "Erro ao salvar",
-          description: "Não foi possível salvar a subcategoria. Tente novamente.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsSaving(false);
-      }
-    }
-  };
-
-  return (
-    <div className="relative">
-      <input
-        type="text"
-        value={subCategoriaSelecionada}
-        onChange={(e) => {
-          const novaSubCategoria = e.target.value;
-          setSubCategoriaSelecionada(novaSubCategoria);
-          handleSave(novaSubCategoria);
-        }}
-        disabled={isSaving}
-        className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
-      />
-    </div>
-  );
-}
-
 function TituloCell({ row }) {
   const data = row || {};
   
@@ -598,109 +530,62 @@ function CategoriaCell({ row, setNoticias }) {
   );
 }
 
-const getColumns = (noticias, setNoticias, mostrarEstrategicas = false) => {
-  if (mostrarEstrategicas) {
-    return [
-      {
-        id: 'data',
-        header: 'Data',
-        accessorKey: 'data',
-        sortable: true,
-      },
-      {
-        id: 'portal',
-        header: 'Portal',
-        accessorKey: 'portal',
-        sortable: true,
-      },
-      {
-        id: 'titulo',
-        header: 'Título',
-        accessorKey: 'titulo',
-        sortable: true,
-        cell: (info) => <TituloCell row={info.row} />,
-      },
-      {
-        id: 'estrategica',
-        header: 'Estratégica',
-        accessorKey: 'estrategica',
-        sortable: true,
-        cell: (info) => <EstrategicaCell row={info.row} setNoticias={setNoticias} />,
-      },
-      {
-        id: 'categoria',
-        header: 'Categoria',
-        accessorKey: 'categoria',
-        sortable: true,
-        cell: (info) => <CategoriaCell row={info.row} setNoticias={setNoticias} />,
-      },
-      {
-        id: 'subcategoria',
-        header: 'Sub Categoria',
-        accessorKey: 'subcategoria',
-        sortable: true,
-        cell: (info) => <SubCategoriaCell row={info.row} setNoticias={setNoticias} />,
-      },
-    ];
-  }
-  
-  return [
-    {
-      id: 'relevancia',
-      header: 'Relevância',
-      accessorKey: 'relevancia',
-      sortable: true,
-      cell: (info) => <RelevanciaCell row={info.row} setNoticias={setNoticias} />,
-    },
-    {
-      id: 'data',
-      header: 'Data',
-      accessorKey: 'data',
-      sortable: true,
-    },
-    {
-      id: 'portal',
-      header: 'Portal',
-      accessorKey: 'portal',
-      sortable: true,
-    },
-    {
-      id: 'titulo',
-      header: 'Título',
-      accessorKey: 'titulo',
-      sortable: true,
-      cell: (info) => <TituloCell row={info.row} />,
-    },
-    {
-      id: 'tema',
-      header: 'Tema',
-      accessorKey: 'tema',
-      sortable: true,
-      cell: (info) => <TemaCell row={info.row} updateTema={info.updateTema} />,
-    },
-    {
-      id: 'avaliacao',
-      header: 'Avaliação',
-      accessorKey: 'avaliacao',
-      sortable: true,
-      cell: (info) => <AvaliacaoCell row={info.row} updateAvaliacao={info.updateAvaliacao} setNoticias={setNoticias} />,
-    },
-    {
-      id: 'pontos',
-      header: 'Pontos',
-      accessorKey: 'pontos',
-      sortable: true,
-      cell: (info) => <PontosCell row={info.row} />,
-    },
-    {
-      id: 'estrategica',
-      header: 'Estratégica',
-      accessorKey: 'estrategica',
-      sortable: true,
-      cell: (info) => <EstrategicaCell row={info.row} setNoticias={setNoticias} />,
-    },
-  ];
-};
+const getColumns = (noticias, setNoticias) => [
+  {
+    id: 'relevancia',
+    header: 'Relevância',
+    accessorKey: 'relevancia',
+    sortable: true,
+    cell: (info) => <RelevanciaCell row={info.row} setNoticias={setNoticias} />,
+  },
+  {
+    id: 'data',
+    header: 'Data',
+    accessorKey: 'data',
+    sortable: true,
+  },
+  {
+    id: 'portal',
+    header: 'Portal',
+    accessorKey: 'portal',
+    sortable: true,
+  },
+  {
+    id: 'titulo',
+    header: 'Título',
+    accessorKey: 'titulo',
+    sortable: true,
+    cell: (info) => <TituloCell row={info.row} />,
+  },
+  {
+    id: 'tema',
+    header: 'Tema',
+    accessorKey: 'tema',
+    sortable: true,
+    cell: (info) => <TemaCell row={info.row} updateTema={info.updateTema} />,
+  },
+  {
+    id: 'avaliacao',
+    header: 'Avaliação',
+    accessorKey: 'avaliacao',
+    sortable: true,
+    cell: (info) => <AvaliacaoCell row={info.row} updateAvaliacao={info.updateAvaliacao} setNoticias={setNoticias} />,
+  },
+  {
+    id: 'pontos',
+    header: 'Pontos',
+    accessorKey: 'pontos',
+    sortable: true,
+    cell: (info) => <PontosCell row={info.row} />,
+  },
+  {
+    id: 'estrategica',
+    header: 'Estratégica',
+    accessorKey: 'estrategica',
+    sortable: true,
+    cell: (info) => <EstrategicaCell row={info.row} setNoticias={setNoticias} />,
+  },
+];
 
 const Spreadsheet = () => {
   const today = new Date(); 
@@ -720,33 +605,18 @@ const Spreadsheet = () => {
   const [error, setError] = useState(null);
   const { toast } = useToast();
   const [filtroRelevancia, setFiltroRelevancia] = useState('Relevante');
-  const [mostrarEstrategicas, setMostrarEstrategicas] = useState(false);
   
   const toggleFiltroRelevancia = () => {
     if (filtroRelevancia === 'Irrelevante') {
       setFiltroRelevancia('Relevante');
       setCursor(null); // Resetar o cursor ao mudar o filtro
-      setMostrarEstrategicas(false); // Fechar estratégicas ao mostrar outras views
     } else {
       setFiltroRelevancia('Irrelevante');
       setCursor(null); // Resetar o cursor ao mudar o filtro
-      setMostrarEstrategicas(false); // Fechar estratégicas ao mostrar outras views
     }
   };
 
-  const toggleMostrarEstrategicas = () => {
-    if (mostrarEstrategicas) {
-      setMostrarEstrategicas(false);
-      setCursor(null); // Resetar o cursor ao mudar o filtro
-      setFiltroRelevancia('Relevante'); // Voltar para view relevante padrão
-    } else {
-      setMostrarEstrategicas(true);
-      setCursor(null); // Resetar o cursor ao mudar o filtro
-      setFiltroRelevancia('Relevante'); // Manter relevante para estratégicas
-    }
-  };
-
-  const columns = getColumns(noticias, setNoticias, mostrarEstrategicas);
+  const columns = getColumns(noticias, setNoticias);
 
   const updateTema = (id, novoTema) => {
     setNoticias(prevNoticias =>
@@ -775,24 +645,12 @@ const Spreadsheet = () => {
   };
 
   const buscarPontosDasNoticias = async (noticias) => {
-    // Protect against undefined noticias parameter
-    if (!Array.isArray(noticias)) {
-      console.error('Erro: noticias não é um array:', noticias);
-      return [];
-    }
-    
     try {
       const response = await fetch('https://smi-api-production-fae2.up.railway.app/noticias/pontos');
       if (!response.ok) {
         throw new Error('Falha ao buscar pontos das notícias');
       }
       const pontos = await response.json();
-      
-      // Verify that pontos is an array before using find on it
-      if (!Array.isArray(pontos)) {
-        console.error('Erro: pontos não é um array:', pontos);
-        return noticias;
-      }
       
       const noticiasComPontos = noticias.map(noticia => {
         const noticiaPontos = pontos.find(p => p.id === noticia.id);
@@ -829,127 +687,120 @@ const Spreadsheet = () => {
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
 
     let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
-    
-    if (mostrarEstrategicas) {
-      url += '&mostrarEstrategicas=true';
-    } else if (filtroRelevancia === 'Irrelevante') {
+    if (filtroRelevancia === 'Irrelevante') {
       url += '&mostrarIrrelevantes=true';
     }
-    
     if (cursor) {
       url += `&after=${cursor}`;
     }
 
     fetch(url)
       .then(response => {
-        console.log('Resposta recebida:', response.status);
+        console.log('Resposta bruta da API:', response.status, response.statusText);
         if (!response.ok) {
-          throw new Error(`Erro na requisição: ${response.status}`);
+          throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
         }
         return response.json();
       })
-      .then(async data => {
-        console.log('Dados recebidos:', data);
-        
-        // Validation check
-        if (!data || !Array.isArray(data.noticias)) {
-          console.error('Formato de resposta inválido:', data);
-          setError('Formato de resposta inválido');
-          setIsLoading(false);
-          return;
+      .then(async response => {
+        console.log('Dados recebidos da API:', response);
+        const { data, nextCursor, total } = response;
+        if (Array.isArray(data)) {
+          const dataWithIds = data.map((item, index) => ({
+            ...item,
+            id: item.id || `noticia-${index}`
+          }));
+          const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
+          setNoticias(noticiasComPontos);
+          setNextCursor(nextCursor);
+          setTotal(total);
+        } else {
+          console.warn('A resposta da API não contém um array de dados:', response);
+          setNoticias([]);
+          setNextCursor(null);
+          setTotal(0);
         }
-        
-        const noticiasComPontos = await buscarPontosDasNoticias(data.noticias);
-        setNoticias(noticiasComPontos || []);
-        setTotal(data.total || 0);
-        setNextCursor(data.nextCursor || null);
-        setIsLoading(false);
       })
-      .catch(err => {
-        console.error('Erro ao buscar notícias:', err.message);
-        setError(err.message);
-        setIsLoading(false);
+      .catch(error => {
+        console.error('Erro ao buscar notícias:', error.message);
+        setError(error.message);
         toast({
-          title: "Erro ao carregar dados",
-          description: `Não foi possível carregar as notícias: ${err.message}`,
+          title: "Erro ao buscar notícias",
+          description: error.message,
           variant: "destructive",
         });
+        setNoticias([]);
+        setNextCursor(null);
+        setTotal(0);
+      })
+      .finally(() => {
+        console.log('useEffect finalizado');
+        setIsLoading(false);
       });
-  }, [dateRange, cursor, filtroRelevancia, mostrarEstrategicas, toast]);
+  }, [dateRange, filtroRelevancia, cursor, limit, toast]);
+
+  const handleDateRangeChange = (range) => {
+    console.log('DateRange alterado:', range);
+    if (range.from && range.to) {
+      setDateRange({ from: range.from, to: range.to });
+      setCursor(null); // Resetar o cursor ao mudar o intervalo de datas
+    }
+  };
+
+  console.log('Renderizando Spreadsheet, noticias:', noticias);
 
   return (
-    <div className="bg-dark-bg min-h-screen text-white flex flex-col">
+    <div className="min-h-screen bg-dark-bg text-white">
       <Navbar />
-      
-      <main className="flex-1 container mx-auto px-4 py-6">
-        <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-          <h1 className="text-2xl font-bold">Planilha de Notícias</h1>
-          
-          <div className="flex flex-col md:flex-row gap-3">
-            <DateRangePicker onChange={setDateRange} />
-            
-            <div className="flex gap-2">
-              <Button
-                variant={filtroRelevancia === 'Relevante' ? 'default' : 'outline'}
-                className={`min-w-[120px] ${filtroRelevancia === 'Relevante' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-dark-card border border-white/10 text-white hover:bg-dark-card-hover'}`}
-                onClick={() => {
-                  if (filtroRelevancia !== 'Relevante') {
-                    toggleFiltroRelevancia();
-                  }
-                }}
-                disabled={isLoading || mostrarEstrategicas}
-              >
-                Relevantes
-              </Button>
-              
-              <Button
-                variant={filtroRelevancia === 'Irrelevante' ? 'default' : 'outline'}
-                className={`min-w-[120px] ${filtroRelevancia === 'Irrelevante' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-dark-card border border-white/10 text-white hover:bg-dark-card-hover'}`}
-                onClick={() => {
-                  if (filtroRelevancia !== 'Irrelevante') {
-                    toggleFiltroRelevancia();
-                  }
-                }}
-                disabled={isLoading || mostrarEstrategicas}
-              >
-                Irrelevantes
-              </Button>
-              
-              <Button
-                variant={mostrarEstrategicas ? 'default' : 'outline'}
-                className={`min-w-[120px] ${mostrarEstrategicas ? 'bg-green-600 hover:bg-green-700' : 'bg-dark-card border border-white/10 text-white hover:bg-dark-card-hover'}`}
-                onClick={toggleMostrarEstrategicas}
-                disabled={isLoading}
-              >
-                {mostrarEstrategicas ? 'Voltar' : 'Estratégicas'}
-              </Button>
-            </div>
+      <main className="p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
+            <p className="text-gray-400">Gerenciamento e análise de notícias</p>
+          </div>
+          <div className="flex items-center gap-3 mt-4 md:mt-0">
+            <Button 
+              variant="default"
+              onClick={toggleFiltroRelevancia}
+              className={
+                filtroRelevancia === 'Irrelevante' 
+                  ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
+                  : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
+              }
+            >
+              {filtroRelevancia === 'Irrelevante' ? 'Voltar' : 'Abrir Irrelevantes'}
+              {filtroRelevancia === 'Irrelevante' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
+            </Button>
+            <DateRangePicker onChange={handleDateRangeChange} />
           </div>
         </div>
-
-        {error && (
-          <div className="bg-red-500/20 border border-red-500 p-4 rounded-md mb-6">
-            <p className="text-red-300">{error}</p>
-          </div>
-        )}
-        
-        {isLoading ? (
-          <div className="flex justify-center items-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
-          </div>
-        ) : (
-          <DataTable 
-            data={noticias}
-            columns={columns}
-            updateTema={updateTema}
-            updateAvaliacao={updateAvaliacao}
-            cursor={cursor}
-            setCursor={setCursor}
-            nextCursor={nextCursor}
-            limit={limit}
-            total={total}
-          />
-        )}
+        <div className="dashboard-card">
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Carregando dados...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-red-400">Erro ao carregar dados: {error}</p>
+            </div>
+          ) : noticias.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Nenhuma notícia encontrada</p>
+            </div>
+          ) : (
+            <DataTable 
+              data={noticias} 
+              columns={columns} 
+              updateTema={updateTema} 
+              updateAvaliacao={updateAvaliacao} 
+              cursor={cursor}
+              setCursor={setCursor}
+              nextCursor={nextCursor}
+              limit={limit}
+              total={total}
+            />
+          )}
+        </div>
       </main>
     </div>
   );

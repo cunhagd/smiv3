@@ -29,12 +29,6 @@ const Navbar = () => {
           >
             Planilha
           </Link>
-          <Link 
-            to="/semana-estrategica" 
-            className={`nav-link ${isActive("/semana-estrategica") && "active"}`}
-          >
-            Semana Estratégica
-          </Link>
         </nav>
       </div>
     </header>
