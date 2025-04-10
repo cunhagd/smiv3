@@ -37,6 +37,8 @@ const ESTRATEGICA = [
   'Não',
 ];
 
+const SUBCATEGORIA = ['Selecionar', 'Gestão', 'Planejamento', 'Execução']; // Ajuste conforme suas subcategorias
+
 const CATEGORIA = [
   'Selecionar',
   'Educação',
@@ -458,17 +460,14 @@ function EstrategicaCell({ row, setNoticias }) {
   );
 }
 
+
+
 function CategoriaCell({ row, setNoticias }) {
   const data = row || {};
   const id = data.id;
-  const dataNoticia = data.data; // Data da notícia no formato DD/MM/YYYY
-  const categoriaSemana = data.categoria_semana || null; // Categoria retornada pela semana_estrategica
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(data.categoria || 'Selecionar');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
-
-  // Define as opções do dropdown: "Selecionar" e a categoria da semana_estrategica (se disponível)
-  const opcoesCategoria = categoriaSemana ? ['Selecionar', categoriaSemana] : ['Selecionar'];
 
   const handleSave = async (novaCategoria) => {
     const valorEnviado = novaCategoria === 'Selecionar' ? null : novaCategoria;
@@ -476,16 +475,14 @@ function CategoriaCell({ row, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`, // Corrigido para atualizar a notícia
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ categoria: valorEnviado }),
           }
         );
-        if (!response.ok) {
-          throw new Error('Falha ao salvar categoria');
-        }
+        if (!response.ok) throw new Error('Falha ao salvar categoria');
         setNoticias((prevNoticias) =>
           prevNoticias.map((noticia) =>
             noticia.id === id ? { ...noticia, categoria: valorEnviado } : noticia
@@ -517,9 +514,74 @@ function CategoriaCell({ row, setNoticias }) {
         disabled={isSaving}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
-        {opcoesCategoria.map((categoria) => (
+        {CATEGORIA.map((categoria) => (
           <option key={categoria} value={categoria} className="text-left">
             {categoria}
+          </option>
+        ))}
+      </select>
+      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+        <ChevronDown className="h-4 w-4" />
+      </div>
+    </div>
+  );
+}
+
+function SubCategoriaCell({ row, setNoticias }) {
+  const data = row || {};
+  const id = data.id;
+  const [subCategoriaSelecionada, setSubCategoriaSelecionada] = useState(data.subcategoria || 'Selecionar');
+  const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast();
+
+  const handleSave = async (novaSubCategoria) => {
+    const valorEnviado = novaSubCategoria === 'Selecionar' ? null : novaSubCategoria;
+    if (valorEnviado !== data.subcategoria) {
+      setIsSaving(true);
+      try {
+        const response = await fetch(
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ subcategoria: valorEnviado }),
+          }
+        );
+        if (!response.ok) throw new Error('Falha ao salvar subcategoria');
+        setNoticias((prevNoticias) =>
+          prevNoticias.map((noticia) =>
+            noticia.id === id ? { ...noticia, subcategoria: valorEnviado } : noticia
+          )
+        );
+        console.log('Subcategoria salva com sucesso:', valorEnviado);
+      } catch (error) {
+        console.error('Erro ao salvar subcategoria:', error.message);
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar a subcategoria. Tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsSaving(false);
+      }
+    }
+  };
+
+  return (
+    <div className="relative">
+      <select
+        value={subCategoriaSelecionada}
+        onChange={(e) => {
+          const novaSubCategoria = e.target.value;
+          setSubCategoriaSelecionada(novaSubCategoria);
+          handleSave(novaSubCategoria);
+        }}
+        disabled={isSaving}
+        className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
+      >
+        {SUBCATEGORIA.map((subcategoria) => (
+          <option key={subcategoria} value={subcategoria} className="text-left">
+            {subcategoria}
           </option>
         ))}
       </select>
@@ -587,15 +649,21 @@ const getColumns = (noticias, setNoticias) => [
   },
 ];
 
+const getEstrategicasColumns = (noticias, setNoticias) => [
+  { id: 'data', header: 'Data', accessorKey: 'data', sortable: true },
+  { id: 'portal', header: 'Portal', accessorKey: 'portal', sortable: true },
+  { id: 'titulo', header: 'Título', accessorKey: 'titulo', sortable: true, cell: (info) => <TituloCell row={info.row} /> },
+  { id: 'estrategica', header: 'Estratégica', accessorKey: 'estrategica', sortable: true, cell: (info) => <EstrategicaCell row={info.row} setNoticias={setNoticias} /> },
+  { id: 'categoria', header: 'Categoria', accessorKey: 'categoria', sortable: true, cell: (info) => <CategoriaCell row={info.row} setNoticias={setNoticias} /> },
+  { id: 'subcategoria', header: 'Sub Categoria', accessorKey: 'subcategoria', sortable: true, cell: (info) => <SubCategoriaCell row={info.row} setNoticias={setNoticias} /> },
+];
+
 const Spreadsheet = () => {
-  const today = new Date(); 
+  const today = new Date();
   const thirtyDaysAgo = new Date(today);
   thirtyDaysAgo.setDate(today.getDate() - 30);
 
-  const [dateRange, setDateRange] = useState({
-    from: thirtyDaysAgo, 
-    to: today, 
-  });
+  const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
   const [noticias, setNoticias] = useState([]);
   const [total, setTotal] = useState(0);
   const [cursor, setCursor] = useState(null);
@@ -605,39 +673,43 @@ const Spreadsheet = () => {
   const [error, setError] = useState(null);
   const { toast } = useToast();
   const [filtroRelevancia, setFiltroRelevancia] = useState('Relevante');
-  
+  const [filtroEstrategica, setFiltroEstrategica] = useState(false); // Novo estado para estratégicas
+
   const toggleFiltroRelevancia = () => {
     if (filtroRelevancia === 'Irrelevante') {
       setFiltroRelevancia('Relevante');
-      setCursor(null); // Resetar o cursor ao mudar o filtro
+      setFiltroEstrategica(false); // Resetar filtro estratégico ao voltar
+      setCursor(null);
     } else {
       setFiltroRelevancia('Irrelevante');
-      setCursor(null); // Resetar o cursor ao mudar o filtro
+      setFiltroEstrategica(false); // Resetar filtro estratégico
+      setCursor(null);
     }
   };
 
-  const columns = getColumns(noticias, setNoticias);
+  const toggleFiltroEstrategica = () => {
+    setFiltroEstrategica((prev) => !prev);
+    setFiltroRelevancia('Relevante'); // Resetar filtro de irrelevantes
+    setCursor(null);
+  };
+
+  const columns = filtroEstrategica ? getEstrategicasColumns(noticias, setNoticias) : getColumns(noticias, setNoticias);
 
   const updateTema = (id, novoTema) => {
-    setNoticias(prevNoticias =>
-      prevNoticias.map(noticia =>
+    setNoticias((prevNoticias) =>
+      prevNoticias.map((noticia) =>
         noticia.id === id ? { ...noticia, tema: novoTema } : noticia
       )
     );
   };
 
   const updateAvaliacao = (id, novaAvaliacao) => {
-    setNoticias(prevNoticias =>
-      prevNoticias.map(noticia => {
+    setNoticias((prevNoticias) =>
+      prevNoticias.map((noticia) => {
         if (noticia.id === id) {
           const pontosBrutos = Math.abs(noticia.pontos || 0);
           const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-          
-          return { 
-            ...noticia, 
-            avaliacao: novaAvaliacao,
-            pontos: novosPontos 
-          };
+          return { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos };
         }
         return noticia;
       })
@@ -647,26 +719,14 @@ const Spreadsheet = () => {
   const buscarPontosDasNoticias = async (noticias) => {
     try {
       const response = await fetch('https://smi-api-production-fae2.up.railway.app/noticias/pontos');
-      if (!response.ok) {
-        throw new Error('Falha ao buscar pontos das notícias');
-      }
+      if (!response.ok) throw new Error('Falha ao buscar pontos das notícias');
       const pontos = await response.json();
-      
-      const noticiasComPontos = noticias.map(noticia => {
-        const noticiaPontos = pontos.find(p => p.id === noticia.id);
+      return noticias.map((noticia) => {
+        const noticiaPontos = pontos.find((p) => p.id === noticia.id);
         let pontosNoticia = noticiaPontos ? noticiaPontos.pontos : 0;
-        
-        if (noticia.avaliacao === 'Negativa') {
-          pontosNoticia = -Math.abs(pontosNoticia);
-        }
-        
-        return {
-          ...noticia,
-          pontos: pontosNoticia
-        };
+        if (noticia.avaliacao === 'Negativa') pontosNoticia = -Math.abs(pontosNoticia);
+        return { ...noticia, pontos: pontosNoticia };
       });
-      
-      return noticiasComPontos;
     } catch (error) {
       console.error('Erro ao buscar pontos das notícias:', error.message);
       toast({
@@ -685,30 +745,30 @@ const Spreadsheet = () => {
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
-
-    let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
-    if (filtroRelevancia === 'Irrelevante') {
-      url += '&mostrarIrrelevantes=true';
+  
+    let url = `http://localhost:3000/noticias?from=${from}&to=${to}&limit=${limit}`;
+    if (filtroEstrategica) {
+      url += '&mostrarEstrategicas=true'; // Filtra apenas estratégicas (true)
+    } else if (filtroRelevancia === 'Irrelevante') {
+      url += '&mostrarIrrelevantes=true'; // Filtra irrelevantes
     }
     if (cursor) {
       url += `&after=${cursor}`;
     }
-
+  
     fetch(url)
-      .then(response => {
+      .then((response) => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
-        if (!response.ok) {
-          throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
         return response.json();
       })
-      .then(async response => {
+      .then(async (response) => {
         console.log('Dados recebidos da API:', response);
         const { data, nextCursor, total } = response;
         if (Array.isArray(data)) {
           const dataWithIds = data.map((item, index) => ({
             ...item,
-            id: item.id || `noticia-${index}`
+            id: item.id || `noticia-${index}`,
           }));
           const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
           setNoticias(noticiasComPontos);
@@ -721,7 +781,7 @@ const Spreadsheet = () => {
           setTotal(0);
         }
       })
-      .catch(error => {
+      .catch((error) => {
         console.error('Erro ao buscar notícias:', error.message);
         setError(error.message);
         toast({
@@ -737,13 +797,13 @@ const Spreadsheet = () => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange, filtroRelevancia, cursor, limit, toast]);
+  }, [dateRange, filtroRelevancia, filtroEstrategica, cursor, limit, toast]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
     if (range.from && range.to) {
       setDateRange({ from: range.from, to: range.to });
-      setCursor(null); // Resetar o cursor ao mudar o intervalo de datas
+      setCursor(null);
     }
   };
 
@@ -759,11 +819,23 @@ const Spreadsheet = () => {
             <p className="text-gray-400">Gerenciamento e análise de notícias</p>
           </div>
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <Button 
+            <Button
+              variant="default"
+              onClick={toggleFiltroEstrategica}
+              className={
+                filtroEstrategica
+                  ? "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
+                  : "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
+              }
+            >
+              {filtroEstrategica ? 'Voltar' : 'Abrir Estratégicas'}
+              {filtroEstrategica ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
+            </Button>
+            <Button
               variant="default"
               onClick={toggleFiltroRelevancia}
               className={
-                filtroRelevancia === 'Irrelevante' 
+                filtroRelevancia === 'Irrelevante'
                   ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
                   : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
               }
@@ -788,11 +860,11 @@ const Spreadsheet = () => {
               <p className="text-gray-400">Nenhuma notícia encontrada</p>
             </div>
           ) : (
-            <DataTable 
-              data={noticias} 
-              columns={columns} 
-              updateTema={updateTema} 
-              updateAvaliacao={updateAvaliacao} 
+            <DataTable
+              data={noticias}
+              columns={columns}
+              updateTema={updateTema}
+              updateAvaliacao={updateAvaliacao}
               cursor={cursor}
               setCursor={setCursor}
               nextCursor={nextCursor}
