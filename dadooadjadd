@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -672,8 +673,8 @@ const Spreadsheet = () => {
   const [error, setError] = useState(null);
   const { toast } = useToast();
   const [filtroRelevancia, setFiltroRelevancia] = useState('Relevante');
-  const [mostrarEstrategicas, setMostrarEstrategicas] = useState(false);
-  
+  const [filtroEstrategica, setFiltroEstrategica] = useState(false); // Novo estado para estratégicas
+
   const toggleFiltroRelevancia = () => {
     if (filtroRelevancia === 'Irrelevante') {
       setFiltroRelevancia('Relevante');
@@ -702,15 +703,13 @@ const Spreadsheet = () => {
     );
   };
 
-  const updateAvaliacao = (id, novaAvaliacao, novosPontos) => {
-    setNoticias(prevNoticias =>
-      prevNoticias.map(noticia => {
+  const updateAvaliacao = (id, novaAvaliacao) => {
+    setNoticias((prevNoticias) =>
+      prevNoticias.map((noticia) => {
         if (noticia.id === id) {
-          return { 
-            ...noticia, 
-            avaliacao: novaAvaliacao,
-            pontos: novosPontos 
-          };
+          const pontosBrutos = Math.abs(noticia.pontos || 0);
+          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
+          return { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos };
         }
         return noticia;
       })
@@ -746,15 +745,13 @@ const Spreadsheet = () => {
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
-
-    let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
-    
-    if (mostrarEstrategicas) {
-      url += '&estrategicas=true';
+  
+    let url = `http://localhost:3000/noticias?from=${from}&to=${to}&limit=${limit}`;
+    if (filtroEstrategica) {
+      url += '&mostrarEstrategicas=true'; // Filtra apenas estratégicas (true)
     } else if (filtroRelevancia === 'Irrelevante') {
-      url += '&mostrarIrrelevantes=true';
+      url += '&mostrarIrrelevantes=true'; // Filtra irrelevantes
     }
-    
     if (cursor) {
       url += `&after=${cursor}`;
     }
@@ -800,7 +797,7 @@ const Spreadsheet = () => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange, filtroRelevancia, cursor, limit, mostrarEstrategicas, toast]);
+  }, [dateRange, filtroRelevancia, filtroEstrategica, cursor, limit, toast]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
