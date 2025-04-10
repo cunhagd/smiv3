@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -605,6 +604,7 @@ const Spreadsheet = () => {
   const [error, setError] = useState(null);
   const { toast } = useToast();
   const [filtroRelevancia, setFiltroRelevancia] = useState('Relevante');
+  const [mostrarEstrategicas, setMostrarEstrategicas] = useState(false);
   
   const toggleFiltroRelevancia = () => {
     if (filtroRelevancia === 'Irrelevante') {
@@ -626,13 +626,10 @@ const Spreadsheet = () => {
     );
   };
 
-  const updateAvaliacao = (id, novaAvaliacao) => {
+  const updateAvaliacao = (id, novaAvaliacao, novosPontos) => {
     setNoticias(prevNoticias =>
       prevNoticias.map(noticia => {
         if (noticia.id === id) {
-          const pontosBrutos = Math.abs(noticia.pontos || 0);
-          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-          
           return { 
             ...noticia, 
             avaliacao: novaAvaliacao,
@@ -687,9 +684,13 @@ const Spreadsheet = () => {
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
 
     let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
-    if (filtroRelevancia === 'Irrelevante') {
+    
+    if (mostrarEstrategicas) {
+      url += '&estrategicas=true';
+    } else if (filtroRelevancia === 'Irrelevante') {
       url += '&mostrarIrrelevantes=true';
     }
+    
     if (cursor) {
       url += `&after=${cursor}`;
     }
@@ -737,7 +738,7 @@ const Spreadsheet = () => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange, filtroRelevancia, cursor, limit, toast]);
+  }, [dateRange, filtroRelevancia, cursor, limit, mostrarEstrategicas, toast]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
