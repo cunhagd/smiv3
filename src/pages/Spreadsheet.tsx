@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -828,3 +829,130 @@ const Spreadsheet = () => {
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
 
     let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
+    
+    if (mostrarEstrategicas) {
+      url += '&mostrarEstrategicas=true';
+    } else if (filtroRelevancia === 'Irrelevante') {
+      url += '&mostrarIrrelevantes=true';
+    }
+    
+    if (cursor) {
+      url += `&after=${cursor}`;
+    }
+
+    fetch(url)
+      .then(response => {
+        console.log('Resposta recebida:', response.status);
+        if (!response.ok) {
+          throw new Error(`Erro na requisição: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(async data => {
+        console.log('Dados recebidos:', data);
+        
+        // Validation check
+        if (!data || !Array.isArray(data.noticias)) {
+          console.error('Formato de resposta inválido:', data);
+          setError('Formato de resposta inválido');
+          setIsLoading(false);
+          return;
+        }
+        
+        const noticiasComPontos = await buscarPontosDasNoticias(data.noticias);
+        setNoticias(noticiasComPontos || []);
+        setTotal(data.total || 0);
+        setNextCursor(data.nextCursor || null);
+        setIsLoading(false);
+      })
+      .catch(err => {
+        console.error('Erro ao buscar notícias:', err.message);
+        setError(err.message);
+        setIsLoading(false);
+        toast({
+          title: "Erro ao carregar dados",
+          description: `Não foi possível carregar as notícias: ${err.message}`,
+          variant: "destructive",
+        });
+      });
+  }, [dateRange, cursor, filtroRelevancia, mostrarEstrategicas, toast]);
+
+  return (
+    <div className="bg-dark-bg min-h-screen text-white flex flex-col">
+      <Navbar />
+      
+      <main className="flex-1 container mx-auto px-4 py-6">
+        <div className="mb-6 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold">Planilha de Notícias</h1>
+          
+          <div className="flex flex-col md:flex-row gap-3">
+            <DateRangePicker onChange={setDateRange} />
+            
+            <div className="flex gap-2">
+              <Button
+                variant={filtroRelevancia === 'Relevante' ? 'default' : 'outline'}
+                className={`min-w-[120px] ${filtroRelevancia === 'Relevante' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-dark-card border border-white/10 text-white hover:bg-dark-card-hover'}`}
+                onClick={() => {
+                  if (filtroRelevancia !== 'Relevante') {
+                    toggleFiltroRelevancia();
+                  }
+                }}
+                disabled={isLoading || mostrarEstrategicas}
+              >
+                Relevantes
+              </Button>
+              
+              <Button
+                variant={filtroRelevancia === 'Irrelevante' ? 'default' : 'outline'}
+                className={`min-w-[120px] ${filtroRelevancia === 'Irrelevante' ? 'bg-blue-600 hover:bg-blue-700' : 'bg-dark-card border border-white/10 text-white hover:bg-dark-card-hover'}`}
+                onClick={() => {
+                  if (filtroRelevancia !== 'Irrelevante') {
+                    toggleFiltroRelevancia();
+                  }
+                }}
+                disabled={isLoading || mostrarEstrategicas}
+              >
+                Irrelevantes
+              </Button>
+              
+              <Button
+                variant={mostrarEstrategicas ? 'default' : 'outline'}
+                className={`min-w-[120px] ${mostrarEstrategicas ? 'bg-green-600 hover:bg-green-700' : 'bg-dark-card border border-white/10 text-white hover:bg-dark-card-hover'}`}
+                onClick={toggleMostrarEstrategicas}
+                disabled={isLoading}
+              >
+                {mostrarEstrategicas ? 'Voltar' : 'Estratégicas'}
+              </Button>
+            </div>
+          </div>
+        </div>
+
+        {error && (
+          <div className="bg-red-500/20 border border-red-500 p-4 rounded-md mb-6">
+            <p className="text-red-300">{error}</p>
+          </div>
+        )}
+        
+        {isLoading ? (
+          <div className="flex justify-center items-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-white"></div>
+          </div>
+        ) : (
+          <DataTable 
+            data={noticias}
+            columns={columns}
+            updateTema={updateTema}
+            updateAvaliacao={updateAvaliacao}
+            cursor={cursor}
+            setCursor={setCursor}
+            nextCursor={nextCursor}
+            limit={limit}
+            total={total}
+          />
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Spreadsheet;
