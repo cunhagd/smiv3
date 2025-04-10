@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -829,4 +830,123 @@ const Spreadsheet = () => {
 
     fetch(url)
       .then(response => {
-        console.
+        console.log('Resposta recebida:', response.status);
+        if (!response.ok) {
+          throw new Error(`Erro na requisição: ${response.status}`);
+        }
+        return response.json();
+      })
+      .then(data => {
+        console.log('Dados recebidos:', data.noticias?.length || 0, 'notícias');
+        if (data.noticias && Array.isArray(data.noticias)) {
+          buscarPontosDasNoticias(data.noticias).then(noticiasComPontos => {
+            setNoticias(noticiasComPontos);
+            setNextCursor(data.nextCursor);
+            setTotal(data.total || 0);
+          });
+        } else {
+          console.error('Formato de resposta inesperado:', data);
+          setError('Formato de resposta inesperado');
+          setNoticias([]);
+        }
+      })
+      .catch(err => {
+        console.error('Erro ao buscar notícias:', err.message);
+        setError(err.message);
+        toast({
+          title: "Erro ao carregar",
+          description: "Não foi possível carregar as notícias. Tente novamente.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [dateRange, cursor, filtroRelevancia, mostrarEstrategicas, limit]);
+
+  const handleAbrirEstrategicas = () => {
+    if (mostrarEstrategicas) {
+      // Se já estiver mostrando estratégicas, volta para a visualização padrão
+      toggleMostrarEstrategicas();
+    } else {
+      // Se não estiver mostrando estratégicas, muda para visualização de estratégicas
+      setMostrarEstrategicas(true);
+      setCursor(null);
+      setFiltroRelevancia('Relevante');
+    }
+  };
+
+  return (
+    <div className="h-screen flex flex-col bg-dark-bg text-white">
+      <Navbar />
+      
+      <main className="flex-1 p-6 overflow-auto">
+        <div className="mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <h1 className="text-2xl font-bold">Planilha de Classificação</h1>
+          
+          <div className="flex items-center gap-3 flex-wrap">
+            <DateRangePicker onChange={setDateRange} />
+            
+            <div className="flex items-center gap-3">
+              <Button 
+                variant="yellowLight"
+                onClick={handleAbrirEstrategicas}
+                className="px-4 py-2"
+              >
+                {mostrarEstrategicas ? 'Voltar' : 'Abrir Estratégicas'}
+              </Button>
+              
+              {!mostrarEstrategicas && (
+                <Button 
+                  variant={filtroRelevancia === 'Irrelevante' ? 'default' : 'outline'}
+                  onClick={toggleFiltroRelevancia}
+                  className="px-4 py-2"
+                >
+                  {filtroRelevancia === 'Irrelevante' ? 'Voltar' : 'Abrir Irrelevantes'}
+                </Button>
+              )}
+            </div>
+          </div>
+        </div>
+        
+        {isLoading && noticias.length === 0 ? (
+          <div className="flex items-center justify-center h-64">
+            <div className="text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-solid border-current border-r-transparent" role="status">
+                <span className="sr-only">Carregando...</span>
+              </div>
+              <p className="mt-2">Carregando notícias...</p>
+            </div>
+          </div>
+        ) : error ? (
+          <div className="bg-red-500/10 border border-red-500/30 p-4 rounded-md">
+            <p className="text-red-400">{error}</p>
+            <Button 
+              variant="outline" 
+              onClick={() => window.location.reload()}
+              className="mt-2"
+            >
+              Tentar novamente
+            </Button>
+          </div>
+        ) : (
+          <div className="bg-dark-card rounded-lg border border-white/5 p-4">
+            <DataTable 
+              data={noticias} 
+              columns={columns}
+              updateTema={updateTema}
+              updateAvaliacao={updateAvaliacao}
+              cursor={cursor}
+              setCursor={setCursor}
+              nextCursor={nextCursor}
+              limit={limit}
+              total={total}
+            />
+          </div>
+        )}
+      </main>
+    </div>
+  );
+};
+
+export default Spreadsheet;
