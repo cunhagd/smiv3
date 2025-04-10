@@ -28,11 +28,21 @@ interface DataTableProps {
   total: number;
 }
 
-const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCursor, nextCursor, limit, total }: DataTableProps) => {
+const DataTable = ({ 
+  data = [], 
+  columns, 
+  updateTema, 
+  updateAvaliacao, 
+  cursor, 
+  setCursor, 
+  nextCursor, 
+  limit, 
+  total 
+}: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [previousCursors, setPreviousCursors] = useState<string[]>([]);
 
-  const displayedData = data;
+  const displayedData = data || [];
 
   const handleNextPage = () => {
     if (nextCursor) {
