@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -6,6 +5,9 @@ import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft
 import DateRangePicker from '@/components/DateRangePicker';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
+
+// Centralizar a URL base
+const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app'; // Ajuste para produção se necessário
 
 const TEMAS = [
   'Agricultura',
@@ -37,16 +39,6 @@ const ESTRATEGICA = [
   'Não',
 ];
 
-const SUBCATEGORIA = ['Selecionar', 'Gestão', 'Planejamento', 'Execução']; // Ajuste conforme suas subcategorias
-
-const CATEGORIA = [
-  'Selecionar',
-  'Educação',
-  'Saúde',
-  'Infraestrutura',
-  'Social',
-];
-
 const MENSAGEM_PADRAO = "Selecionar";
 
 function RelevanciaCell({ row, setNoticias }) {
@@ -76,7 +68,7 @@ function RelevanciaCell({ row, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          `${API_BASE_URL}/noticias/${id}`,
           {
             method: 'PUT',
             headers: {
@@ -165,6 +157,7 @@ function TemaCell({ row, updateTema }) {
   
   const [temaSelecionado, setTemaSelecionado] = useState(data.tema || '');
   const [isSaving, setIsSaving] = useState(false);
+  const { toast } = useToast(); // Adicionado para exibir mensagens de erro
 
   const handleSave = async (novoTema) => {
     const valorEnviado = novoTema === "" ? null : novoTema;
@@ -173,7 +166,7 @@ function TemaCell({ row, updateTema }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          `${API_BASE_URL}/noticias/${id}`, // Ajustado para usar API_BASE_URL
           {
             method: 'PUT',
             headers: {
@@ -183,12 +176,17 @@ function TemaCell({ row, updateTema }) {
           }
         );
         if (!response.ok) {
-          throw new Error('Falha ao salvar');
+          throw new Error('Falha ao salvar tema');
         }
-        console.log('Salvo com sucesso:', valorEnviado);
+        console.log('Tema salvo com sucesso:', valorEnviado);
         updateTema(id, valorEnviado);
       } catch (error) {
-        console.error('Erro ao salvar:', error.message);
+        console.error('Erro ao salvar tema:', error.message);
+        toast({
+          title: "Erro ao salvar",
+          description: "Não foi possível salvar o tema. Tente novamente.",
+          variant: "destructive",
+        });
       } finally {
         setIsSaving(false);
       }
@@ -236,7 +234,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          `${API_BASE_URL}/noticias/${id}`, // Ajustado para usar API_BASE_URL
           {
             method: 'PUT',
             headers: {
@@ -382,14 +380,12 @@ function EstrategicaCell({ row, setNoticias }) {
   const data = row || {};
   const id = data.id;
 
-  // Mapeia o valor booleano do banco para o texto do dropdown
   const mapEstrategicaToString = (estrategica) => {
     if (estrategica === true) return 'Sim';
     if (estrategica === false) return 'Não';
     return 'Selecionar';
   };
 
-  // Mapeia o texto do dropdown para o valor booleano ou null
   const mapStringToEstrategica = (valor) => {
     if (valor === 'Sim') return true;
     if (valor === 'Não') return false;
@@ -406,7 +402,7 @@ function EstrategicaCell({ row, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`, // Use http://localhost:3000 para testes locais
+          `${API_BASE_URL}/noticias/${id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -416,12 +412,32 @@ function EstrategicaCell({ row, setNoticias }) {
         if (!response.ok) {
           throw new Error('Falha ao salvar estratégica');
         }
+
+        const noticiaSalva = await response.json();
+
         setNoticias((prevNoticias) =>
           prevNoticias.map((noticia) =>
-            noticia.id === id ? { ...noticia, estrategica: valorEnviado } : noticia
+            noticia.id === id
+              ? {
+                  ...noticia,
+                  estrategica: valorEnviado,
+                  categoria: noticiaSalva.categoria,
+                  subcategoria: noticiaSalva.subcategoria,
+                }
+              : noticia
           )
         );
+
         console.log('Estratégica salva com sucesso:', valorEnviado);
+        console.log('Notícia atualizada no estado:', noticiaSalva);
+
+        if (valorEnviado === true && noticiaSalva.categoria) {
+          toast({
+            title: "Notícia estratégica",
+            description: `Categorizada como: ${noticiaSalva.categoria} / ${noticiaSalva.subcategoria || ''}`,
+            variant: "default",
+          });
+        }
       } catch (error) {
         console.error('Erro ao salvar estratégica:', error.message);
         toast({
@@ -460,14 +476,14 @@ function EstrategicaCell({ row, setNoticias }) {
   );
 }
 
-
-
-function CategoriaCell({ row, setNoticias }) {
+function CategoriaCell({ row, setNoticias, categorias }) {
   const data = row || {};
   const id = data.id;
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(data.categoria || 'Selecionar');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  console.log(`Categoria inicial para notícia ID ${id}:`, data.categoria);
 
   const handleSave = async (novaCategoria) => {
     const valorEnviado = novaCategoria === 'Selecionar' ? null : novaCategoria;
@@ -475,7 +491,7 @@ function CategoriaCell({ row, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          `${API_BASE_URL}/noticias/${id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -514,7 +530,8 @@ function CategoriaCell({ row, setNoticias }) {
         disabled={isSaving}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
-        {CATEGORIA.map((categoria) => (
+        <option value="Selecionar" className="text-left">Selecionar</option>
+        {categorias.map((categoria) => (
           <option key={categoria} value={categoria} className="text-left">
             {categoria}
           </option>
@@ -527,12 +544,14 @@ function CategoriaCell({ row, setNoticias }) {
   );
 }
 
-function SubCategoriaCell({ row, setNoticias }) {
+function SubCategoriaCell({ row, setNoticias, subcategorias }) {
   const data = row || {};
   const id = data.id;
   const [subCategoriaSelecionada, setSubCategoriaSelecionada] = useState(data.subcategoria || 'Selecionar');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  console.log(`Subcategoria inicial para notícia ID ${id}:`, data.subcategoria);
 
   const handleSave = async (novaSubCategoria) => {
     const valorEnviado = novaSubCategoria === 'Selecionar' ? null : novaSubCategoria;
@@ -540,7 +559,7 @@ function SubCategoriaCell({ row, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
+          `${API_BASE_URL}/noticias/${id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -579,7 +598,8 @@ function SubCategoriaCell({ row, setNoticias }) {
         disabled={isSaving}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
-        {SUBCATEGORIA.map((subcategoria) => (
+        <option value="Selecionar" className="text-left">Selecionar</option>
+        {subcategorias.map((subcategoria) => (
           <option key={subcategoria} value={subcategoria} className="text-left">
             {subcategoria}
           </option>
@@ -649,13 +669,13 @@ const getColumns = (noticias, setNoticias) => [
   },
 ];
 
-const getEstrategicasColumns = (noticias, setNoticias) => [
+const getEstrategicasColumns = (noticias, setNoticias, categorias, subcategorias) => [
   { id: 'data', header: 'Data', accessorKey: 'data', sortable: true },
   { id: 'portal', header: 'Portal', accessorKey: 'portal', sortable: true },
   { id: 'titulo', header: 'Título', accessorKey: 'titulo', sortable: true, cell: (info) => <TituloCell row={info.row} /> },
   { id: 'estrategica', header: 'Estratégica', accessorKey: 'estrategica', sortable: true, cell: (info) => <EstrategicaCell row={info.row} setNoticias={setNoticias} /> },
-  { id: 'categoria', header: 'Categoria', accessorKey: 'categoria', sortable: true, cell: (info) => <CategoriaCell row={info.row} setNoticias={setNoticias} /> },
-  { id: 'subcategoria', header: 'Sub Categoria', accessorKey: 'subcategoria', sortable: true, cell: (info) => <SubCategoriaCell row={info.row} setNoticias={setNoticias} /> },
+  { id: 'categoria', header: 'Categoria', accessorKey: 'categoria', sortable: true, cell: (info) => <CategoriaCell row={info.row} setNoticias={setNoticias} categorias={categorias} /> },
+  { id: 'subcategoria', header: 'Sub Categoria', accessorKey: 'subcategoria', sortable: true, cell: (info) => <SubCategoriaCell row={info.row} setNoticias={setNoticias} subcategorias={subcategorias} /> },
 ];
 
 const Spreadsheet = () => {
@@ -673,27 +693,29 @@ const Spreadsheet = () => {
   const [error, setError] = useState(null);
   const { toast } = useToast();
   const [filtroRelevancia, setFiltroRelevancia] = useState('Relevante');
-  const [filtroEstrategica, setFiltroEstrategica] = useState(false); // Novo estado para estratégicas
+  const [filtroEstrategica, setFiltroEstrategica] = useState(false);
+  const [categorias, setCategorias] = useState([]);
+  const [subcategorias, setSubcategorias] = useState([]);
 
   const toggleFiltroRelevancia = () => {
     if (filtroRelevancia === 'Irrelevante') {
       setFiltroRelevancia('Relevante');
-      setFiltroEstrategica(false); // Resetar filtro estratégico ao voltar
+      setFiltroEstrategica(false);
       setCursor(null);
     } else {
       setFiltroRelevancia('Irrelevante');
-      setFiltroEstrategica(false); // Resetar filtro estratégico
+      setFiltroEstrategica(false);
       setCursor(null);
     }
   };
 
   const toggleFiltroEstrategica = () => {
     setFiltroEstrategica((prev) => !prev);
-    setFiltroRelevancia('Relevante'); // Resetar filtro de irrelevantes
+    setFiltroRelevancia('Relevante');
     setCursor(null);
   };
 
-  const columns = filtroEstrategica ? getEstrategicasColumns(noticias, setNoticias) : getColumns(noticias, setNoticias);
+  const columns = filtroEstrategica ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias) : getColumns(noticias, setNoticias);
 
   const updateTema = (id, novoTema) => {
     setNoticias((prevNoticias) =>
@@ -718,7 +740,7 @@ const Spreadsheet = () => {
 
   const buscarPontosDasNoticias = async (noticias) => {
     try {
-      const response = await fetch('https://smi-api-production-fae2.up.railway.app/noticias/pontos');
+      const response = await fetch(`${API_BASE_URL}/noticias/pontos`);
       if (!response.ok) throw new Error('Falha ao buscar pontos das notícias');
       const pontos = await response.json();
       return noticias.map((noticia) => {
@@ -739,23 +761,51 @@ const Spreadsheet = () => {
   };
 
   useEffect(() => {
+    const fetchCategoriasESubcategorias = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
+        if (!response.ok) throw new Error('Falha ao buscar semanas estratégicas');
+        const { data } = await response.json();
+
+        const categoriasUnicas = [...new Set(data.map(item => item.categoria).filter(c => c))];
+        const subcategoriasUnicas = [...new Set(data.map(item => item.subcategoria).filter(s => s))];
+
+        setCategorias(categoriasUnicas);
+        setSubcategorias(subcategoriasUnicas);
+
+        console.log('Categorias disponíveis:', categoriasUnicas);
+        console.log('Subcategorias disponíveis:', subcategoriasUnicas);
+      } catch (error) {
+        console.error('Erro ao buscar categorias e subcategorias:', error.message);
+        toast({
+          title: "Erro ao buscar categorias",
+          description: "Não foi possível carregar as categorias e subcategorias.",
+          variant: "destructive",
+        });
+      }
+    };
+
+    fetchCategoriasESubcategorias();
+  }, [toast]);
+
+  useEffect(() => {
     console.log('useEffect iniciado');
     setIsLoading(true);
     setError(null);
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
-  
-    let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
+
+    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}&limit=${limit}`;
     if (filtroEstrategica) {
-      url += '&mostrarEstrategicas=true'; // Filtra apenas estratégicas (true)
+      url += '&mostrarEstrategicas=true';
     } else if (filtroRelevancia === 'Irrelevante') {
-      url += '&mostrarIrrelevantes=true'; // Filtra irrelevantes
+      url += '&mostrarIrrelevantes=true';
     }
     if (cursor) {
       url += `&after=${cursor}`;
     }
-  
+
     fetch(url)
       .then((response) => {
         console.log('Resposta bruta da API:', response.status, response.statusText);
@@ -763,7 +813,7 @@ const Spreadsheet = () => {
         return response.json();
       })
       .then(async (response) => {
-        console.log('Dados recebidos da API:', response);
+        console.log('Dados recebidos da API (primeiras 3 notícias):', response.data.slice(0, 3));
         const { data, nextCursor, total } = response;
         if (Array.isArray(data)) {
           const dataWithIds = data.map((item, index) => ({
