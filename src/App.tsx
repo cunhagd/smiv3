@@ -5,25 +5,19 @@ import SemanaEstrategica from './pages/SemanaEstrategica'; // Ajuste o caminho c
 import Login from './pages/Login';
 
 function App() {
-  // Simulando verificação de autenticação
+  // Verifica se o usuário "logou" (apenas para redirecionar para o login inicialmente)
   const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
 
   return (
     <Router>
       <Routes>
-        <Route path="/" element={<Navigate to="/login" replace />} />
-        <Route
-          path="/dashboard"
-          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/spreadsheet"
-          element={isAuthenticated ? <Spreadsheet /> : <Navigate to="/login" replace />}
-        />
-        <Route
-          path="/semana-estrategica"
-          element={isAuthenticated ? <SemanaEstrategica /> : <Navigate to="/login" replace />}
-        />
+        {/* Redireciona a raiz ("/") para a página de login se não estiver autenticado */}
+        <Route path="/" element={isAuthenticated ? <Navigate to="/spreadsheet" replace /> : <Navigate to="/login" replace />} />
+        {/* Remove a verificação de autenticação para todas as rotas protegidas */}
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/spreadsheet" element={<Spreadsheet />} />
+        <Route path="/semana-estrategica" element={<SemanaEstrategica />} />
+        {/* Mantém a rota de login */}
         <Route path="/login" element={<Login />} />
       </Routes>
     </Router>

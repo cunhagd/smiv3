@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ChevronRight } from 'lucide-react';
@@ -15,24 +14,16 @@ const Login = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    
-    // Simulating authentication
+
+    // Simula um "login" sem qualquer validação
     setTimeout(() => {
-      if (email && password) {
-        // Set authentication status
-        localStorage.setItem('isAuthenticated', 'true');
-        navigate('/dashboard');
-        toast({
-          title: "Login realizado com sucesso",
-          description: "Bem-vindo ao Sistema de Monitoramento de Imprensa",
-        });
-      } else {
-        toast({
-          variant: "destructive",
-          title: "Erro de autenticação",
-          description: "Por favor, verifique seu email e senha",
-        });
-      }
+      // Define o status de autenticação como true, independentemente do email e senha
+      localStorage.setItem('isAuthenticated', 'true');
+      navigate('/dashboard');
+      toast({
+        title: "Login realizado com sucesso",
+        description: "Bem-vindo ao Sistema de Monitoramento de Imprensa",
+      });
       setLoading(false);
     }, 1000);
   };
@@ -67,7 +58,7 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu.email@governo.mg.gov.br"
                 className="form-input"
-                required
+                // Removido o "required" para permitir entradas vazias
               />
             </div>
             
@@ -83,7 +74,7 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="form-input pr-10"
-                  required
+                  // Removido o "required" para permitir entradas vazias
                 />
                 <button
                   type="button"
