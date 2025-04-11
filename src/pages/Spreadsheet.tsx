@@ -406,7 +406,7 @@ function EstrategicaCell({ row, setNoticias }) {
       setIsSaving(true);
       try {
         const response = await fetch(
-          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`, // Use http://localhost:3000 para testes locais
+          `https://smi-api-production-fae2.up.railway.app/noticias/${id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
@@ -465,6 +465,7 @@ function EstrategicaCell({ row, setNoticias }) {
 function CategoriaCell({ row, setNoticias }) {
   const data = row || {};
   const id = data.id;
+  const isEstrategica = data.estrategica === true; // Verifica se é estratégica
   const [categoriaSelecionada, setCategoriaSelecionada] = useState(data.categoria || 'Selecionar');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
@@ -511,7 +512,7 @@ function CategoriaCell({ row, setNoticias }) {
           setCategoriaSelecionada(novaCategoria);
           handleSave(novaCategoria);
         }}
-        disabled={isSaving}
+        disabled={isSaving || isEstrategica} // Desabilita se estiver salvando ou for estratégica
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
         {CATEGORIA.map((categoria) => (
@@ -746,7 +747,7 @@ const Spreadsheet = () => {
     const to = dateRange.to.toISOString().split('T')[0];
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
   
-    let url = `http://localhost:3000/noticias?from=${from}&to=${to}&limit=${limit}`;
+    let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
     if (filtroEstrategica) {
       url += '&mostrarEstrategicas=true'; // Filtra apenas estratégicas (true)
     } else if (filtroRelevancia === 'Irrelevante') {

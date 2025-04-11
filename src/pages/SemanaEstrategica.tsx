@@ -1,11 +1,10 @@
-
-import React, { useState } from 'react';
+import { Pencil, Save, X, CalendarIcon, ChevronDown } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { format } from "date-fns";
-import { CalendarIcon, ChevronDown, Plus } from "lucide-react";
+import { format, parse } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
@@ -18,10 +17,9 @@ const CATEGORIAS = [
 ];
 
 interface FormularioSemanaEstrategicaProps {
-  onSubmit: () => void;
+  onSubmit: (novaSemana: any) => void;
 }
 
-// Componente do formulário individual
 const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = ({ onSubmit }) => {
   const [dataInicial, setDataInicial] = useState<Date | undefined>(undefined);
   const [dataFinal, setDataFinal] = useState<Date | undefined>(undefined);
@@ -31,13 +29,11 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
-  // Gera números de 1 a 100 para o ciclo
   const ciclosOpcoes = ['Selecionar', ...Array.from({ length: 100 }, (_, i) => (i + 1).toString())];
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validações
+
     if (!dataInicial) {
       toast({
         title: "Campo obrigatório",
@@ -46,7 +42,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       });
       return;
     }
-    
+
     if (!dataFinal) {
       toast({
         title: "Campo obrigatório",
@@ -55,7 +51,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       });
       return;
     }
-    
+
     if (ciclo === "Selecionar") {
       toast({
         title: "Campo obrigatório",
@@ -64,7 +60,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       });
       return;
     }
-    
+
     if (categoria === "Selecionar") {
       toast({
         title: "Campo obrigatório",
@@ -73,7 +69,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       });
       return;
     }
-    
+
     if (!subCategoria.trim()) {
       toast({
         title: "Campo obrigatório",
@@ -84,37 +80,46 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
     }
 
     setIsLoading(true);
-    
+
     try {
-      // Aqui você faria a chamada à API para salvar a semana estratégica
-      // Como solicitado, estamos apenas criando a interface sem implementar a chamada API real
-      console.log("Semana Estratégica cadastrada:", {
-        dataInicial: dataInicial.toISOString().split('T')[0],
-        dataFinal: dataFinal.toISOString().split('T')[0],
-        ciclo,
+      const novaSemana = {
+        data_inicial: format(dataInicial, "dd/MM/yyyy"),
+        data_final: format(dataFinal, "dd/MM/yyyy"),
+        ciclo: parseInt(ciclo, 10),
         categoria,
-        subCategoria
+        subcategoria: subCategoria,
+      };
+
+      const response = await fetch('http://localhost:3000/semana-estrategica', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(novaSemana),
       });
-      
-      // Reseta o formulário
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Falha ao cadastrar semana estratégica');
+      }
+
+      const semanaCadastrada = await response.json();
+
       setDataInicial(undefined);
       setDataFinal(undefined);
       setCiclo("Selecionar");
       setCategoria("Selecionar");
       setSubCategoria("");
-      
+
       toast({
         title: "Sucesso!",
         description: "Semana Estratégica cadastrada com sucesso.",
       });
-      
-      // Notifica o componente pai para adicionar um novo formulário
-      onSubmit();
+
+      onSubmit(semanaCadastrada);
     } catch (error) {
-      console.error("Erro ao cadastrar:", error);
+      console.error("Erro ao cadastrar:", error.message);
       toast({
         title: "Erro ao cadastrar",
-        description: "Não foi possível cadastrar a Semana Estratégica. Tente novamente.",
+        description: error.message || "Não foi possível cadastrar a Semana Estratégica. Tente novamente.",
         variant: "destructive",
       });
     } finally {
@@ -127,7 +132,6 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       <h2 className="text-lg font-semibold mb-4">Cadastrar Semana Estratégica</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {/* Data Inicial */}
           <div>
             <label className="block text-sm font-medium mb-1">Data Inicial</label>
             <Popover>
@@ -155,7 +159,6 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
             </Popover>
           </div>
 
-          {/* Data Final */}
           <div>
             <label className="block text-sm font-medium mb-1">Data Final</label>
             <Popover>
@@ -183,7 +186,6 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
             </Popover>
           </div>
 
-          {/* Ciclo */}
           <div>
             <label className="block text-sm font-medium mb-1">Ciclo</label>
             <div className="relative">
@@ -204,7 +206,6 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
             </div>
           </div>
 
-          {/* Categoria */}
           <div>
             <label className="block text-sm font-medium mb-1">Categoria</label>
             <div className="relative">
@@ -225,7 +226,6 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
             </div>
           </div>
 
-          {/* Sub Categoria */}
           <div className="md:col-span-2">
             <label className="block text-sm font-medium mb-1">Sub Categoria</label>
             <input
@@ -252,12 +252,114 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
   );
 };
 
-// Página principal
 const SemanaEstrategica = () => {
-  const [formularios, setFormularios] = useState<number[]>([0]);
+  const [semanas, setSemanas] = useState<any[]>([]);
+  const [editingId, setEditingId] = useState<number | null>(null);
+  const [editedData, setEditedData] = useState<any>({});
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast();
 
-  const adicionarFormulario = () => {
-    setFormularios([...formularios, formularios.length]);
+  useEffect(() => {
+    const fetchSemanas = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        const response = await fetch('http://localhost:3000/semana-estrategica');
+        
+        if (!response.ok) {
+          if (response.status === 0) {
+            throw new Error('Não foi possível conectar ao servidor. Verifique se o backend está rodando.');
+          }
+          const errorData = await response.json();
+          throw new Error(errorData.error || 'Falha ao buscar semanas estratégicas');
+        }
+        
+        const { data } = await response.json();
+        setSemanas(data);
+        
+      } catch (error) {
+        console.error('Erro ao buscar semanas:', error.message);
+        setError(error.message);
+        toast({
+          title: "Erro ao carregar semanas",
+          description: error.message || "Não foi possível carregar as semanas estratégicas. Tente novamente.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+  
+    fetchSemanas();
+  }, [toast]);
+
+  const handleEdit = (semana: any) => {
+    setEditingId(semana.id);
+    setEditedData({
+      ...semana,
+      data_inicial: parse(semana.data_inicial, 'dd/MM/yyyy', new Date()),
+      data_final: parse(semana.data_final, 'dd/MM/yyyy', new Date())
+    });
+  };
+
+  const handleSave = async (id: number) => {
+    try {
+      const formattedData = {
+        ...editedData,
+        data_inicial: format(editedData.data_inicial, 'dd/MM/yyyy'),
+        data_final: format(editedData.data_final, 'dd/MM/yyyy')
+      };
+
+      const response = await fetch(`http://localhost:3000/semana-estrategica/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(formattedData),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Falha ao atualizar semana estratégica');
+      }
+      
+      const updatedSemana = await response.json();
+      setSemanas(semanas.map(s => s.id === id ? updatedSemana : s));
+      setEditingId(null);
+      
+      // Dispara um evento para notificar outros componentes
+      localStorage.setItem('semanaEstrategicaUpdated', Date.now().toString());
+      
+      toast({
+        title: "Sucesso!",
+        description: "Semana atualizada com sucesso",
+      });
+      
+    } catch (error) {
+      console.error("Erro ao atualizar:", error.message);
+      toast({
+        title: "Erro ao atualizar",
+        description: error.message || "Não foi possível atualizar a Semana Estratégica. Tente novamente.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const handleCancel = () => {
+    setEditingId(null);
+    setEditedData({});
+  };
+
+  const handleFieldChange = (field: string, value: any) => {
+    setEditedData(prev => ({
+      ...prev,
+      [field]: value
+    }));
+  };
+
+  const adicionarSemana = (novaSemana: any) => {
+    setSemanas(prev => [...prev, novaSemana]);
+    // Dispara um evento para notificar outros componentes
+    localStorage.setItem('semanaEstrategicaUpdated', Date.now().toString());
   };
 
   return (
@@ -269,12 +371,171 @@ const SemanaEstrategica = () => {
           <p className="text-gray-400">Cadastro e gerenciamento de semanas estratégicas</p>
         </div>
 
-        {formularios.map((id) => (
-          <FormularioSemanaEstrategica 
-            key={id} 
-            onSubmit={adicionarFormulario}
-          />
-        ))}
+        <FormularioSemanaEstrategica onSubmit={adicionarSemana} />
+
+        <div className="dashboard-card">
+          <h2 className="text-lg font-semibold mb-4">Semanas Estratégicas Cadastradas</h2>
+          
+          {isLoading ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Carregando dados...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-red-400">Erro ao carregar dados: {error}</p>
+            </div>
+          ) : semanas.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Nenhuma semana estratégica encontrada</p>
+            </div>
+          ) : (
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="text-gray-400 border-b border-white/10">
+                  <th className="py-2 px-4">ID</th>
+                  <th className="py-2 px-4">Data Inicial</th>
+                  <th className="py-2 px-4">Data Final</th>
+                  <th className="py-2 px-4">Ciclo</th>
+                  <th className="py-2 px-4">Categoria</th>
+                  <th className="py-2 px-4">Subcategoria</th>
+                  <th className="py-2 px-4">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
+                {semanas.map((semana) => (
+                  <tr key={semana.id} className="border-b border-white/10">
+                    <td className="py-2 px-4">{semana.id}</td>
+
+                    {/* Data Inicial */}
+                    <td className="py-2 px-4">
+                      {editingId === semana.id ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="h-8 p-2 text-xs border-white/20"
+                            >
+                              {format(editedData.data_inicial, 'dd/MM/yyyy')}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={editedData.data_inicial}
+                              onSelect={(date) => handleFieldChange('data_inicial', date)}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        semana.data_inicial
+                      )}
+                    </td>
+
+                    {/* Data Final */}
+                    <td className="py-2 px-4">
+                      {editingId === semana.id ? (
+                        <Popover>
+                          <PopoverTrigger asChild>
+                            <Button
+                              variant="outline"
+                              className="h-8 p-2 text-xs border-white/20"
+                            >
+                              {format(editedData.data_final, 'dd/MM/yyyy')}
+                            </Button>
+                          </PopoverTrigger>
+                          <PopoverContent className="w-auto p-0">
+                            <Calendar
+                              mode="single"
+                              selected={editedData.data_final}
+                              onSelect={(date) => handleFieldChange('data_final', date)}
+                            />
+                          </PopoverContent>
+                        </Popover>
+                      ) : (
+                        semana.data_final
+                      )}
+                    </td>
+
+                    {/* Ciclo */}
+                    <td className="py-2 px-4">
+                      {editingId === semana.id ? (
+                        <select
+                          value={editedData.ciclo}
+                          onChange={(e) => handleFieldChange('ciclo', parseInt(e.target.value))}
+                          className="bg-dark-card border border-white/20 rounded px-2 py-1"
+                        >
+                          {Array.from({ length: 100 }, (_, i) => (
+                            <option key={i + 1} value={i + 1}>{i + 1}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        semana.ciclo
+                      )}
+                    </td>
+
+                    {/* Categoria */}
+                    <td className="py-2 px-4">
+                      {editingId === semana.id ? (
+                        <select
+                          value={editedData.categoria}
+                          onChange={(e) => handleFieldChange('categoria', e.target.value)}
+                          className="bg-dark-card border border-white/20 rounded px-2 py-1"
+                        >
+                          {CATEGORIAS.map((cat) => (
+                            <option key={cat} value={cat}>{cat}</option>
+                          ))}
+                        </select>
+                      ) : (
+                        semana.categoria || '-'
+                      )}
+                    </td>
+
+                    {/* Subcategoria */}
+                    <td className="py-2 px-4">
+                      {editingId === semana.id ? (
+                        <input
+                          type="text"
+                          value={editedData.subcategoria}
+                          onChange={(e) => handleFieldChange('subcategoria', e.target.value)}
+                          className="bg-dark-card border border-white/20 rounded px-2 py-1 w-full"
+                        />
+                      ) : (
+                        semana.subcategoria || '-'
+                      )}
+                    </td>
+
+                    {/* Ações */}
+                    <td className="py-2 px-4">
+                      {editingId === semana.id ? (
+                        <div className="flex gap-2">
+                          <button
+                            onClick={() => handleSave(semana.id)}
+                            className="text-green-400 hover:text-green-300"
+                          >
+                            <Save size={18} />
+                          </button>
+                          <button
+                            onClick={handleCancel}
+                            className="text-red-400 hover:text-red-300"
+                          >
+                            <X size={18} />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => handleEdit(semana)}
+                          className="text-blue-400 hover:text-blue-300"
+                        >
+                          <Pencil size={18} />
+                        </button>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
+        </div>
       </main>
     </div>
   );
