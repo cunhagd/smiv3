@@ -746,7 +746,7 @@ const Spreadsheet = () => {
     const to = dateRange.to.toISOString().split('T')[0];
     console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
   
-    let url = `http://localhost:3000/noticias?from=${from}&to=${to}&limit=${limit}`;
+    let url = `https://smi-api-production-fae2.up.railway.app/noticias?from=${from}&to=${to}&limit=${limit}`;
     if (filtroEstrategica) {
       url += '&mostrarEstrategicas=true'; // Filtra apenas estratégicas (true)
     } else if (filtroRelevancia === 'Irrelevante') {
