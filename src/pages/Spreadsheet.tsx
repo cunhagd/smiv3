@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -688,6 +689,7 @@ const Spreadsheet = () => {
   const [total, setTotal] = useState(0);
   const [cursor, setCursor] = useState(null);
   const [nextCursor, setNextCursor] = useState(null);
+  const [previousCursors, setPreviousCursors] = useState<string[]>([]);
   const [limit] = useState(80);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -702,10 +704,12 @@ const Spreadsheet = () => {
       setFiltroRelevancia('Relevante');
       setFiltroEstrategica(false);
       setCursor(null);
+      setPreviousCursors([]);
     } else {
       setFiltroRelevancia('Irrelevante');
       setFiltroEstrategica(false);
       setCursor(null);
+      setPreviousCursors([]);
     }
   };
 
@@ -713,6 +717,7 @@ const Spreadsheet = () => {
     setFiltroEstrategica((prev) => !prev);
     setFiltroRelevancia('Relevante');
     setCursor(null);
+    setPreviousCursors([]);
   };
 
   const columns = filtroEstrategica ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias) : getColumns(noticias, setNoticias);
@@ -725,13 +730,16 @@ const Spreadsheet = () => {
     );
   };
 
-  const updateAvaliacao = (id, novaAvaliacao) => {
+  const updateAvaliacao = (id, novaAvaliacao, novosPontos) => {
     setNoticias((prevNoticias) =>
       prevNoticias.map((noticia) => {
         if (noticia.id === id) {
           const pontosBrutos = Math.abs(noticia.pontos || 0);
-          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-          return { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos };
+          const calculatedNovosPontos = novosPontos !== undefined 
+            ? novosPontos 
+            : (novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos);
+          
+          return { ...noticia, avaliacao: novaAvaliacao, pontos: calculatedNovosPontos };
         }
         return noticia;
       })
@@ -854,6 +862,7 @@ const Spreadsheet = () => {
     if (range.from && range.to) {
       setDateRange({ from: range.from, to: range.to });
       setCursor(null);
+      setPreviousCursors([]);
     }
   };
 
@@ -920,6 +929,8 @@ const Spreadsheet = () => {
               nextCursor={nextCursor}
               limit={limit}
               total={total}
+              previousCursors={previousCursors}
+              setPreviousCursors={setPreviousCursors}
             />
           )}
         </div>
