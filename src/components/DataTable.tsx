@@ -54,6 +54,7 @@ const DataTable = ({
 }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [localPreviousCursors, setLocalPreviousCursors] = useState<string[]>(previousCursors);
+  const [allCursors, setAllCursors] = useState<string[]>([]);
 
   const displayedData = data;
 
@@ -89,6 +90,14 @@ const DataTable = ({
   };
 
   const handleGoToPage = (pageNumber: number) => {
+    const storedCursors = setPreviousCursors ? previousCursors : localPreviousCursors;
+    const currentPage = cursor ? storedCursors.length + 2 : 1;
+    
+    if (pageNumber === currentPage) {
+      // Já estamos na página solicitada
+      return;
+    }
+    
     if (pageNumber === 1) {
       // Voltar para a primeira página
       setCursor(null);
@@ -97,39 +106,34 @@ const DataTable = ({
       } else {
         setLocalPreviousCursors([]);
       }
-    } else if (pageNumber > currentPage) {
-      // Avançar para frente
-      let tempCursors = [];
-      let tempNextCursor = nextCursor;
-      
-      // Precisamos avançar (pageNumber - currentPage) vezes
-      const stepsForward = pageNumber - currentPage;
-      
-      if (stepsForward === 1 && nextCursor) {
-        handleNextPage();
-      } else {
-        console.warn("Salto direto para páginas não-adjacentes não é suportado pela API atual");
-        // Para APIs que suportam paginação por número de página, poderíamos implementar:
-        // setCursor(`page=${pageNumber}`);
-      }
+    } else if (pageNumber === currentPage + 1 && nextCursor) {
+      // Avançar para a próxima página
+      handleNextPage();
+    } else if (pageNumber === currentPage - 1 && storedCursors.length > 0) {
+      // Voltar para a página anterior
+      handlePreviousPage();
     } else if (pageNumber < currentPage) {
-      // Voltar páginas
-      const stepsBack = currentPage - pageNumber;
+      // Voltar várias páginas
+      const newCursors = storedCursors.slice(0, pageNumber - 1);
       
-      if (pageNumber === 1) {
-        // Caso especial para voltar à primeira página
-        setCursor(null);
-        if (setPreviousCursors) {
-          setPreviousCursors([]);
-        } else {
-          setLocalPreviousCursors([]);
-        }
-      } else if (stepsBack === 1 && storedCursors.length > 0) {
-        // Voltar uma página é suportado
-        handlePreviousPage();
+      if (setPreviousCursors) {
+        setPreviousCursors(newCursors);
       } else {
-        console.warn("Salto direto para páginas anteriores não-adjacentes não é suportado pela API atual");
+        setLocalPreviousCursors(newCursors);
       }
+      
+      const targetCursor = pageNumber === 1 ? null : newCursors[newCursors.length - 1];
+      setCursor(targetCursor);
+    } else {
+      // Este é o caso em que pageNumber > currentPage + 1
+      // Infelizmente, não podemos pular diretamente para páginas mais avançadas
+      // devido à natureza da paginação baseada em cursor
+      console.warn("Não é possível pular diretamente para páginas avançadas devido à paginação baseada em cursor.");
+      toast({
+        title: "Limitação da paginação",
+        description: "Não é possível pular diretamente para páginas avançadas. Navegue sequencialmente.",
+        variant: "warning"
+      });
     }
   };
 
@@ -169,10 +173,14 @@ const DataTable = ({
         startPage = 2;
         endPage = 4;
         pageNumbers.push(...Array.from({length: endPage - startPage + 1}, (_, i) => startPage + i));
-        pageNumbers.push(-1); // -1 representa uma elipse
+        if (totalPages > 5) {
+          pageNumbers.push(-1); // -1 representa uma elipse
+        }
       } else if (currentPage >= totalPages - 2) {
         // Se a página atual estiver no fim
-        pageNumbers.push(-1); // elipse
+        if (totalPages > 5) {
+          pageNumbers.push(-1); // elipse
+        }
         startPage = totalPages - 3;
         endPage = totalPages - 1;
         pageNumbers.push(...Array.from({length: endPage - startPage + 1}, (_, i) => startPage + i));
@@ -182,17 +190,28 @@ const DataTable = ({
         pageNumbers.push(currentPage - 1);
         pageNumbers.push(currentPage);
         pageNumbers.push(currentPage + 1);
-        pageNumbers.push(-1); // elipse
+        if (currentPage + 2 < totalPages) {
+          pageNumbers.push(-1); // elipse
+        }
       }
 
-      // Sempre mostrar a última página
-      pageNumbers.push(totalPages);
+      // Sempre mostrar a última página se for diferente da atual
+      if (totalPages !== pageNumbers[pageNumbers.length - 1]) {
+        pageNumbers.push(totalPages);
+      }
     }
 
     return pageNumbers;
   };
 
   const pageNumbers = getPageNumbers();
+
+  // Function to generate proper description for toast
+  const toast = ({ title, description, variant }) => {
+    console.warn(`${title}: ${description}`);
+    // This is a placeholder for actual toast implementation
+    // In a real application, you would use something like useToast() from your toast hook
+  };
 
   return (
     <div className="w-full">      
@@ -277,7 +296,9 @@ const DataTable = ({
                   <PaginationLink 
                     isActive={currentPage === pageNumber}
                     onClick={() => handleGoToPage(pageNumber)}
-                    className="cursor-pointer"
+                    className={`cursor-pointer ${
+                      pageNumber > currentPage + 1 ? 'opacity-70' : ''
+                    }`}
                   >
                     {pageNumber}
                   </PaginationLink>
