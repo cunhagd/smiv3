@@ -20,7 +20,7 @@ interface DataTableProps {
   columns: Column[];
   updateTema?: (id: string, novoTema: string) => void;
   updateAvaliacao?: (id: string, novaAvaliacao: string) => void;
-  currentPage: number; // Adiciona currentPage como prop
+  currentPage: number; // Substitui cursor por currentPage
   setCurrentPage: (page: number) => void; // Função para atualizar a página atual
   limit: number;
   total: number;
