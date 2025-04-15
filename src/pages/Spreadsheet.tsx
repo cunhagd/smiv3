@@ -686,8 +686,7 @@ const Spreadsheet = () => {
   const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
   const [noticias, setNoticias] = useState([]);
   const [total, setTotal] = useState(0);
-  const [cursor, setCursor] = useState(null);
-  const [nextCursor, setNextCursor] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1); // Substitui cursor por currentPage
   const [limit] = useState(80);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -701,18 +700,18 @@ const Spreadsheet = () => {
     if (filtroRelevancia === 'Irrelevante') {
       setFiltroRelevancia('Relevante');
       setFiltroEstrategica(false);
-      setCursor(null);
+      setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
     } else {
       setFiltroRelevancia('Irrelevante');
       setFiltroEstrategica(false);
-      setCursor(null);
+      setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
     }
   };
 
   const toggleFiltroEstrategica = () => {
     setFiltroEstrategica((prev) => !prev);
     setFiltroRelevancia('Relevante');
-    setCursor(null);
+    setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
   };
 
   const columns = filtroEstrategica ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias) : getColumns(noticias, setNoticias);
@@ -794,16 +793,16 @@ const Spreadsheet = () => {
     setError(null);
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
-    console.log('Chamando API com from:', from, 'e to:', to, 'cursor:', cursor, 'limit:', limit);
+    console.log('Chamando API com from:', from, 'e to:', to, 'currentPage:', currentPage, 'limit:', limit);
 
-    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}&limit=${limit}`;
+    // Calcula o offset com base na página atual
+    const offset = (currentPage - 1) * limit;
+
+    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}&limit=${limit}&offset=${offset}`; // Usa offset em vez de cursor
     if (filtroEstrategica) {
       url += '&mostrarEstrategicas=true';
     } else if (filtroRelevancia === 'Irrelevante') {
       url += '&mostrarIrrelevantes=true';
-    }
-    if (cursor) {
-      url += `&after=${cursor}`;
     }
 
     fetch(url)
@@ -814,7 +813,7 @@ const Spreadsheet = () => {
       })
       .then(async (response) => {
         console.log('Dados recebidos da API (primeiras 3 notícias):', response.data.slice(0, 3));
-        const { data, nextCursor, total } = response;
+        const { data, total } = response;
         if (Array.isArray(data)) {
           const dataWithIds = data.map((item, index) => ({
             ...item,
@@ -822,12 +821,10 @@ const Spreadsheet = () => {
           }));
           const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
           setNoticias(noticiasComPontos);
-          setNextCursor(nextCursor);
           setTotal(total);
         } else {
           console.warn('A resposta da API não contém um array de dados:', response);
           setNoticias([]);
-          setNextCursor(null);
           setTotal(0);
         }
       })
@@ -840,20 +837,19 @@ const Spreadsheet = () => {
           variant: "destructive",
         });
         setNoticias([]);
-        setNextCursor(null);
         setTotal(0);
       })
       .finally(() => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange, filtroRelevancia, filtroEstrategica, cursor, limit, toast]);
+  }, [dateRange, filtroRelevancia, filtroEstrategica, currentPage, limit, toast]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
     if (range.from && range.to) {
       setDateRange({ from: range.from, to: range.to });
-      setCursor(null);
+      setCurrentPage(1); // Reseta para a página 1 ao mudar o intervalo de datas
     }
   };
 
@@ -915,9 +911,8 @@ const Spreadsheet = () => {
               columns={columns}
               updateTema={updateTema}
               updateAvaliacao={updateAvaliacao}
-              cursor={cursor}
-              setCursor={setCursor}
-              nextCursor={nextCursor}
+              currentPage={currentPage} // Passa currentPage
+              setCurrentPage={setCurrentPage} // Passa setCurrentPage
               limit={limit}
               total={total}
             />

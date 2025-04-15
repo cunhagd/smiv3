@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { 
   ChevronDown, 
@@ -21,48 +20,26 @@ interface DataTableProps {
   columns: Column[];
   updateTema?: (id: string, novoTema: string) => void;
   updateAvaliacao?: (id: string, novaAvaliacao: string) => void;
-  cursor: string | null;
-  setCursor: (cursor: string | null) => void;
-  nextCursor: string | null;
+  currentPage: number; // Adiciona currentPage como prop
+  setCurrentPage: (page: number) => void; // Função para atualizar a página atual
   limit: number;
   total: number;
 }
 
-const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCursor, nextCursor, limit, total }: DataTableProps) => {
+const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentPage, setCurrentPage, limit, total }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
-  const [previousCursors, setPreviousCursors] = useState<string[]>([]);
 
   const displayedData = data;
 
-  const handleNextPage = () => {
-    if (nextCursor) {
-      // Salva o cursor atual para poder voltar depois
-      if (cursor) {
-        setPreviousCursors(prev => [...prev, cursor]);
-      }
-      setCursor(nextCursor);
-    }
-  };
-
-  const handlePreviousPage = () => {
-    if (previousCursors.length > 0) {
-      // Pega o último cursor do histórico
-      const lastCursor = previousCursors[previousCursors.length - 1];
-      // Remove o último cursor do histórico
-      setPreviousCursors(prev => prev.slice(0, -1));
-      // Define o cursor para o último cursor do histórico
-      setCursor(lastCursor);
-    }
-  };
-
-  const handleReset = () => {
-    setCursor(null);
-    setPreviousCursors([]);
-  };
-
-  // Calcula informações de paginação
-  const currentPage = cursor ? Math.floor(displayedData.length / limit) + 1 : 1;
+  // Calcula o número total de páginas
   const totalPages = Math.ceil(total / limit);
+
+  // Função para mudar diretamente para uma página específica
+  const handlePageChange = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+    }
+  };
 
   return (
     <div className="w-full">      
@@ -130,24 +107,39 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, cursor, setCurs
           <span className="px-2 py-1">
             Página {currentPage} de {totalPages}
           </span>
+          {/* Botão "Voltar ao início" */}
           <button 
             className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={cursor === null}
-            onClick={handleReset}
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(1)}
           >
             Voltar ao início
           </button>
+          {/* Botão "Página anterior" */}
           <button 
             className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={previousCursors.length === 0}
-            onClick={handlePreviousPage}
+            disabled={currentPage === 1}
+            onClick={() => handlePageChange(currentPage - 1)}
           >
             Voltar
           </button>
+          {/* Seleção direta de página */}
+          <select
+            value={currentPage}
+            onChange={(e) => handlePageChange(Number(e.target.value))}
+            className="px-2 py-1 rounded border border-white/10 bg-dark-card text-white"
+          >
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <option key={page} value={page}>
+                {page}
+              </option>
+            ))}
+          </select>
+          {/* Botão "Próxima página" */}
           <button 
             className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={!nextCursor}
-            onClick={handleNextPage}
+            disabled={currentPage === totalPages}
+            onClick={() => handlePageChange(currentPage + 1)}
           >
             Próximo
           </button>
