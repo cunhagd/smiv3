@@ -2,10 +2,10 @@
 import React, { useState, useEffect } from 'react';
 import { format, isToday } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { Calendar as CalendarIcon, ChevronDown } from 'lucide-react';
+import { Calendar, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
 import { Button } from '@/components/ui/button';
-import { Calendar } from '@/components/ui/calendar';
+import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 
 type DateRange = {
@@ -114,7 +114,7 @@ const DateRangePicker = ({ onChange }: DateRangePickerProps) => {
           variant="outline" 
           className="flex items-center gap-2 px-3 py-2 bg-dark-card border border-white/10 rounded-lg hover:bg-dark-card-hover"
         >
-          <CalendarIcon className="h-4 w-4 text-gray-400" />
+          <Calendar className="h-4 w-4 text-gray-400" />
           <span className="text-sm whitespace-nowrap">{formatDateRange()}</span>
           <ChevronDown className="h-4 w-4 text-gray-400" />
         </Button>
@@ -155,14 +155,13 @@ const DateRangePicker = ({ onChange }: DateRangePickerProps) => {
                 </Button>
               </div>
             )}
-            <Calendar
+            <CalendarComponent
               mode="range"
               defaultMonth={dateRange.from}
               selected={dateRange}
               onSelect={handleDateRangeChange}
               numberOfMonths={2}
               locale={ptBR}
-              className="pointer-events-auto"
             />
             <div className="mt-4 flex justify-end">
               <Button 
