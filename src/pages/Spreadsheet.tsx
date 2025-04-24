@@ -686,7 +686,8 @@ const Spreadsheet = () => {
   const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
   const [noticias, setNoticias] = useState([]);
   const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1); // Substitui cursor por currentPage
+  const [uniqueDates, setUniqueDates] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
   const [limit] = useState(80);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -695,6 +696,10 @@ const Spreadsheet = () => {
   const [filtroEstrategica, setFiltroEstrategica] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const [subcategorias, setSubcategorias] = useState([]);
+
+  const columns = filtroEstrategica 
+    ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias) 
+    : getColumns(noticias, setNoticias);
 
   const toggleFiltroRelevancia = () => {
     if (filtroRelevancia === 'Irrelevante') {
@@ -713,8 +718,6 @@ const Spreadsheet = () => {
     setFiltroRelevancia('Relevante');
     setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
   };
-
-  const columns = filtroEstrategica ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias) : getColumns(noticias, setNoticias);
 
   const updateTema = (id, novoTema) => {
     setNoticias((prevNoticias) =>
@@ -789,138 +792,3 @@ const Spreadsheet = () => {
 
   useEffect(() => {
     console.log('useEffect iniciado');
-    setIsLoading(true);
-    setError(null);
-    const from = dateRange.from.toISOString().split('T')[0];
-    const to = dateRange.to.toISOString().split('T')[0];
-    console.log('Chamando API com from:', from, 'e to:', to, 'currentPage:', currentPage, 'limit:', limit);
-
-    // Calcula o offset com base na página atual
-    const offset = (currentPage - 1) * limit;
-
-    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}&limit=${limit}&offset=${offset}`; // Usa offset em vez de cursor
-    if (filtroEstrategica) {
-      url += '&mostrarEstrategicas=true';
-    } else if (filtroRelevancia === 'Irrelevante') {
-      url += '&mostrarIrrelevantes=true';
-    }
-
-    fetch(url)
-      .then((response) => {
-        console.log('Resposta bruta da API:', response.status, response.statusText);
-        if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-        return response.json();
-      })
-      .then(async (response) => {
-        console.log('Dados recebidos da API (primeiras 3 notícias):', response.data.slice(0, 3));
-        const { data, total } = response;
-        if (Array.isArray(data)) {
-          const dataWithIds = data.map((item, index) => ({
-            ...item,
-            id: item.id || `noticia-${index}`,
-          }));
-          const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
-          setNoticias(noticiasComPontos);
-          setTotal(total);
-        } else {
-          console.warn('A resposta da API não contém um array de dados:', response);
-          setNoticias([]);
-          setTotal(0);
-        }
-      })
-      .catch((error) => {
-        console.error('Erro ao buscar notícias:', error.message);
-        setError(error.message);
-        toast({
-          title: "Erro ao buscar notícias",
-          description: error.message,
-          variant: "destructive",
-        });
-        setNoticias([]);
-        setTotal(0);
-      })
-      .finally(() => {
-        console.log('useEffect finalizado');
-        setIsLoading(false);
-      });
-  }, [dateRange, filtroRelevancia, filtroEstrategica, currentPage, limit, toast]);
-
-  const handleDateRangeChange = (range) => {
-    console.log('DateRange alterado:', range);
-    if (range.from && range.to) {
-      setDateRange({ from: range.from, to: range.to });
-      setCurrentPage(1); // Reseta para a página 1 ao mudar o intervalo de datas
-    }
-  };
-
-  console.log('Renderizando Spreadsheet, noticias:', noticias);
-
-  return (
-    <div className="min-h-screen bg-dark-bg text-white">
-      <Navbar />
-      <main className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
-            <p className="text-gray-400">Gerenciamento e análise de notícias</p>
-          </div>
-          <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <Button
-              variant="default"
-              onClick={toggleFiltroEstrategica}
-              className={
-                filtroEstrategica
-                  ? "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
-                  : "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
-              }
-            >
-              {filtroEstrategica ? 'Voltar' : 'Abrir Estratégicas'}
-              {filtroEstrategica ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
-            </Button>
-            <Button
-              variant="default"
-              onClick={toggleFiltroRelevancia}
-              className={
-                filtroRelevancia === 'Irrelevante'
-                  ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
-                  : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
-              }
-            >
-              {filtroRelevancia === 'Irrelevante' ? 'Voltar' : 'Abrir Irrelevantes'}
-              {filtroRelevancia === 'Irrelevante' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
-            </Button>
-            <DateRangePicker onChange={handleDateRangeChange} />
-          </div>
-        </div>
-        <div className="dashboard-card">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Carregando dados...</p>
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-red-400">Erro ao carregar dados: {error}</p>
-            </div>
-          ) : noticias.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Nenhuma notícia encontrada</p>
-            </div>
-          ) : (
-            <DataTable
-              data={noticias}
-              columns={columns}
-              updateTema={updateTema}
-              updateAvaliacao={updateAvaliacao}
-              currentPage={currentPage} // Passa currentPage
-              setCurrentPage={setCurrentPage} // Passa setCurrentPage
-              limit={limit}
-              total={total}
-            />
-          )}
-        </div>
-      </main>
-    </div>
-  );
-};
-
-export default Spreadsheet;
