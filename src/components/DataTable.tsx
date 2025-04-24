@@ -63,8 +63,7 @@ const DataTable = ({
           <PaginationItem>
             <PaginationPrevious 
               onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage <= 1} 
-              className={currentPage <= 1 ? "opacity-50 cursor-not-allowed" : ""}
+              className={currentPage <= 1 ? "opacity-50 pointer-events-none" : ""}
             />
           </PaginationItem>
 
@@ -86,8 +85,7 @@ const DataTable = ({
           <PaginationItem>
             <PaginationNext
               onClick={() => setCurrentPage(Math.min(availableDates.length, currentPage + 1))}
-              disabled={currentPage >= availableDates.length}
-              className={currentPage >= availableDates.length ? "opacity-50 cursor-not-allowed" : ""}
+              className={currentPage >= availableDates.length ? "opacity-50 pointer-events-none" : ""}
             />
           </PaginationItem>
         </PaginationContent>

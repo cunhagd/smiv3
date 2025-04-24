@@ -2,12 +2,12 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX } from 'lucide-react';
+import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleCheckBig, CircleX } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
-import pt from 'date-fns/locale/pt';
+import { pt } from 'date-fns/locale/pt';
 
 // Centralizar a URL base
 const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app'; // Ajuste para produção se necessário
@@ -922,7 +922,7 @@ const Spreadsheet = () => {
             </Button>
           </div>
 
-          <DateRangePicker value={dateRange} onChange={setDateRange} />
+          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
         </div>
 
         {/* Loading State */}
