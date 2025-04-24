@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
@@ -7,7 +6,7 @@ import DateRangePicker from '@/components/DateRangePicker';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { format } from 'date-fns';
-import { pt } from 'date-fns/locale/pt';
+import { ptBR } from 'date-fns/locale';
 
 // Centralizar a URL base
 const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app'; // Ajuste para produção se necessário
@@ -26,20 +25,40 @@ const TEMAS = [
 ];
 
 const AVALIACOES = [
-  { valor: 'Positiva', cor: '#F2FCE2', icone: ThumbsUp },
-  { valor: 'Neutra', cor: '#F1F0FB', icone: Minus },
-  { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
+  {
+    valor: 'Positiva',
+    cor: '#F2FCE2',
+    icone: ThumbsUp
+  },
+  {
+    valor: 'Neutra',
+    cor: '#F1F0FB',
+    icone: Minus
+  },
+  {
+    valor: 'Negativa',
+    cor: '#FFDEE2',
+    icone: ThumbsDown
+  }
 ];
 
 const RELEVANCIA = [
-  { valor: 'Relevante', cor: '#F2FCE2', icone: CircleCheckBig },
-  { valor: 'Irrelevante', cor: '#FFDEE2', icone: CircleX },
+  {
+    valor: 'Relevante',
+    cor: '#F2FCE2',
+    icone: CircleCheckBig
+  },
+  {
+    valor: 'Irrelevante',
+    cor: '#FFDEE2',
+    icone: CircleX
+  }
 ];
 
 const ESTRATEGICA = [
   'Selecionar',
   'Sim',
-  'Não',
+  'Não'
 ];
 
 const MENSAGEM_PADRAO = "Selecionar";
@@ -782,185 +801,3 @@ const Spreadsheet = () => {
         console.log('Subcategorias disponíveis:', subcategoriasUnicas);
       } catch (error) {
         console.error('Erro ao buscar categorias e subcategorias:', error.message);
-        toast({
-          title: "Erro ao buscar categorias",
-          description: "Não foi possível carregar as categorias e subcategorias.",
-          variant: "destructive",
-        });
-      }
-    };
-
-    fetchCategoriasESubcategorias();
-  }, [toast]);
-
-  useEffect(() => {
-    console.log('useEffect iniciado');
-    
-    // Função para buscar notícias da API
-    const fetchNoticias = async () => {
-      if (!dateRange.from || !dateRange.to) {
-        console.log('Data range inválido:', dateRange);
-        return;
-      }
-      
-      setIsLoading(true);
-      setError(null);
-      
-      try {
-        const from = format(dateRange.from, 'yyyy-MM-dd');
-        const to = format(dateRange.to, 'yyyy-MM-dd');
-        
-        console.log(`Buscando notícias de ${from} até ${to}`);
-        
-        const url = `${API_BASE_URL}/noticias?from=${from}&to=${to}`;
-        console.log('URL da requisição:', url);
-        
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Falha ao buscar notícias');
-        
-        const { data, total } = await response.json();
-        console.log(`Notícias carregadas: ${data.length}, Total: ${total}`);
-        
-        // Processar as datas das notícias
-        const noticiasComPontos = await buscarPontosDasNoticias(data);
-        
-        // Organizar notícias por data
-        const noticiasAgrupadas: {[key: string]: any[]} = {};
-        const datasUnicas: string[] = [];
-        
-        noticiasComPontos.forEach(noticia => {
-          // Formato da data: "data": "2023-07-19 14:11:00"
-          const data = noticia.data.split(' ')[0]; // Pega apenas a parte da data
-          
-          if (!noticiasAgrupadas[data]) {
-            noticiasAgrupadas[data] = [];
-            datasUnicas.push(data);
-          }
-          
-          noticiasAgrupadas[data].push(noticia);
-        });
-        
-        // Ordenar as datas em ordem decrescente (mais recente primeiro)
-        datasUnicas.sort((a, b) => new Date(b).getTime() - new Date(a).getTime());
-        
-        setNoticiasPorData(noticiasAgrupadas);
-        setUniqueDates(datasUnicas);
-        
-        // Definir a visualização inicial para a primeira data disponível
-        if (datasUnicas.length > 0) {
-          const noticiasDaPrimeiraPagina = noticiasAgrupadas[datasUnicas[currentPage - 1]] || [];
-          setNoticias(noticiasDaPrimeiraPagina);
-        } else {
-          setNoticias([]);
-        }
-        
-      } catch (error) {
-        console.error('Erro ao buscar notícias:', error);
-        setError(error.message);
-        toast({
-          title: "Erro ao buscar notícias",
-          description: "Não foi possível carregar as notícias. Verifique sua conexão e tente novamente.",
-          variant: "destructive",
-        });
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    
-    fetchNoticias();
-  }, [dateRange, toast]);
-  
-  // Atualizar notícias quando a página muda
-  useEffect(() => {
-    if (uniqueDates.length > 0) {
-      const dataAtual = uniqueDates[currentPage - 1];
-      if (dataAtual && noticiasPorData[dataAtual]) {
-        setNoticias(noticiasPorData[dataAtual]);
-      }
-    }
-  }, [currentPage, uniqueDates, noticiasPorData]);
-
-  // Obter a data atual formatada para exibição
-  const dataAtual = uniqueDates[currentPage - 1] 
-    ? format(new Date(uniqueDates[currentPage - 1]), 'dd/MM/yyyy', { locale: pt })
-    : '';
-
-  return (
-    <div className="bg-[#070F2B] min-h-screen text-white pb-12">
-      <Navbar />
-
-      {/* Introdução */}
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        <h1 className="text-2xl md:text-3xl font-semibold">Análise de Notícias</h1>
-        <p className="mt-2 text-gray-300 text-sm">
-          Acompanhe e classifique as notícias relacionadas à empresa
-        </p>
-
-        {/* Filtros e seleção de data */}
-        <div className="mt-6 flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="flex flex-col md:flex-row gap-2">
-            <Button
-              onClick={toggleFiltroRelevancia}
-              variant={filtroRelevancia === 'Relevante' ? 'outline' : 'secondary'}
-              className={filtroRelevancia === 'Relevante' ? 'bg-[#E2F2FC] text-black' : ''}
-            >
-              Notícias Relevantes
-            </Button>
-            <Button
-              onClick={toggleFiltroRelevancia}
-              variant={filtroRelevancia === 'Irrelevante' ? 'outline' : 'secondary'}
-              className={filtroRelevancia === 'Irrelevante' ? 'bg-[#E2F2FC] text-black' : ''}
-            >
-              Notícias Irrelevantes
-            </Button>
-            <Button
-              onClick={toggleFiltroEstrategica}
-              variant={filtroEstrategica ? 'outline' : 'secondary'}
-              className={filtroEstrategica ? 'bg-[#E2F2FC] text-black' : ''}
-            >
-              Notícias Estratégicas
-            </Button>
-          </div>
-
-          <DateRangePicker dateRange={dateRange} onDateRangeChange={setDateRange} />
-        </div>
-
-        {/* Loading State */}
-        {isLoading && (
-          <div className="mt-8 flex justify-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-b-4 border-blue-500"></div>
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !isLoading && (
-          <div className="mt-8 bg-red-900/20 border border-red-900 text-red-200 p-4 rounded-lg">
-            <h3 className="font-medium text-red-100">Erro ao carregar notícias</h3>
-            <p className="mt-1">{error}</p>
-            <p className="mt-2">Verifique sua conexão e tente novamente.</p>
-          </div>
-        )}
-
-        {/* Tabela de Notícias */}
-        {!isLoading && !error && (
-          <div className="mt-8">
-            <DataTable 
-              data={noticias}
-              columns={columns}
-              updateTema={updateTema}
-              updateAvaliacao={updateAvaliacao}
-              currentPage={currentPage}
-              setCurrentPage={setCurrentPage}
-              limit={limit}
-              total={uniqueDates.length}
-              currentDate={dataAtual}
-              availableDates={uniqueDates}
-            />
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-export default Spreadsheet;
