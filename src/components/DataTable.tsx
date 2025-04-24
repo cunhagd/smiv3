@@ -1,3 +1,4 @@
+
 import React, { useState } from 'react';
 import { 
   ChevronDown, 
@@ -6,6 +7,15 @@ import {
   MoreHorizontal
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import {
+  Pagination,
+  PaginationContent,
+  PaginationEllipsis,
+  PaginationItem,
+  PaginationLink,
+  PaginationNext,
+  PaginationPrevious,
+} from "@/components/ui/pagination";
 
 interface Column {
   id: string;
@@ -20,29 +30,144 @@ interface DataTableProps {
   columns: Column[];
   updateTema?: (id: string, novoTema: string) => void;
   updateAvaliacao?: (id: string, novaAvaliacao: string) => void;
-  currentPage: number; // Substitui cursor por currentPage
-  setCurrentPage: (page: number) => void; // Função para atualizar a página atual
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
   limit: number;
   total: number;
+  currentDate?: string; // Data atual que está sendo exibida
+  availableDates?: string[]; // Lista de datas disponíveis
 }
 
-const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentPage, setCurrentPage, total }: DataTableProps) => {
+const DataTable = ({ 
+  data, 
+  columns, 
+  updateTema, 
+  updateAvaliacao, 
+  currentPage, 
+  setCurrentPage, 
+  total,
+  currentDate,
+  availableDates = []
+}: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const displayedData = data;
 
-  // Calcula o número total de páginas
-  const totalPages = Math.ceil(total / limit);
+  // Para renderizar os controles de paginação
+  const renderPaginationControls = () => {
+    if (availableDates.length === 0) return null;
+    
+    return (
+      <Pagination className="mt-4">
+        <PaginationContent>
+          <PaginationItem>
+            <PaginationPrevious 
+              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+              disabled={currentPage <= 1} 
+              className={currentPage <= 1 ? "opacity-50 cursor-not-allowed" : ""}
+            />
+          </PaginationItem>
 
-  // Função para mudar diretamente para uma página específica
-  const handlePageChange = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
+          {availableDates.length > 10 ? (
+            renderPageNumbers()
+          ) : (
+            availableDates.map((date, index) => (
+              <PaginationItem key={date}>
+                <PaginationLink
+                  isActive={index + 1 === currentPage}
+                  onClick={() => setCurrentPage(index + 1)}
+                >
+                  {index + 1}
+                </PaginationLink>
+              </PaginationItem>
+            ))
+          )}
+
+          <PaginationItem>
+            <PaginationNext
+              onClick={() => setCurrentPage(Math.min(availableDates.length, currentPage + 1))}
+              disabled={currentPage >= availableDates.length}
+              className={currentPage >= availableDates.length ? "opacity-50 cursor-not-allowed" : ""}
+            />
+          </PaginationItem>
+        </PaginationContent>
+      </Pagination>
+    );
+  };
+
+  const renderPageNumbers = () => {
+    const totalPages = availableDates.length;
+    
+    // Determinar quais páginas mostrar
+    let startPage = Math.max(1, currentPage - 2);
+    let endPage = Math.min(totalPages, startPage + 4);
+    
+    // Ajustar se estiver perto do final
+    if (endPage - startPage < 4) {
+      startPage = Math.max(1, endPage - 4);
     }
+    
+    const pages = [];
+    
+    // Primeira página
+    if (startPage > 1) {
+      pages.push(
+        <PaginationItem key="1">
+          <PaginationLink onClick={() => setCurrentPage(1)}>
+            1
+          </PaginationLink>
+        </PaginationItem>
+      );
+      
+      // Mostrar ellipsis se necessário
+      if (startPage > 2) {
+        pages.push(
+          <PaginationItem key="start-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+    }
+    
+    // Páginas do meio
+    for (let i = startPage; i <= endPage; i++) {
+      pages.push(
+        <PaginationItem key={i}>
+          <PaginationLink
+            isActive={i === currentPage}
+            onClick={() => setCurrentPage(i)}
+          >
+            {i}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    // Última página
+    if (endPage < totalPages) {
+      // Mostrar ellipsis se necessário
+      if (endPage < totalPages - 1) {
+        pages.push(
+          <PaginationItem key="end-ellipsis">
+            <PaginationEllipsis />
+          </PaginationItem>
+        );
+      }
+      
+      pages.push(
+        <PaginationItem key={totalPages}>
+          <PaginationLink onClick={() => setCurrentPage(totalPages)}>
+            {totalPages}
+          </PaginationLink>
+        </PaginationItem>
+      );
+    }
+    
+    return pages;
   };
 
   return (
-    <div className="w-full">      
+    <div className="w-full">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -102,44 +227,11 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentPage, se
       <div className="mt-4 flex justify-between items-center text-sm text-gray-400">
         <div>
           Mostrando {data.length} notícias
+          {currentDate && (
+            <span className="ml-1 font-medium">• {currentDate}</span>
+          )}
         </div>
-        <div className="flex items-center gap-2">
-          <span className="px-2 py-1">
-            Página {currentPage} de {total}
-          </span>
-          <button 
-            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(1)}
-          >
-            Voltar ao início
-          </button>
-          <button 
-            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={currentPage === 1}
-            onClick={() => setCurrentPage(currentPage - 1)}
-          >
-            Anterior
-          </button>
-          <select
-            value={currentPage}
-            onChange={(e) => setCurrentPage(Number(e.target.value))}
-            className="px-2 py-1 rounded border border-white/10 bg-dark-card text-white"
-          >
-            {Array.from({ length: total }, (_, i) => i + 1).map((page) => (
-              <option key={page} value={page}>
-                {page}
-              </option>
-            ))}
-          </select>
-          <button 
-            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={currentPage === total}
-            onClick={() => setCurrentPage(currentPage + 1)}
-          >
-            Próximo
-          </button>
-        </div>
+        {renderPaginationControls()}
       </div>
     </div>
   );
