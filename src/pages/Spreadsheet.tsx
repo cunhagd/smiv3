@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
-import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX } from 'lucide-react';
+import { ExternalLink, ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX, ShieldPlus } from 'lucide-react';
 import DateRangePicker from '@/components/DateRangePicker';
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
@@ -29,8 +29,9 @@ const AVALIACOES = [
 ];
 
 const RELEVANCIA = [
-  { valor: 'Relevante', cor: '#F2FCE2', icone: CircleCheckBig },
-  { valor: 'Irrelevante', cor: '#FFDEE2', icone: CircleX },
+  { valor: 'Útil', cor: '#F2FCE2', icone: CircleCheckBig },
+  { valor: 'Lixo', cor: '#FFDEE2', icone: CircleX },
+  {valor: 'Suporte', cor: '#B8E2F4', icone: ShieldPlus}
 ];
 
 const ESTRATEGICA = [
@@ -46,14 +47,18 @@ function RelevanciaCell({ row, setNoticias }) {
   const id = data.id;
 
   const mapRelevanciaToString = (relevancia) => {
-    if (relevancia === true) return 'Relevante';
-    if (relevancia === false) return 'Irrelevante';
+    if (relevancia === 'Útil') return 'Útil';
+    if (relevancia === 'Lixo') return 'Lixo';
+    if (relevancia == 'Suporte') return 'Suporte';
+    if (relevancia == null) return 'Selecionar'
     return '';
   };
 
   const mapStringToRelevancia = (valor) => {
-    if (valor === 'Relevante') return true;
-    if (valor === 'Irrelevante') return false;
+    if (valor === 'Útil') return 'Útil';
+    if (valor === 'Lixo') return 'Lixo';
+    if (valor == 'Suporte') return 'Suporte';
+    if (valor == null) return 'Selecionar'
     return null;
   };
 
@@ -117,11 +122,14 @@ function RelevanciaCell({ row, setNoticias }) {
         }}
         disabled={isSaving}
         className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
-          relevSelecionada === 'Relevante' 
+          relevSelecionada === 'Útil' 
             ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400' 
-            : relevSelecionada === 'Irrelevante' 
+            : relevSelecionada === 'Lixo' 
             ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400' 
+            : relevSelecionada == 'Suporte'
+            ? 'bg-[#B8E2F4] text-blue-800 border-blue-300 focus:border-blue-400 focus:ring-blue-400/30 hover:border-blue-400'
             : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
+            
         }`}
       >
         <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
@@ -134,10 +142,12 @@ function RelevanciaCell({ row, setNoticias }) {
       {IconeRelevancia && (
         <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
           <IconeRelevancia className={`h-4 w-4 ${
-            relevSelecionada === 'Relevante' 
+            relevSelecionada === 'Útil' 
               ? 'text-green-600' 
-              : relevSelecionada === 'Irrelevante' 
+              : relevSelecionada === 'Lixo' 
               ? 'text-red-600' 
+              : relevSelecionada === 'Suporte'
+              ? 'text-blue-600'
               : 'text-gray-600'
           }`} />
         </div>
@@ -615,7 +625,7 @@ function SubCategoriaCell({ row, setNoticias, subcategorias }) {
 const getColumns = (noticias, setNoticias) => [
   {
     id: 'relevancia',
-    header: 'Relevância',
+    header: 'Útilidade',
     accessorKey: 'relevancia',
     sortable: true,
     cell: (info) => <RelevanciaCell row={info.row} setNoticias={setNoticias} />,
@@ -687,30 +697,29 @@ const Spreadsheet = () => {
   const [noticias, setNoticias] = useState([]);
   const [total, setTotal] = useState(0);
   const [currentPage, setCurrentPage] = useState(1); // Substitui cursor por currentPage
-  const [limit] = useState(80);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
   const { toast } = useToast();
-  const [filtroRelevancia, setFiltroRelevancia] = useState('Relevante');
+  const [filtroRelevancia, setFiltroRelevancia] = useState('Útil');
   const [filtroEstrategica, setFiltroEstrategica] = useState(false);
   const [categorias, setCategorias] = useState([]);
   const [subcategorias, setSubcategorias] = useState([]);
 
   const toggleFiltroRelevancia = () => {
-    if (filtroRelevancia === 'Irrelevante') {
-      setFiltroRelevancia('Relevante');
-      setFiltroEstrategica(false);
-      setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
+    if (filtroRelevancia === 'Lixo') {
+      setFiltroRelevancia('Útil');
+    } else if (filtroRelevancia === 'Útil') {
+      setFiltroRelevancia('Lixo');
     } else {
-      setFiltroRelevancia('Irrelevante');
-      setFiltroEstrategica(false);
-      setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
+      setFiltroRelevancia('Suporte');
     }
+    setFiltroEstrategica(false);
+    setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
   };
 
   const toggleFiltroEstrategica = () => {
     setFiltroEstrategica((prev) => !prev);
-    setFiltroRelevancia('Relevante');
+    setFiltroRelevancia('Útil');
     setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
   };
 
@@ -793,16 +802,16 @@ const Spreadsheet = () => {
     setError(null);
     const from = dateRange.from.toISOString().split('T')[0];
     const to = dateRange.to.toISOString().split('T')[0];
-    console.log('Chamando API com from:', from, 'e to:', to, 'currentPage:', currentPage, 'limit:', limit);
+    console.log('Chamando API com from:', from, 'e to:', to, 'currentPage:', currentPage);
 
     // Calcula o offset com base na página atual
-    const offset = (currentPage - 1) * limit;
+    const offset = (currentPage - 1);
 
-    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}&limit=${limit}&offset=${offset}`; // Usa offset em vez de cursor
+    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}`; // Usa offset em vez de cursor
     if (filtroEstrategica) {
       url += '&mostrarEstrategicas=true';
-    } else if (filtroRelevancia === 'Irrelevante') {
-      url += '&mostrarIrrelevantes=true';
+    } else if (filtroRelevancia === 'Lixo') {
+      url += '&mostrarLixos=true';
     }
 
     fetch(url)
@@ -843,7 +852,7 @@ const Spreadsheet = () => {
         console.log('useEffect finalizado');
         setIsLoading(false);
       });
-  }, [dateRange, filtroRelevancia, filtroEstrategica, currentPage, limit, toast]);
+  }, [dateRange, filtroRelevancia, filtroEstrategica, currentPage, toast]);
 
   const handleDateRangeChange = (range) => {
     console.log('DateRange alterado:', range);
@@ -881,13 +890,13 @@ const Spreadsheet = () => {
               variant="default"
               onClick={toggleFiltroRelevancia}
               className={
-                filtroRelevancia === 'Irrelevante'
+                filtroRelevancia === 'Lixo'
                   ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
                   : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
               }
             >
-              {filtroRelevancia === 'Irrelevante' ? 'Voltar' : 'Abrir Irrelevantes'}
-              {filtroRelevancia === 'Irrelevante' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
+              {filtroRelevancia === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
+              {filtroRelevancia === 'Lixo' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
             </Button>
             <DateRangePicker onChange={handleDateRangeChange} />
           </div>
@@ -913,7 +922,6 @@ const Spreadsheet = () => {
               updateAvaliacao={updateAvaliacao}
               currentPage={currentPage} // Passa currentPage
               setCurrentPage={setCurrentPage} // Passa setCurrentPage
-              limit={limit}
               total={total}
             />
           )}
