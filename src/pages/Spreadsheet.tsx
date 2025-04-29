@@ -625,7 +625,7 @@ function SubCategoriaCell({ row, setNoticias, subcategorias }) {
 const getColumns = (noticias, setNoticias) => [
   {
     id: 'relevancia',
-    header: 'Útilidade',
+    header: 'Utilidade',
     accessorKey: 'relevancia',
     sortable: true,
     cell: (info) => <RelevanciaCell row={info.row} setNoticias={setNoticias} />,
@@ -689,246 +689,233 @@ const getEstrategicasColumns = (noticias, setNoticias, categorias, subcategorias
 ];
 
 const Spreadsheet = () => {
-  const today = new Date();
-  const thirtyDaysAgo = new Date(today);
-  thirtyDaysAgo.setDate(today.getDate() - 30);
-
-  const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
-  const [noticias, setNoticias] = useState([]);
-  const [total, setTotal] = useState(0);
-  const [currentPage, setCurrentPage] = useState(1); // Substitui cursor por currentPage
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const { toast } = useToast();
-  const [filtroRelevancia, setFiltroRelevancia] = useState('Útil');
-  const [filtroEstrategica, setFiltroEstrategica] = useState(false);
-  const [categorias, setCategorias] = useState([]);
-  const [subcategorias, setSubcategorias] = useState([]);
-
-  const toggleFiltroRelevancia = () => {
-    if (filtroRelevancia === 'Lixo') {
-      setFiltroRelevancia('Útil');
-    } else if (filtroRelevancia === 'Útil') {
-      setFiltroRelevancia('Lixo');
-    } else {
-      setFiltroRelevancia('Suporte');
-    }
-    setFiltroEstrategica(false);
-    setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
-  };
-
-  const toggleFiltroEstrategica = () => {
-    setFiltroEstrategica((prev) => !prev);
-    setFiltroRelevancia('Útil');
-    setCurrentPage(1); // Reseta para a página 1 ao mudar o filtro
-  };
-
-  const columns = filtroEstrategica ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias) : getColumns(noticias, setNoticias);
-
-  const updateTema = (id, novoTema) => {
-    setNoticias((prevNoticias) =>
-      prevNoticias.map((noticia) =>
-        noticia.id === id ? { ...noticia, tema: novoTema } : noticia
-      )
-    );
-  };
-
-  const updateAvaliacao = (id, novaAvaliacao) => {
-    setNoticias((prevNoticias) =>
-      prevNoticias.map((noticia) => {
-        if (noticia.id === id) {
-          const pontosBrutos = Math.abs(noticia.pontos || 0);
-          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-          return { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos };
-        }
-        return noticia;
-      })
-    );
-  };
-
-  const buscarPontosDasNoticias = async (noticias) => {
-    try {
-      const response = await fetch(`${API_BASE_URL}/noticias/pontos`);
-      if (!response.ok) throw new Error('Falha ao buscar pontos das notícias');
-      const pontos = await response.json();
-      return noticias.map((noticia) => {
-        const noticiaPontos = pontos.find((p) => p.id === noticia.id);
-        let pontosNoticia = noticiaPontos ? noticiaPontos.pontos : 0;
-        if (noticia.avaliacao === 'Negativa') pontosNoticia = -Math.abs(pontosNoticia);
-        return { ...noticia, pontos: pontosNoticia };
-      });
-    } catch (error) {
-      console.error('Erro ao buscar pontos das notícias:', error.message);
-      toast({
-        title: "Erro ao buscar pontos",
-        description: "Não foi possível carregar os pontos das notícias.",
-        variant: "destructive",
-      });
-      return noticias;
-    }
-  };
-
-  useEffect(() => {
-    const fetchCategoriasESubcategorias = async () => {
+    const today = new Date();
+    const thirtyDaysAgo = new Date(today);
+    thirtyDaysAgo.setDate(today.getDate() - 30);
+  
+    const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
+    const [noticias, setNoticias] = useState([]);
+    const [total, setTotal] = useState(0);
+    const [currentPage, setCurrentPage] = useState(1);
+    const [limit] = useState(80);
+    const [isLoading, setIsLoading] = useState(true);
+    const [error, setError] = useState(null);
+    const { toast } = useToast();
+    const [filtroAtivo, setFiltroAtivo] = useState('Nenhum'); // 'Nenhum', 'Lixo', 'Estrategica'
+    const [categorias, setCategorias] = useState([]);
+    const [subcategorias, setSubcategorias] = useState([]);
+  
+    const toggleFiltroLixo = () => {
+      const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
+      setFiltroAtivo(novoFiltro);
+      setCurrentPage(1); // Reseta para a página 1
+    };
+  
+    const toggleFiltroEstrategica = () => {
+      const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
+      setFiltroAtivo(novoFiltro);
+      setCurrentPage(1); // Reseta para a página 1
+    };
+  
+    const columns = filtroAtivo === 'Estrategica'
+      ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias)
+      : getColumns(noticias, setNoticias);
+  
+    const updateTema = (id, novoTema) => {
+      setNoticias((prevNoticias) =>
+        prevNoticias.map((noticia) =>
+          noticia.id === id ? { ...noticia, tema: novoTema } : noticia
+        )
+      );
+    };
+  
+    const updateAvaliacao = (id, novaAvaliacao) => {
+      setNoticias((prevNoticias) =>
+        prevNoticias.map((noticia) => {
+          if (noticia.id === id) {
+            const pontosBrutos = Math.abs(noticia.pontos || 0);
+            const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
+            return { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos };
+          }
+          return noticia;
+        })
+      );
+    };
+  
+    const buscarPontosDasNoticias = async (noticias) => {
       try {
-        const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
-        if (!response.ok) throw new Error('Falha ao buscar semanas estratégicas');
-        const { data } = await response.json();
-
-        const categoriasUnicas = [...new Set(data.map(item => item.categoria).filter(c => c))];
-        const subcategoriasUnicas = [...new Set(data.map(item => item.subcategoria).filter(s => s))];
-
-        setCategorias(categoriasUnicas);
-        setSubcategorias(subcategoriasUnicas);
-
-        console.log('Categorias disponíveis:', categoriasUnicas);
-        console.log('Subcategorias disponíveis:', subcategoriasUnicas);
+        const response = await fetch(`${API_BASE_URL}/noticias/pontos`);
+        if (!response.ok) throw new Error('Falha ao buscar pontos das notícias');
+        const pontos = await response.json();
+        return noticias.map((noticia) => {
+          const noticiaPontos = pontos.find((p) => p.id === noticia.id);
+          let pontosNoticia = noticiaPontos ? noticiaPontos.pontos : 0;
+          if (noticia.avaliacao === 'Negativa') pontosNoticia = -Math.abs(pontosNoticia);
+          return { ...noticia, pontos: pontosNoticia };
+        });
       } catch (error) {
-        console.error('Erro ao buscar categorias e subcategorias:', error.message);
+        console.error('Erro ao buscar pontos das notícias:', error.message);
         toast({
-          title: "Erro ao buscar categorias",
-          description: "Não foi possível carregar as categorias e subcategorias.",
+          title: "Erro ao buscar pontos",
+          description: "Não foi possível carregar os pontos das notícias.",
           variant: "destructive",
         });
+        return noticias;
       }
     };
-
-    fetchCategoriasESubcategorias();
-  }, [toast]);
-
-  useEffect(() => {
-    console.log('useEffect iniciado');
-    setIsLoading(true);
-    setError(null);
-    const from = dateRange.from.toISOString().split('T')[0];
-    const to = dateRange.to.toISOString().split('T')[0];
-    console.log('Chamando API com from:', from, 'e to:', to, 'currentPage:', currentPage);
-
-    // Calcula o offset com base na página atual
-    const offset = (currentPage - 1);
-
-    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}`; // Usa offset em vez de cursor
-    if (filtroEstrategica) {
-      url += '&mostrarEstrategicas=true';
-    } else if (filtroRelevancia === 'Lixo') {
-      url += '&mostrarLixos=true';
-    }
-
-    fetch(url)
-      .then((response) => {
-        console.log('Resposta bruta da API:', response.status, response.statusText);
-        if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-        return response.json();
-      })
-      .then(async (response) => {
-        console.log('Dados recebidos da API (primeiras 3 notícias):', response.data.slice(0, 3));
-        const { data, total } = response;
-        if (Array.isArray(data)) {
-          const dataWithIds = data.map((item, index) => ({
-            ...item,
-            id: item.id || `noticia-${index}`,
-          }));
-          const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
-          setNoticias(noticiasComPontos);
-          setTotal(total);
-        } else {
-          console.warn('A resposta da API não contém um array de dados:', response);
+  
+    useEffect(() => {
+      const fetchCategoriasESubcategorias = async () => {
+        try {
+          const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
+          if (!response.ok) throw new Error('Falha ao buscar semanas estratégicas');
+          const { data } = await response.json();
+  
+          const categoriasUnicas = [...new Set(data.map(item => item.categoria).filter(c => c))];
+          const subcategoriasUnicas = [...new Set(data.map(item => item.subcategoria).filter(s => s))];
+  
+          setCategorias(categoriasUnicas);
+          setSubcategorias(subcategoriasUnicas);
+        } catch (error) {
+          console.error('Erro ao buscar categorias e subcategorias:', error.message);
+          toast({
+            title: "Erro ao buscar categorias",
+            description: "Não foi possível carregar as categorias e subcategorias.",
+            variant: "destructive",
+          });
+        }
+      };
+  
+      fetchCategoriasESubcategorias();
+    }, [toast]);
+  
+    useEffect(() => {
+      setIsLoading(true);
+      setError(null);
+      const from = dateRange.from.toISOString().split('T')[0];
+      const to = dateRange.to.toISOString().split('T')[0];
+  
+      // Construção da URL com base no filtro ativo
+      let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}`;
+      if (filtroAtivo === 'Lixo') {
+        url += '&relevancia=Lixo';
+      } else if (filtroAtivo === 'Estrategica') {
+        url += '&estrategica=true';
+      }
+  
+      fetch(url)
+        .then((response) => {
+          if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+          return response.json();
+        })
+        .then(async (response) => {
+          const { data, meta } = response;
+          if (Array.isArray(data)) {
+            const dataWithIds = data.map((item, index) => ({
+              ...item,
+              id: item.id || `noticia-${index}`,
+            }));
+            const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
+            setNoticias(noticiasComPontos);
+            setTotal(meta.total || 0);
+          } else {
+            setNoticias([]);
+            setTotal(0);
+          }
+        })
+        .catch((error) => {
+          console.error('Erro ao buscar notícias:', error.message);
+          setError(error.message);
+          toast({
+            title: "Erro ao buscar notícias",
+            description: error.message,
+            variant: "destructive",
+          });
           setNoticias([]);
           setTotal(0);
-        }
-      })
-      .catch((error) => {
-        console.error('Erro ao buscar notícias:', error.message);
-        setError(error.message);
-        toast({
-          title: "Erro ao buscar notícias",
-          description: error.message,
-          variant: "destructive",
+        })
+        .finally(() => {
+          setIsLoading(false);
         });
-        setNoticias([]);
-        setTotal(0);
-      })
-      .finally(() => {
-        console.log('useEffect finalizado');
-        setIsLoading(false);
-      });
-  }, [dateRange, filtroRelevancia, filtroEstrategica, currentPage, toast]);
-
-  const handleDateRangeChange = (range) => {
-    console.log('DateRange alterado:', range);
-    if (range.from && range.to) {
-      setDateRange({ from: range.from, to: range.to });
-      setCurrentPage(1); // Reseta para a página 1 ao mudar o intervalo de datas
-    }
+    }, [dateRange, filtroAtivo, currentPage, limit, toast]);
+  
+    const handleDateRangeChange = (range) => {
+      if (range.from && range.to) {
+        setDateRange({ from: range.from, to: range.to });
+        setCurrentPage(1);
+      }
+    };
+  
+    return (
+      <div className="min-h-screen bg-dark-bg text-white">
+        <Navbar />
+        <main className="p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
+              <p className="text-gray-400">Gerenciamento e análise de notícias</p>
+            </div>
+            <div className="flex items-center gap-3 mt-4 md:mt-0">
+              <Button
+                variant="default"
+                onClick={toggleFiltroEstrategica}
+                className={
+                  filtroAtivo === 'Estrategica'
+                    ? "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
+                    : "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
+                }
+              >
+                {filtroAtivo === 'Estrategica' ? 'Voltar' : 'Abrir Estratégicas'}
+                {filtroAtivo === 'Estrategica' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
+              </Button>
+              <Button
+                variant="default"
+                onClick={toggleFiltroLixo}
+                className={
+                  filtroAtivo === 'Lixo'
+                    ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
+                    : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
+                }
+              >
+                {filtroAtivo === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
+                {filtroAtivo === 'Lixo' ? (
+                  <CircleArrowLeft className="ml-2 h-4 w-4" />
+                ) : (
+                  <CircleX className="ml-2 h-4 w-4" />
+                )}
+              </Button>
+              <DateRangePicker onChange={handleDateRangeChange} />
+            </div>
+          </div>
+          <div className="dashboard-card">
+            {isLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-gray-400">Carregando dados...</p>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-red-400">Erro ao carregar dados: {error}</p>
+              </div>
+            ) : noticias.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-gray-400">Nenhuma notícia encontrada</p>
+              </div>
+            ) : (
+              <DataTable
+                data={noticias}
+                columns={columns}
+                updateTema={updateTema}
+                updateAvaliacao={updateAvaliacao}
+                currentPage={currentPage}
+                setCurrentPage={setCurrentPage}
+                limit={limit}
+                total={total}
+              />
+            )}
+          </div>
+        </main>
+      </div>
+    );
   };
-
-  console.log('Renderizando Spreadsheet, noticias:', noticias);
-
-  return (
-    <div className="min-h-screen bg-dark-bg text-white">
-      <Navbar />
-      <main className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
-            <p className="text-gray-400">Gerenciamento e análise de notícias</p>
-          </div>
-          <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <Button
-              variant="default"
-              onClick={toggleFiltroEstrategica}
-              className={
-                filtroEstrategica
-                  ? "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
-                  : "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
-              }
-            >
-              {filtroEstrategica ? 'Voltar' : 'Abrir Estratégicas'}
-              {filtroEstrategica ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
-            </Button>
-            <Button
-              variant="default"
-              onClick={toggleFiltroRelevancia}
-              className={
-                filtroRelevancia === 'Lixo'
-                  ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
-                  : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
-              }
-            >
-              {filtroRelevancia === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
-              {filtroRelevancia === 'Lixo' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <CircleX className="ml-2 h-4 w-4" />}
-            </Button>
-            <DateRangePicker onChange={handleDateRangeChange} />
-          </div>
-        </div>
-        <div className="dashboard-card">
-          {isLoading ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Carregando dados...</p>
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-red-400">Erro ao carregar dados: {error}</p>
-            </div>
-          ) : noticias.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Nenhuma notícia encontrada</p>
-            </div>
-          ) : (
-            <DataTable
-              data={noticias}
-              columns={columns}
-              updateTema={updateTema}
-              updateAvaliacao={updateAvaliacao}
-              currentPage={currentPage} // Passa currentPage
-              setCurrentPage={setCurrentPage} // Passa setCurrentPage
-              total={total}
-            />
-          )}
-        </div>
-      </main>
-    </div>
-  );
-};
-
-export default Spreadsheet;
+  
+  export default Spreadsheet;
