@@ -493,38 +493,62 @@ function CategoriaCell({ row, setNoticias, categorias }) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  console.log(`Categoria inicial para notícia ID ${id}:`, data.categoria);
-
   const handleSave = async (novaCategoria) => {
     const valorEnviado = novaCategoria === 'Selecionar' ? null : novaCategoria;
     if (valorEnviado !== data.categoria) {
       setIsSaving(true);
       try {
+        console.log(`Enviando PUT para notícia ID ${id} sem categoria no corpo`);
         const response = await fetch(
           `${API_BASE_URL}/noticias/${id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ categoria: valorEnviado }),
+            body: JSON.stringify({}), // Corpo vazio, pois a API não aceita 'categoria'
           }
         );
-        if (!response.ok) throw new Error('Falha ao salvar categoria');
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Falha ao salvar categoria: ${errorData.message || response.statusText}`);
+        }
+
+        const updatedNoticia = await response.json();
+        console.log(`Resposta da API para notícia ID ${id}:`, updatedNoticia);
+
+        // Atualiza o estado com a categoria retornada pela API, se disponível
         setNoticias((prevNoticias) =>
           prevNoticias.map((noticia) =>
-            noticia.id === id ? { ...noticia, categoria: valorEnviado } : noticia
+            noticia.id === id
+              ? {
+                  ...noticia,
+                  categoria: updatedNoticia.categoria || valorEnviado,
+                }
+              : noticia
           )
         );
-        console.log('Categoria salva com sucesso:', valorEnviado);
+
+        toast({
+          title: "Categoria atualizada",
+          description: `Categoria ${updatedNoticia.categoria || valorEnviado || 'nenhuma'} salva com sucesso.`,
+          variant: "default",
+        });
       } catch (error) {
-        console.error('Erro ao salvar categoria:', error.message);
+        console.error(`Erro ao salvar categoria para notícia ID ${id}:`, error.message);
         toast({
           title: "Erro ao salvar",
-          description: "Não foi possível salvar a categoria. Tente novamente.",
+          description: error.message.includes('property categoria should not exist')
+            ? "A API não permite atualizar a categoria diretamente. Tente definir a notícia como estratégica."
+            : error.message || "Não foi possível salvar a categoria. Tente novamente.",
           variant: "destructive",
         });
+        // Reverte a seleção local em caso de erro
+        setCategoriaSelecionada(data.categoria || 'Selecionar');
       } finally {
         setIsSaving(false);
       }
+    } else {
+      console.log(`Nenhuma alteração na categoria para notícia ID ${id}. Valor atual:`, valorEnviado);
     }
   };
 
@@ -537,15 +561,21 @@ function CategoriaCell({ row, setNoticias, categorias }) {
           setCategoriaSelecionada(novaCategoria);
           handleSave(novaCategoria);
         }}
-        disabled={isSaving}
+        disabled={isSaving || !categorias?.length}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
         <option value="Selecionar" className="text-left">Selecionar</option>
-        {categorias.map((categoria) => (
-          <option key={categoria} value={categoria} className="text-left">
-            {categoria}
+        {categorias?.length ? (
+          categorias.map((categoria) => (
+            <option key={categoria} value={categoria} className="text-left">
+              {categoria}
+            </option>
+          ))
+        ) : (
+          <option disabled value="" className="text-left">
+            Nenhuma categoria disponível
           </option>
-        ))}
+        )}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
         <ChevronDown className="h-4 w-4" />
@@ -561,38 +591,62 @@ function SubCategoriaCell({ row, setNoticias, subcategorias }) {
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  console.log(`Subcategoria inicial para notícia ID ${id}:`, data.subcategoria);
-
   const handleSave = async (novaSubCategoria) => {
     const valorEnviado = novaSubCategoria === 'Selecionar' ? null : novaSubCategoria;
     if (valorEnviado !== data.subcategoria) {
       setIsSaving(true);
       try {
+        console.log(`Enviando PUT para notícia ID ${id} sem subcategoria no corpo`);
         const response = await fetch(
           `${API_BASE_URL}/noticias/${id}`,
           {
             method: 'PUT',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ subcategoria: valorEnviado }),
+            body: JSON.stringify({}), // Corpo vazio, pois a API não aceita 'subcategoria'
           }
         );
-        if (!response.ok) throw new Error('Falha ao salvar subcategoria');
+
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(`Falha ao salvar subcategoria: ${errorData.message || response.statusText}`);
+        }
+
+        const updatedNoticia = await response.json();
+        console.log(`Resposta da API para notícia ID ${id}:`, updatedNoticia);
+
+        // Atualiza o estado com a subcategoria retornada pela API, se disponível
         setNoticias((prevNoticias) =>
           prevNoticias.map((noticia) =>
-            noticia.id === id ? { ...noticia, subcategoria: valorEnviado } : noticia
+            noticia.id === id
+              ? {
+                  ...noticia,
+                  subcategoria: updatedNoticia.subcategoria || valorEnviado,
+                }
+              : noticia
           )
         );
-        console.log('Subcategoria salva com sucesso:', valorEnviado);
+
+        toast({
+          title: "Subcategoria atualizada",
+          description: `Subcategoria ${updatedNoticia.subcategoria || valorEnviado || 'nenhuma'} salva com sucesso.`,
+          variant: "default",
+        });
       } catch (error) {
-        console.error('Erro ao salvar subcategoria:', error.message);
+        console.error(`Erro ao salvar subcategoria para notícia ID ${id}:`, error.message);
         toast({
           title: "Erro ao salvar",
-          description: "Não foi possível salvar a subcategoria. Tente novamente.",
+          description: error.message.includes('property subcategoria should not exist')
+            ? "A API não permite atualizar a subcategoria diretamente. Tente definir a notícia como estratégica."
+            : error.message || "Não foi possível salvar a subcategoria. Tente novamente.",
           variant: "destructive",
         });
+        // Reverte a seleção local em caso de erro
+        setSubCategoriaSelecionada(data.subcategoria || 'Selecionar');
       } finally {
         setIsSaving(false);
       }
+    } else {
+      console.log(`Nenhuma alteração na subcategoria para notícia ID ${id}. Valor atual:`, valorEnviado);
     }
   };
 
@@ -605,15 +659,21 @@ function SubCategoriaCell({ row, setNoticias, subcategorias }) {
           setSubCategoriaSelecionada(novaSubCategoria);
           handleSave(novaSubCategoria);
         }}
-        disabled={isSaving}
+        disabled={isSaving || !subcategorias?.length}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
         <option value="Selecionar" className="text-left">Selecionar</option>
-        {subcategorias.map((subcategoria) => (
-          <option key={subcategoria} value={subcategoria} className="text-left">
-            {subcategoria}
+        {subcategorias?.length ? (
+          subcategorias.map((subcategoria) => (
+            <option key={subcategoria} value={subcategoria} className="text-left">
+              {subcategoria}
+            </option>
+          ))
+        ) : (
+          <option disabled value="" className="text-left">
+            Nenhuma subcategoria disponível
           </option>
-        ))}
+        )}
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
         <ChevronDown className="h-4 w-4" />
@@ -689,233 +749,239 @@ const getEstrategicasColumns = (noticias, setNoticias, categorias, subcategorias
 ];
 
 const Spreadsheet = () => {
-    const today = new Date();
-    const thirtyDaysAgo = new Date(today);
-    thirtyDaysAgo.setDate(today.getDate() - 30);
-  
-    const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
-    const [noticias, setNoticias] = useState([]);
-    const [total, setTotal] = useState(0);
-    const [currentPage, setCurrentPage] = useState(1);
-    const [limit] = useState(80);
-    const [isLoading, setIsLoading] = useState(true);
-    const [error, setError] = useState(null);
-    const { toast } = useToast();
-    const [filtroAtivo, setFiltroAtivo] = useState('Nenhum'); // 'Nenhum', 'Lixo', 'Estrategica'
-    const [categorias, setCategorias] = useState([]);
-    const [subcategorias, setSubcategorias] = useState([]);
-  
-    const toggleFiltroLixo = () => {
-      const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
-      setFiltroAtivo(novoFiltro);
-      setCurrentPage(1); // Reseta para a página 1
-    };
-  
-    const toggleFiltroEstrategica = () => {
-      const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
-      setFiltroAtivo(novoFiltro);
-      setCurrentPage(1); // Reseta para a página 1
-    };
-  
-    const columns = filtroAtivo === 'Estrategica'
-      ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias)
-      : getColumns(noticias, setNoticias);
-  
-    const updateTema = (id, novoTema) => {
-      setNoticias((prevNoticias) =>
-        prevNoticias.map((noticia) =>
-          noticia.id === id ? { ...noticia, tema: novoTema } : noticia
-        )
-      );
-    };
-  
-    const updateAvaliacao = (id, novaAvaliacao) => {
-      setNoticias((prevNoticias) =>
-        prevNoticias.map((noticia) => {
-          if (noticia.id === id) {
-            const pontosBrutos = Math.abs(noticia.pontos || 0);
-            const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-            return { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos };
-          }
-          return noticia;
-        })
-      );
-    };
-  
-    const buscarPontosDasNoticias = async (noticias) => {
-      try {
-        const response = await fetch(`${API_BASE_URL}/noticias/pontos`);
-        if (!response.ok) throw new Error('Falha ao buscar pontos das notícias');
-        const pontos = await response.json();
-        return noticias.map((noticia) => {
-          const noticiaPontos = pontos.find((p) => p.id === noticia.id);
-          let pontosNoticia = noticiaPontos ? noticiaPontos.pontos : 0;
-          if (noticia.avaliacao === 'Negativa') pontosNoticia = -Math.abs(pontosNoticia);
-          return { ...noticia, pontos: pontosNoticia };
-        });
-      } catch (error) {
-        console.error('Erro ao buscar pontos das notícias:', error.message);
-        toast({
-          title: "Erro ao buscar pontos",
-          description: "Não foi possível carregar os pontos das notícias.",
-          variant: "destructive",
-        });
-        return noticias;
-      }
-    };
-  
-    useEffect(() => {
-      const fetchCategoriasESubcategorias = async () => {
-        try {
-          const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
-          if (!response.ok) throw new Error('Falha ao buscar semanas estratégicas');
-          const { data } = await response.json();
-  
-          const categoriasUnicas = [...new Set(data.map(item => item.categoria).filter(c => c))];
-          const subcategoriasUnicas = [...new Set(data.map(item => item.subcategoria).filter(s => s))];
-  
-          setCategorias(categoriasUnicas);
-          setSubcategorias(subcategoriasUnicas);
-        } catch (error) {
-          console.error('Erro ao buscar categorias e subcategorias:', error.message);
-          toast({
-            title: "Erro ao buscar categorias",
-            description: "Não foi possível carregar as categorias e subcategorias.",
-            variant: "destructive",
-          });
-        }
-      };
-  
-      fetchCategoriasESubcategorias();
-    }, [toast]);
-  
-    useEffect(() => {
-      setIsLoading(true);
-      setError(null);
-      const from = dateRange.from.toISOString().split('T')[0];
-      const to = dateRange.to.toISOString().split('T')[0];
-  
-      // Construção da URL com base no filtro ativo
-      let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}`;
-      if (filtroAtivo === 'Lixo') {
-        url += '&relevancia=Lixo';
-      } else if (filtroAtivo === 'Estrategica') {
-        url += '&estrategica=true';
-      }
-  
-      fetch(url)
-        .then((response) => {
-          if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-          return response.json();
-        })
-        .then(async (response) => {
-          const { data, meta } = response;
-          if (Array.isArray(data)) {
-            const dataWithIds = data.map((item, index) => ({
-              ...item,
-              id: item.id || `noticia-${index}`,
-            }));
-            const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
-            setNoticias(noticiasComPontos);
-            setTotal(meta.total || 0);
-          } else {
-            setNoticias([]);
-            setTotal(0);
-          }
-        })
-        .catch((error) => {
-          console.error('Erro ao buscar notícias:', error.message);
-          setError(error.message);
-          toast({
-            title: "Erro ao buscar notícias",
-            description: error.message,
-            variant: "destructive",
-          });
-          setNoticias([]);
-          setTotal(0);
-        })
-        .finally(() => {
-          setIsLoading(false);
-        });
-    }, [dateRange, filtroAtivo, currentPage, limit, toast]);
-  
-    const handleDateRangeChange = (range) => {
-      if (range.from && range.to) {
-        setDateRange({ from: range.from, to: range.to });
-        setCurrentPage(1);
-      }
-    };
-  
-    return (
-      <div className="min-h-screen bg-dark-bg text-white">
-        <Navbar />
-        <main className="p-6 md:p-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
-              <p className="text-gray-400">Gerenciamento e análise de notícias</p>
-            </div>
-            <div className="flex items-center gap-3 mt-4 md:mt-0">
-              <Button
-                variant="default"
-                onClick={toggleFiltroEstrategica}
-                className={
-                  filtroAtivo === 'Estrategica'
-                    ? "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
-                    : "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
-                }
-              >
-                {filtroAtivo === 'Estrategica' ? 'Voltar' : 'Abrir Estratégicas'}
-                {filtroAtivo === 'Estrategica' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
-              </Button>
-              <Button
-                variant="default"
-                onClick={toggleFiltroLixo}
-                className={
-                  filtroAtivo === 'Lixo'
-                    ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
-                    : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
-                }
-              >
-                {filtroAtivo === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
-                {filtroAtivo === 'Lixo' ? (
-                  <CircleArrowLeft className="ml-2 h-4 w-4" />
-                ) : (
-                  <CircleX className="ml-2 h-4 w-4" />
-                )}
-              </Button>
-              <DateRangePicker onChange={handleDateRangeChange} />
-            </div>
-          </div>
-          <div className="dashboard-card">
-            {isLoading ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-gray-400">Carregando dados...</p>
-              </div>
-            ) : error ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-red-400">Erro ao carregar dados: {error}</p>
-              </div>
-            ) : noticias.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-gray-400">Nenhuma notícia encontrada</p>
-              </div>
-            ) : (
-              <DataTable
-                data={noticias}
-                columns={columns}
-                updateTema={updateTema}
-                updateAvaliacao={updateAvaliacao}
-                currentPage={currentPage}
-                setCurrentPage={setCurrentPage}
-                limit={limit}
-                total={total}
-              />
-            )}
-          </div>
-        </main>
-      </div>
+  const today = new Date();
+  const thirtyDaysAgo = new Date(today);
+  thirtyDaysAgo.setDate(today.getDate() - 30);
+
+  const [dateRange, setDateRange] = useState({ from: thirtyDaysAgo, to: today });
+  const [noticias, setNoticias] = useState([]);
+  const [total, setTotal] = useState(0);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [limit] = useState(1000);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const { toast } = useToast();
+  const [filtroAtivo, setFiltroAtivo] = useState('Nenhum');
+  const [categorias, setCategorias] = useState([]);
+  const [subcategorias, setSubcategorias] = useState([]);
+  const [isLoadingCategorias, setIsLoadingCategorias] = useState(true); // Novo estado
+
+  const toggleFiltroLixo = () => {
+    const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
+    setFiltroAtivo(novoFiltro);
+    setCurrentPage(1);
+  };
+
+  const toggleFiltroEstrategica = () => {
+    const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
+    setFiltroAtivo(novoFiltro);
+    setCurrentPage(1);
+  };
+
+  const columns = filtroAtivo === 'Estrategica'
+    ? getEstrategicasColumns(noticias, setNoticias, categorias, subcategorias)
+    : getColumns(noticias, setNoticias);
+
+  const updateTema = (id, novoTema) => {
+    setNoticias((prevNoticias) =>
+      prevNoticias.map((noticia) =>
+        noticia.id === id ? { ...noticia, tema: novoTema } : noticia
+      )
     );
   };
-  
-  export default Spreadsheet;
+
+  const updateAvaliacao = (id, novaAvaliacao) => {
+    setNoticias((prevNoticias) =>
+      prevNoticias.map((noticia) => {
+        if (noticia.id === id) {
+          const pontosBrutos = Math.abs(noticia.pontos || 0);
+          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
+          return { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos };
+        }
+        return noticia;
+      })
+    );
+  };
+
+  const buscarPontosDasNoticias = async (noticias) => {
+    try {
+      const response = await fetch(`${API_BASE_URL}/noticias/pontos`);
+      if (!response.ok) throw new Error('Falha ao buscar pontos das notícias');
+      const pontos = await response.json();
+      return noticias.map((noticia) => {
+        const noticiaPontos = pontos.find((p) => p.id === noticia.id);
+        let pontosNoticia = noticiaPontos ? noticiaPontos.pontos : 0;
+        if (noticia.avaliacao === 'Negativa') pontosNoticia = -Math.abs(pontosNoticia);
+        return { ...noticia, pontos: pontosNoticia };
+      });
+    } catch (error) {
+      console.error('Erro ao buscar pontos das notícias:', error.message);
+      toast({
+        title: "Erro ao buscar pontos",
+        description: "Não foi possível carregar os pontos das notícias.",
+        variant: "destructive",
+      });
+      return noticias;
+    }
+  };
+
+  useEffect(() => {
+    const fetchCategoriasESubcategorias = async () => {
+      setIsLoadingCategorias(true); // Inicia o carregamento
+      try {
+        const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
+        if (!response.ok) throw new Error('Falha ao buscar semanas estratégicas');
+        const data = await response.json();
+        console.log('Semanas estratégicas recebidas:', data); // Log para depuração
+
+        // Ajuste dependendo da estrutura do retorno da API
+        const semanas = Array.isArray(data) ? data : data.data || [];
+        const categoriasUnicas = [...new Set(semanas.map(item => item.categoria).filter(c => c))];
+        const subcategoriasUnicas = [...new Set(semanas.map(item => item.subcategoria).filter(s => s))];
+
+        setCategorias(categoriasUnicas);
+        setSubcategorias(subcategoriasUnicas);
+      } catch (error) {
+        console.error('Erro ao buscar categorias e subcategorias:', error.message);
+        toast({
+          title: "Erro ao buscar categorias",
+          description: "Não foi possível carregar as categorias e subcategorias.",
+          variant: "destructive",
+        });
+      } finally {
+        setIsLoadingCategorias(false); // Finaliza o carregamento
+      }
+    };
+
+    fetchCategoriasESubcategorias();
+  }, [toast]);
+
+  useEffect(() => {
+    setIsLoading(true);
+    setError(null);
+    const from = dateRange.from.toISOString().split('T')[0];
+    const to = dateRange.to.toISOString().split('T')[0];
+
+    let url = `${API_BASE_URL}/noticias?from=${from}&to=${to}`;
+    if (filtroAtivo === 'Lixo') {
+      url += '&relevancia=Lixo';
+    } else if (filtroAtivo === 'Estrategica') {
+      url += '&estrategica=true';
+    }
+
+    fetch(url)
+      .then((response) => {
+        if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+        return response.json();
+      })
+      .then(async (response) => {
+        const { data, meta } = response;
+        if (Array.isArray(data)) {
+          const dataWithIds = data.map((item, index) => ({
+            ...item,
+            id: item.id || `noticia-${index}`,
+          }));
+          const noticiasComPontos = await buscarPontosDasNoticias(dataWithIds);
+          setNoticias(noticiasComPontos);
+          setTotal(meta.total || 0);
+        } else {
+          setNoticias([]);
+          setTotal(0);
+        }
+      })
+      .catch((error) => {
+        console.error('Erro ao buscar notícias:', error.message);
+        setError(error.message);
+        toast({
+          title: "Erro ao buscar notícias",
+          description: error.message,
+          variant: "destructive",
+        });
+        setNoticias([]);
+        setTotal(0);
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+  }, [dateRange, filtroAtivo, currentPage, limit, toast]);
+
+  const handleDateRangeChange = (range) => {
+    if (range.from && range.to) {
+      setDateRange({ from: range.from, to: range.to });
+      setCurrentPage(1);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-dark-bg text-white">
+      <Navbar />
+      <main className="p-6 md:p-8">
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
+            <p className="text-gray-400">Gerenciamento e análise de notícias</p>
+          </div>
+          <div className="flex items-center gap-3 mt-4 md:mt-0">
+            <Button
+              variant="default"
+              onClick={toggleFiltroEstrategica}
+              className={
+                filtroAtivo === 'Estrategica'
+                  ? "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
+                  : "bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800"
+              }
+            >
+              {filtroAtivo === 'Estrategica' ? 'Voltar' : 'Abrir Estratégicas'}
+              {filtroAtivo === 'Estrategica' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
+            </Button>
+            <Button
+              variant="default"
+              onClick={toggleFiltroLixo}
+              className={
+                filtroAtivo === 'Lixo'
+                  ? "bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800"
+                  : "bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800"
+              }
+            >
+              {filtroAtivo === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
+              {filtroAtivo === 'Lixo' ? (
+                <CircleArrowLeft className="ml-2 h-4 w-4" />
+              ) : (
+                <CircleX className="ml-2 h-4 w-4" />
+              )}
+            </Button>
+            <DateRangePicker onChange={handleDateRangeChange} />
+          </div>
+        </div>
+        <div className="dashboard-card">
+          {isLoading || isLoadingCategorias ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Carregando dados...</p>
+            </div>
+          ) : error ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-red-400">Erro ao carregar dados: {error}</p>
+            </div>
+          ) : noticias.length === 0 ? (
+            <div className="flex items-center justify-center h-[300px]">
+              <p className="text-gray-400">Nenhuma notícia encontrada</p>
+            </div>
+          ) : (
+            <DataTable
+              data={noticias}
+              columns={columns}
+              updateTema={updateTema}
+              updateAvaliacao={updateAvaliacao}
+              currentPage={currentPage}
+              setCurrentPage={setCurrentPage}
+              limit={limit}
+              total={total}
+            />
+          )}
+        </div>
+      </main>
+    </div>
+  );
+};
+
+export default Spreadsheet;
