@@ -1,5 +1,5 @@
 import { Pencil, Save, X, CalendarIcon, ChevronDown, Trash2 } from 'lucide-react';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 
 const CATEGORIAS = [
+  'Todas', // Adicionado para o filtro
   'Selecionar',
   'Educação',
   'Social',
@@ -271,7 +272,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
                 className="w-full p-2 pl-3 pr-10 bg-dark-card border border-white/10 rounded text-sm text-white appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20"
                 aria-label="Selecionar categoria"
               >
-                {CATEGORIAS.map((cat) => (
+                {CATEGORIAS.filter(cat => cat !== 'Todas').map((cat) => ( // Exclui 'Todas' do formulário
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
@@ -318,6 +319,7 @@ const SemanaEstrategica = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas'); // Novo estado para o filtro
   const { toast } = useToast();
 
   useEffect(() => {
@@ -366,6 +368,14 @@ const SemanaEstrategica = () => {
 
     fetchSemanas();
   }, [toast]);
+
+  // Filtrar semanas com base na categoria selecionada
+  const semanasFiltradas = useMemo(() => {
+    if (filtroCategoria === 'Todas') {
+      return semanas;
+    }
+    return semanas.filter(semana => semana.categoria === filtroCategoria);
+  }, [semanas, filtroCategoria]);
 
   const handleEdit = (semana: Semana) => {
     console.log('Botão de edição clicado para semana:', semana);
@@ -572,6 +582,31 @@ const SemanaEstrategica = () => {
         <div className="dashboard-card">
           <h2 className="text-lg font-semibold mb-4">Semanas Estratégicas Cadastradas</h2>
 
+          {/* Filtro por Categoria */}
+          <div className="mb-4">
+            <label className="block text-sm font-medium mb-1">Filtrar por Categoria</label>
+            <div className="relative w-64">
+              <select
+                value={filtroCategoria}
+                onChange={(e) => {
+                  console.log('Filtro de categoria alterado para:', e.target.value);
+                  setFiltroCategoria(e.target.value);
+                }}
+                className="w-full p-2 pl-3 pr-10 bg-dark-card border border-white/10 rounded text-sm text-white appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20"
+                aria-label="Filtrar por categoria"
+              >
+                {CATEGORIAS.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {cat}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
+                <ChevronDown className="h-4 w-4" />
+              </div>
+            </div>
+          </div>
+
           {isLoading ? (
             <div className="flex items-center justify-center h-[300px]">
               <p className="text-gray-400">Carregando dados...</p>
@@ -580,9 +615,13 @@ const SemanaEstrategica = () => {
             <div className="flex items-center justify-center h-[300px]">
               <p className="text-red-400">Erro ao carregar dados: {error}</p>
             </div>
-          ) : semanas.length === 0 ? (
+          ) : semanasFiltradas.length === 0 ? (
             <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Nenhuma semana estratégica encontrada</p>
+              <p className="text-gray-400">
+                {filtroCategoria === 'Todas' 
+                  ? 'Nenhuma semana estratégica encontrada' 
+                  : `Nenhuma semana estratégica encontrada para a categoria "${filtroCategoria}"`}
+              </p>
             </div>
           ) : (
             <table className="w-full text-left border-collapse">
@@ -598,7 +637,7 @@ const SemanaEstrategica = () => {
                 </tr>
               </thead>
               <tbody>
-                {semanas.map((semana) => (
+                {semanasFiltradas.map((semana) => (
                   <tr key={semana.id} className="border-b border-white/10">
                     <td className="py-2 px-4">{semana.id}</td>
 
@@ -677,7 +716,7 @@ const SemanaEstrategica = () => {
                           className="bg-dark-card border border-white/20 rounded px-2 py-1"
                           aria-label="Editar categoria"
                         >
-                          {CATEGORIAS.map((cat) => (
+                          {CATEGORIAS.filter(cat => cat !== 'Todas').map((cat) => ( // Exclui 'Todas' da edição
                             <option key={cat} value={cat}>{cat}</option>
                           ))}
                         </select>
