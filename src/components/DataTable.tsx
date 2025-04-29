@@ -20,19 +20,19 @@ interface DataTableProps {
   columns: Column[];
   updateTema?: (id: string, novoTema: string) => void;
   updateAvaliacao?: (id: string, novaAvaliacao: string) => void;
-  currentPage: number; // Substitui cursor por currentPage
-  setCurrentPage: (page: number) => void; // Função para atualizar a página atual
-  limit: number;
-  total: number;
+  currentPage: number;
+  setCurrentPage: (page: number) => void;
+  totalDates: number;
+  selectedDate?: string;
 }
 
-const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentPage, setCurrentPage, limit, total }: DataTableProps) => {
+const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentPage, setCurrentPage, totalDates, selectedDate }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const displayedData = data;
 
-  // Calcula o número total de páginas
-  const totalPages = Math.ceil(total / limit);
+  // Usa totalDates como o número total de páginas
+  const totalPages = totalDates;
 
   // Função para mudar diretamente para uma página específica
   const handlePageChange = (page: number) => {
@@ -42,7 +42,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentPage, se
   };
 
   return (
-    <div className="w-full">      
+    <div className="w-full">
       <div className="overflow-x-auto">
         <table className="w-full border-collapse">
           <thead>
@@ -101,47 +101,65 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentPage, se
       
       <div className="mt-4 flex justify-between items-center text-sm text-gray-400">
         <div>
-          Mostrando {displayedData.length} de {total} itens
+          Mostrando {displayedData.length} notícias {selectedDate ? `de ${selectedDate}` : ''}
         </div>
         <div className="flex items-center gap-2">
           <span className="px-2 py-1">
-            Página {currentPage} de {totalPages}
+            Dia {currentPage} de {totalPages}
           </span>
-          {/* Botão "Voltar ao início" */}
+          {/* Botão "Primeiro dia" */}
           <button 
             className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={currentPage === 1}
-            onClick={() => handlePageChange(1)}
+            disabled={currentPage === 1 || totalPages === 0}
+            onClick={() => {
+              console.log('Clicou em Primeiro dia, indo para página 1');
+              handlePageChange(1);
+            }}
           >
-            Voltar ao início
+            Primeiro dia
           </button>
-          {/* Botão "Página anterior" */}
+          {/* Botão "Dia anterior" */}
           <button 
             className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={currentPage === 1}
-            onClick={() => handlePageChange(currentPage - 1)}
+            disabled={currentPage === 1 || totalPages === 0}
+            onClick={() => {
+              console.log('Clicou em Dia anterior, indo para página', currentPage - 1);
+              handlePageChange(currentPage - 1);
+            }}
           >
-            Voltar
+            Dia anterior
           </button>
-          {/* Seleção direta de página */}
+          {/* Seleção direta de dia */}
           <select
             value={currentPage}
-            onChange={(e) => handlePageChange(Number(e.target.value))}
+            onChange={(e) => {
+              const newPage = Number(e.target.value);
+              console.log('Selecionou dia', newPage);
+              handlePageChange(newPage);
+            }}
             className="px-2 py-1 rounded border border-white/10 bg-dark-card text-white"
+            disabled={totalPages === 0}
           >
-            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-              <option key={page} value={page}>
-                {page}
-              </option>
-            ))}
+            {totalPages > 0 ? (
+              Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                <option key={page} value={page}>
+                  Dia {page}
+                </option>
+              ))
+            ) : (
+              <option value={currentPage}>Nenhum dia disponível</option>
+            )}
           </select>
-          {/* Botão "Próxima página" */}
+          {/* Botão "Próximo dia" */}
           <button 
             className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={currentPage === totalPages}
-            onClick={() => handlePageChange(currentPage + 1)}
+            disabled={currentPage === totalPages || totalPages === 0}
+            onClick={() => {
+              console.log('Clicou em Próximo dia, indo para página', currentPage + 1);
+              handlePageChange(currentPage + 1);
+            }}
           >
-            Próximo
+            Próximo dia
           </button>
         </div>
       </div>
