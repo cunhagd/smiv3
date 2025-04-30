@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
 import DatePicker from '@/components/DateRangePicker';
+import DatePickerEstrategicas from '@/components/DatePickerEstrategicas';
 import { ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX, ShieldPlus, ExternalLink } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { format } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 
 // Centralizar a URL base
-const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
+const API_BASE_URL = 'http://localhost:3000';
 
 const TEMAS = [
   'Agricultura',
@@ -448,6 +449,7 @@ interface EstrategicasReturn {
 // Componente principal
 const Spreadsheet: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDateEstrategicas, setSelectedDateEstrategicas] = useState<Date | undefined>(undefined);
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [currentDate, setCurrentDate] = useState<string | null>(null);
@@ -465,12 +467,16 @@ const Spreadsheet: React.FC = () => {
     const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null); // Resetar data para buscar a mais recente
+    setSelectedDate(new Date()); // Resetar data padrão
+    setSelectedDateEstrategicas(undefined); // Resetar data estratégicas
   };
 
   const toggleFiltroEstrategica = () => {
     const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null); // Resetar data para buscar a mais recente
+    setSelectedDate(new Date()); // Resetar data padrão
+    setSelectedDateEstrategicas(undefined); // Resetar data estratégicas
   };
 
   const updateTema = (id: string, novoTema: string) => {
@@ -500,14 +506,21 @@ const Spreadsheet: React.FC = () => {
       setError(null);
 
       let url = `${API_BASE_URL}/noticias`;
-      if (selectedDate) {
-        const dateFormatted = format(selectedDate, 'yyyy-MM-dd');
-        url += `?date=${dateFormatted}`;
-      }
-      if (filtroAtivo === 'Lixo') {
-        url += `${selectedDate ? '&' : '?'}relevancia=Lixo`;
-      } else if (filtroAtivo === 'Estrategica') {
-        url += `${selectedDate ? '&' : '?'}estrategica=true`;
+      if (filtroAtivo === 'Estrategica') {
+        if (selectedDateEstrategicas) {
+          const dateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
+          url += `?estrategica=true&date=${dateFormatted}`;
+        } else {
+          url += `?estrategica=true&all=true`; // Buscar todas as notícias estratégicas
+        }
+      } else {
+        if (selectedDate) {
+          const dateFormatted = format(selectedDate, 'yyyy-MM-dd');
+          url += `?date=${dateFormatted}`;
+        }
+        if (filtroAtivo === 'Lixo') {
+          url += `${selectedDate ? '&' : '?'}relevancia=Lixo`;
+        }
       }
 
       console.log('Buscando notícias com URL:', url);
@@ -563,28 +576,39 @@ const Spreadsheet: React.FC = () => {
     };
 
     fetchNoticias();
-  }, [selectedDate, filtroAtivo, toast]);
+  }, [selectedDate, selectedDateEstrategicas, filtroAtivo, toast]);
 
   const handleDateChange = (date: Date | undefined) => {
     setSelectedDate(date);
     setCurrentDate(null); // Resetar navegação por before/after
   };
 
+  const handleDateChangeEstrategicas = (date: Date | undefined) => {
+    setSelectedDateEstrategicas(date);
+    setCurrentDate(null); // Resetar navegação por before/after
+  };
+
   const handleNext = () => {
     if (hasNext && currentDate) {
-      // Converter DD/MM/YYYY para YYYY-MM-DD
+      // Converter DD/MM/YYYY para YYYY-MM-dd
       const [day, month, year] = currentDate.split('/');
       const dateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       setCurrentDate(null); // Limpar data atual
       let url = `${API_BASE_URL}/noticias?before=${dateFormatted}`;
-      if (selectedDate) {
-        const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
-        url += `&date=${selectedDateFormatted}`;
-      }
-      if (filtroAtivo === 'Lixo') {
-        url += '&relevancia=Lixo';
-      } else if (filtroAtivo === 'Estrategica') {
+      if (filtroAtivo === 'Estrategica') {
         url += '&estrategica=true';
+        if (selectedDateEstrategicas) {
+          const selectedDateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
+      } else {
+        if (selectedDate) {
+          const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
+        if (filtroAtivo === 'Lixo') {
+          url += '&relevancia=Lixo';
+        }
       }
       fetch(url)
         .then(response => {
@@ -615,19 +639,25 @@ const Spreadsheet: React.FC = () => {
 
   const handlePrevious = () => {
     if (hasPrevious && currentDate) {
-      // Converter DD/MM/YYYY para YYYY-MM-DD
+      // Converter DD/MM/YYYY para YYYY-MM-dd
       const [day, month, year] = currentDate.split('/');
       const dateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
       setCurrentDate(null); // Limpar data atual
       let url = `${API_BASE_URL}/noticias?after=${dateFormatted}`;
-      if (selectedDate) {
-        const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
-        url += `&date=${selectedDateFormatted}`;
-      }
-      if (filtroAtivo === 'Lixo') {
-        url += '&relevancia=Lixo';
-      } else if (filtroAtivo === 'Estrategica') {
+      if (filtroAtivo === 'Estrategica') {
         url += '&estrategica=true';
+        if (selectedDateEstrategicas) {
+          const selectedDateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
+      } else {
+        if (selectedDate) {
+          const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
+        if (filtroAtivo === 'Lixo') {
+          url += '&relevancia=Lixo';
+        }
       }
       fetch(url)
         .then(response => {
@@ -691,23 +721,29 @@ const Spreadsheet: React.FC = () => {
               {filtroAtivo === 'Estrategica' ? 'Voltar' : 'Abrir Estratégicas'}
               {filtroAtivo === 'Estrategica' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
             </Button>
-            <Button
-              variant="default"
-              onClick={toggleFiltroLixo}
-              className={
-                filtroAtivo === 'Lixo'
-                  ? 'bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800'
-                  : 'bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800'
-              }
-            >
-              {filtroAtivo === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
-              {filtroAtivo === 'Lixo' ? (
-                <CircleArrowLeft className="ml-2 h-4 w-4" />
-              ) : (
-                <CircleX className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-            <DatePicker onChange={handleDateChange} />
+            {filtroAtivo !== 'Estrategica' && (
+              <Button
+                variant="default"
+                onClick={toggleFiltroLixo}
+                className={
+                  filtroAtivo === 'Lixo'
+                    ? 'bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800'
+                    : 'bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800'
+                }
+              >
+                {filtroAtivo === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
+                {filtroAtivo === 'Lixo' ? (
+                  <CircleArrowLeft className="ml-2 h-4 w-4" />
+                ) : (
+                  <CircleX className="ml-2 h-4 w-4" />
+                )}
+              </Button>
+            )}
+            {filtroAtivo !== 'Estrategica' ? (
+              <DatePicker onChange={handleDateChange} />
+            ) : (
+              <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} />
+            )}
           </div>
         </div>
         <div className="dashboard-card">
