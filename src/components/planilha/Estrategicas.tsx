@@ -5,7 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { TituloCell } from '@/pages/Spreadsheet';
 
-const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app/';
+const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
 
 interface EstrategicasProps {
   noticias: Noticia[];

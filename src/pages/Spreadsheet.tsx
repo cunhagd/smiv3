@@ -12,7 +12,7 @@ import { format, parse } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 
 // Centralizar a URL base
-const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app/';
+const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
 
 const TEMAS = [
   'Agricultura',
