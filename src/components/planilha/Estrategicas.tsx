@@ -1,12 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Noticia, ColumnDef } from '@/types/noticia';
-import { ChevronDown, ChevronRight } from 'lucide-react';
-import { Checkbox } from '@/components/ui/checkbox';
+import { ChevronDown, ChevronRight, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { TituloCell } from '@/pages/Spreadsheet';
 
-const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
+const API_BASE_URL = 'http://localhost:3000';
 
 interface EstrategicasProps {
   noticias: Noticia[];
@@ -315,12 +314,18 @@ function EstrategicaCell({ row, setNoticias, onEstrategicaChange }: {
 
   return (
     <div className="flex justify-center items-center h-full">
-      <Checkbox
-        checked={isChecked}
-        onCheckedChange={handleChange}
-        disabled={isSaving}
-        className="border-white/20 data-[state=checked]:bg-yellow-200 data-[state=checked]:border-yellow-200"
-      />
+      <span
+        onClick={() => handleChange(!isChecked)}
+        className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
+      >
+        <Star
+          className={`h-5 w-5 transition-colors ${
+            isChecked
+              ? 'fill-yellow-300 text-yellow-300 hover:text-yellow-200'
+              : 'fill-none text-white/20 hover:text-white/40'
+          }`}
+        />
+      </span>
     </div>
   );
 }

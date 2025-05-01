@@ -3,11 +3,11 @@ import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
 import DatePicker from '@/components/DateRangePicker';
 import DatePickerEstrategicas from '@/components/DatePickerEstrategicas';
-import { ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, ShieldPlus, ExternalLink, Star } from 'lucide-react';
+import DatePickerLixeira from '@/components/DatePickerLixeira';
+import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
-import { Checkbox } from '@/components/ui/checkbox';
 import Estrategicas from '@/components/planilha/Estrategicas';
+import Lixeira from '@/components/planilha/Lixeira';
 import { format, parse } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 
@@ -28,15 +28,15 @@ const TEMAS = [
 ];
 
 const AVALIACOES = [
-  { valor: 'Positiva', cor: '#F2FCE2', icone: ThumbsUp },
-  { valor: 'Neutra', cor: '#F1F0FB', icone: Minus },
-  { valor: 'Negativa', cor: '#FFDEE2', icone: ThumbsDown },
+  { valor: 'Positiva', cor: '#F2FCE2', icone: Smile },
+  { valor: 'Neutra', cor: '#F1F0FB', icone: Meh },
+  { valor: 'Negativa', cor: '#FFDEE2', icone: Frown },
 ];
 
 const RELEVANCIA = [
-  { valor: 'Útil', cor: '#F2FCE2', icone: CircleCheckBig },
-  { valor: 'Lixo', cor: '#FFDEE2', icone: Trash2 },
-  { valor: 'Suporte', cor: '#B8E2F4', icone: ShieldPlus },
+  { valor: 'Útil', cor: '#CAF10A', icone: CircleCheckBig },
+  { valor: 'Lixo', cor: '#FFFFFF', icone: Trash2 },
+  { valor: 'Suporte', cor: '#FFFFFF', icone: Lightbulb },
 ];
 
 const MENSAGEM_PADRAO = 'Selecionar';
@@ -74,13 +74,14 @@ export const TituloCell: React.FC<TituloCellProps> = ({ row }) => (
   </a>
 );
 
-// Componente para o dropdown de Relevância
+// Componente para o menu de Relevância
 function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>> }) {
   const { id, relevancia } = row;
   const [relevSelecionada, setRelevSelecionada] = useState<string>(
     relevancia === 'Útil' ? 'Útil' : relevancia === 'Lixo' ? 'Lixo' : relevancia === 'Suporte' ? 'Suporte' : 'Selecionar'
   );
   const [isSaving, setIsSaving] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(relevSelecionada === 'Selecionar');
   const { toast } = useToast();
 
   const handleSave = async (novaRelevancia: string) => {
@@ -112,54 +113,85 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
     }
   };
 
+  const handleSelect = (novaRelevancia: string) => {
+    setRelevSelecionada(novaRelevancia);
+    handleSave(novaRelevancia);
+    if (novaRelevancia !== 'Selecionar') {
+      setIsMenuOpen(false);
+    } else {
+      setIsMenuOpen(true);
+    }
+  };
+
+  const handleIconClick = () => {
+    setRelevSelecionada('selecionar'); // Resetar a seleção para "Selecionar"
+    handleSave('selecionar'); // Enviar null para o DB
+    setIsMenuOpen(true); // Abrir o menu com as três opções
+  };
+
   const relevanciaObj = RELEVANCIA.find((r) => r.valor === relevSelecionada);
   const IconeRelevancia = relevanciaObj?.icone;
 
   return (
-    <div className="relative">
-      <select
-        value={relevSelecionada}
-        onChange={(e) => {
-          const novaRelevancia = e.target.value;
-          setRelevSelecionada(novaRelevancia);
-          handleSave(novaRelevancia);
-        }}
-        disabled={isSaving}
-        className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
-          relevSelecionada === 'Útil'
-            ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400'
-            : relevSelecionada === 'Lixo'
-            ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400'
-            : relevSelecionada === 'Suporte'
-            ? 'bg-[#B8E2F4] text-blue-800 border-blue-300 focus:border-blue-400 focus:ring-blue-400/30 hover:border-blue-400'
-            : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
-        }`}
-      >
-        <option value="Selecionar" className="text-left">{MENSAGEM_PADRAO}</option>
-        {RELEVANCIA.map((relevancia) => (
-          <option key={relevancia.valor} value={relevancia.valor} className="text-left">
-            {relevancia.valor}
-          </option>
-        ))}
-      </select>
-      {IconeRelevancia && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
-          <IconeRelevancia
-            className={`h-4 w-4 ${
-              relevSelecionada === 'Útil'
-                ? 'text-green-600'
-                : relevSelecionada === 'Lixo'
-                ? 'text-red-600'
-                : relevSelecionada === 'Suporte'
-                ? 'text-blue-600'
-                : 'text-gray-600'
-            }`}
-          />
+    <div className="flex justify-center items-center h-full">
+      {isMenuOpen ? (
+        <div className="flex gap-2">
+          {RELEVANCIA.map((relevancia) => {
+            const Icone = relevancia.icone;
+            const isUtil = relevancia.valor === 'Útil';
+            const isLixo = relevancia.valor === 'Lixo';
+            const isSuporte = relevancia.valor === 'Suporte';
+            return (
+              <span
+                key={relevancia.valor}
+                onClick={() => handleSelect(relevancia.valor)}
+                className={`relative cursor-pointer transition-all duration-300 ease-in-out transform ${
+                  isMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
+                } ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
+                data-tooltip={relevancia.valor}
+              >
+                <Icone
+                  className={`h-5 w-5 transition-colors ${
+                    isUtil
+                      ? 'text-[#4c4c4c] hover:text-[#CAF10A]'
+                      : isLixo
+                      ? 'text-[#4c4c4c] hover:text-red-500'
+                      : isSuporte
+                      ? 'text-[#4c4c4c] hover:text-[#72C5FD]'
+                      : ''
+                  }`}
+                />
+              </span>
+            );
+          })}
         </div>
+      ) : (
+        <span
+          onClick={handleIconClick}
+          className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
+        >
+          {relevSelecionada === 'Selecionar' ? (
+            <span
+              className="text-white text-sm cursor-pointer hover:text-blue-400 transition-colors"
+              onClick={() => setIsMenuOpen(true)}
+            >
+              {MENSAGEM_PADRAO}
+            </span>
+          ) : (
+            IconeRelevancia && (
+              <IconeRelevancia
+                className={`h-5 w-5 transition-colors ${
+                  relevSelecionada === 'Útil'
+                    ? 'text-[#CAF10A] hover:text-[#eafb9a]'
+                    : relevSelecionada === 'Lixo'
+                    ? 'text-red-700 hover:text-red-500'
+                    : 'text-[#72C5FD] hover:text-[#bde4fe]'
+                }`}
+              />
+            )
+          )}
+        </span>
       )}
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-        <ChevronDown className={`h-4 w-4 ${relevSelecionada ? 'text-gray-600' : 'text-white/60'}`} />
-      </div>
     </div>
   );
 }
@@ -221,11 +253,14 @@ function TemaCell({ row, updateTema }: { row: Noticia; updateTema: (id: string, 
   );
 }
 
-// Componente para o dropdown de Avaliação
+// Componente para o menu de Avaliação
 function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; updateAvaliacao: (id: string, avaliacao: string) => void; setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>> }) {
   const { id, avaliacao, pontos } = row;
-  const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState<string>(avaliacao || '');
+  const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState<string>(
+    avaliacao === 'Positiva' ? 'Positiva' : avaliacao === 'Neutra' ? 'Neutra' : avaliacao === 'Negativa' ? 'Negativa' : ''
+  );
   const [isSaving, setIsSaving] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(!avaliacaoSelecionada);
   const { toast } = useToast();
 
   const handleSave = async (novaAvaliacao: string) => {
@@ -242,6 +277,11 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
 
         const pontosBrutos = Math.abs(pontos || 0);
         const novosPontos = valorEnviado === 'Negativa' ? -pontosBrutos : pontosBrutos;
+        setNoticias((prevNoticias) =>
+          prevNoticias.map((noticia) =>
+            noticia.id === id ? { ...noticia, avaliacao: valorEnviado, pontos: novosPontos } : noticia
+          )
+        );
         updateAvaliacao(id.toString(), valorEnviado || '');
       } catch (error: any) {
         toast({
@@ -255,61 +295,85 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
     }
   };
 
+  const handleSelect = (novaAvaliacao: string) => {
+    setAvaliacaoSelecionada(novaAvaliacao);
+    handleSave(novaAvaliacao);
+    if (novaAvaliacao !== '') {
+      setIsMenuOpen(false);
+    } else {
+      setIsMenuOpen(true);
+    }
+  };
+
+  const handleIconClick = () => {
+    setAvaliacaoSelecionada(''); // Resetar a seleção para ""
+    handleSave(''); // Enviar null para o DB
+    setIsMenuOpen(true); // Abrir o menu com as três opções
+  };
+
   const avaliacaoObj = AVALIACOES.find((a) => a.valor === avaliacaoSelecionada);
   const IconeAvaliacao = avaliacaoObj?.icone;
 
   return (
-    <div className="relative">
-      <select
-        value={avaliacaoSelecionada}
-        onChange={(e) => {
-          const novaAvaliacao = e.target.value;
-          setAvaliacaoSelecionada(novaAvaliacao);
-          const pontosBrutos = Math.abs(pontos || 0);
-          const novosPontos = novaAvaliacao === 'Negativa' ? -pontosBrutos : pontosBrutos;
-          setNoticias((prevNoticias) =>
-            prevNoticias.map((noticia) =>
-              noticia.id === id
-                ? { ...noticia, avaliacao: novaAvaliacao, pontos: novosPontos }
-                : noticia
-            )
-          );
-          handleSave(novaAvaliacao);
-        }}
-        disabled={isSaving}
-        className={`p-1 pl-8 pr-8 border rounded text-sm w-full min-w-[140px] text-left appearance-none focus:ring-1 transition-all ${
-          avaliacaoSelecionada === 'Positiva'
-            ? 'bg-[#F2FCE2] text-green-800 border-green-300 focus:border-green-400 focus:ring-green-400/30 hover:border-green-400'
-            : avaliacaoSelecionada === 'Negativa'
-            ? 'bg-[#FFDEE2] text-red-800 border-red-300 focus:border-red-400 focus:ring-red-400/30 hover:border-red-400'
-            : avaliacaoSelecionada === 'Neutra'
-            ? 'bg-[#F1F0FB] text-gray-800 border-gray-300 focus:border-gray-400 focus:ring-gray-400/30 hover:border-gray-400'
-            : 'bg-dark-card border-white/10 text-white focus:border-blue-400/50 focus:ring-blue-400/30 hover:border-white/20'
-        }`}
-      >
-        <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
-        {AVALIACOES.map((avaliacao) => (
-          <option key={avaliacao.valor} value={avaliacao.valor} className="text-left">
-            {avaliacao.valor}
-          </option>
-        ))}
-      </select>
-      {IconeAvaliacao && (
-        <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center px-2">
-          <IconeAvaliacao
-            className={`h-4 w-4 ${
-              avaliacaoSelecionada === 'Positiva'
-                ? 'text-green-600'
-                : avaliacaoSelecionada === 'Negativa'
-                ? 'text-red-600'
-                : 'text-gray-600'
-            }`}
-          />
+    <div className="flex justify-center items-center h-full">
+      {isMenuOpen ? (
+        <div className="flex gap-2">
+          {AVALIACOES.map((avaliacao) => {
+            const Icone = avaliacao.icone;
+            const isPositiva = avaliacao.valor === 'Positiva';
+            const isNeutra = avaliacao.valor === 'Neutra';
+            const isNegativa = avaliacao.valor === 'Negativa';
+            return (
+              <span
+                key={avaliacao.valor}
+                onClick={() => handleSelect(avaliacao.valor)}
+                className={`relative cursor-pointer transition-all duration-300 ease-in-out transform ${
+                  isMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
+                } ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
+                data-tooltip={avaliacao.valor}
+              >
+                <Icone
+                  className={`h-5 w-5 transition-colors ${
+                    isPositiva
+                      ? 'text-[#4c4c4c] hover:text-green-600'
+                      : isNeutra
+                      ? 'text-[#4c4c4c] hover:text-gray-600'
+                      : isNegativa
+                      ? 'text-[#4c4c4c] hover:text-red-600'
+                      : ''
+                  }`}
+                />
+              </span>
+            );
+          })}
         </div>
+      ) : (
+        <span
+          onClick={handleIconClick}
+          className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
+        >
+          {avaliacaoSelecionada === '' ? (
+            <span
+              className="text-white text-sm cursor-pointer hover:text-blue-400 transition-colors"
+              onClick={() => setIsMenuOpen(true)}
+            >
+              {MENSAGEM_PADRAO}
+            </span>
+          ) : (
+            IconeAvaliacao && (
+              <IconeAvaliacao
+                className={`h-5 w-5 transition-colors ${
+                  avaliacaoSelecionada === 'Positiva'
+                    ? 'text-green-600 hover:text-green-400'
+                    : avaliacaoSelecionada === 'Neutra'
+                    ? 'text-gray-600 hover:text-gray-400'
+                    : 'text-red-600 hover:text-red-400'
+                }`}
+              />
+            )
+          )}
+        </span>
       )}
-      <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
-        <ChevronDown className={`h-4 w-4 ${avaliacaoSelecionada ? 'text-gray-600' : 'text-white/60'}`} />
-      </div>
     </div>
   );
 }
@@ -373,12 +437,18 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
 
   return (
     <div className="flex justify-center items-center h-full">
-      <Checkbox
-        checked={isChecked}
-        onCheckedChange={handleChange}
-        disabled={isSaving}
-        className="border-white/20 data-[state=checked]:bg-yellow-200 data-[state=checked]:border-yellow-200"
-      />
+      <span
+        onClick={() => handleChange(!isChecked)}
+        className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
+      >
+        <Star
+          className={`h-5 w-5 transition-colors ${
+            isChecked
+              ? 'fill-yellow-300 text-yellow-300 hover:text-yellow-200'
+              : 'fill-none text-white/20 hover:text-white/40'
+          }`}
+        />
+      </span>
     </div>
   );
 }
@@ -456,8 +526,11 @@ interface EstrategicasReturn {
 const Spreadsheet: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedDateEstrategicas, setSelectedDateEstrategicas] = useState<Date | undefined>(undefined);
+  const [selectedDateLixeira, setSelectedDateLixeira] = useState<Date | undefined>(undefined);
+  const [previousSelectedDate, setPreviousSelectedDate] = useState<Date | undefined>(new Date()); // Novo estado para armazenar a data anterior
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [strategicDates, setStrategicDates] = useState<Date[]>([]);
+  const [trashDates, setTrashDates] = useState<Date[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [currentDate, setCurrentDate] = useState<string | null>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -473,17 +546,29 @@ const Spreadsheet: React.FC = () => {
   const toggleFiltroLixo = () => {
     const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
     setFiltroAtivo(novoFiltro);
-    setCurrentDate(null); // Resetar data para buscar a mais recente
-    setSelectedDate(new Date()); // Resetar data padrão
-    setSelectedDateEstrategicas(undefined); // Resetar data estratégicas
+    setCurrentDate(null);
+    if (novoFiltro === 'Lixo') {
+      setPreviousSelectedDate(selectedDate); // Armazenar a data atual antes de entrar no modo Lixo
+      setSelectedDate(undefined); // Limpar a data atual para evitar conflitos
+    } else {
+      setSelectedDate(previousSelectedDate || new Date()); // Restaurar a data anterior ao voltar para a planilha principal
+    }
+    setSelectedDateEstrategicas(undefined);
+    setSelectedDateLixeira(undefined);
   };
 
   const toggleFiltroEstrategica = () => {
     const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
     setFiltroAtivo(novoFiltro);
-    setCurrentDate(null); // Resetar data para buscar a mais recente
-    setSelectedDate(new Date()); // Resetar data padrão
-    setSelectedDateEstrategicas(undefined); // Resetar data estratégicas
+    setCurrentDate(null);
+    if (novoFiltro === 'Estrategica') {
+      setPreviousSelectedDate(selectedDate); // Armazenar a data atual antes de entrar no modo Estratégica
+      setSelectedDate(undefined); // Limpar a data atual para evitar conflitos
+    } else {
+      setSelectedDate(previousSelectedDate || new Date()); // Restaurar a data anterior ao voltar para a planilha principal
+    }
+    setSelectedDateEstrategicas(undefined);
+    setSelectedDateLixeira(undefined);
   };
 
   const updateTema = (id: string, novoTema: string) => {
@@ -529,6 +614,28 @@ const Spreadsheet: React.FC = () => {
     fetchStrategicDates();
   }, []);
 
+  // Buscar as datas com notícias marcadas como "Lixo"
+  useEffect(() => {
+    const fetchTrashDates = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/noticias/trash-dates`);
+        if (!response.ok) {
+          throw new Error('Erro ao buscar datas de notícias na lixeira');
+        }
+        const dates: string[] = await response.json();
+        const parsedDates = dates
+          .map((dateStr) => parse(dateStr, 'dd/MM/yyyy', new Date()))
+          .filter((date) => !isNaN(date.getTime()));
+        setTrashDates(parsedDates);
+      } catch (error: any) {
+        console.error('Erro ao buscar datas de notícias na lixeira:', error.message);
+        setTrashDates([]);
+      }
+    };
+
+    fetchTrashDates();
+  }, []);
+
   useEffect(() => {
     const fetchNoticias = async () => {
       setIsLoading(true);
@@ -540,15 +647,19 @@ const Spreadsheet: React.FC = () => {
           const dateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
           url += `?estrategica=true&date=${dateFormatted}`;
         } else {
-          url += `?estrategica=true&all=true`; // Buscar todas as notícias estratégicas
+          url += `?estrategica=true&all=true`;
+        }
+      } else if (filtroAtivo === 'Lixo') {
+        if (selectedDateLixeira) {
+          const dateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
+          url += `?relevancia=Lixo&date=${dateFormatted}`;
+        } else {
+          url += `?relevancia=Lixo&all=true`;
         }
       } else {
         if (selectedDate) {
           const dateFormatted = format(selectedDate, 'yyyy-MM-dd');
           url += `?date=${dateFormatted}`;
-        }
-        if (filtroAtivo === 'Lixo') {
-          url += `${selectedDate ? '&' : '?'}relevancia=Lixo`;
         }
       }
 
@@ -605,24 +716,28 @@ const Spreadsheet: React.FC = () => {
     };
 
     fetchNoticias();
-  }, [selectedDate, selectedDateEstrategicas, filtroAtivo, toast]);
+  }, [selectedDate, selectedDateEstrategicas, selectedDateLixeira, filtroAtivo, toast]);
 
   const handleDateChange = (date: Date | undefined) => {
     setSelectedDate(date);
-    setCurrentDate(null); // Resetar navegação por before/after
+    setCurrentDate(null);
   };
 
   const handleDateChangeEstrategicas = (date: Date | undefined) => {
     setSelectedDateEstrategicas(date);
-    setCurrentDate(null); // Resetar navegação por before/after
+    setCurrentDate(null);
+  };
+
+  const handleDateChangeLixeira = (date: Date | undefined) => {
+    setSelectedDateLixeira(date);
+    setCurrentDate(null);
   };
 
   const handleNext = () => {
     if (hasNext && currentDate) {
-      // Converter DD/MM/YYYY para YYYY-MM-dd
       const [day, month, year] = currentDate.split('/');
       const dateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      setCurrentDate(null); // Limpar data atual
+      setCurrentDate(null);
       let url = `${API_BASE_URL}/noticias?before=${dateFormatted}`;
       if (filtroAtivo === 'Estrategica') {
         url += '&estrategica=true';
@@ -630,13 +745,16 @@ const Spreadsheet: React.FC = () => {
           const selectedDateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
           url += `&date=${selectedDateFormatted}`;
         }
+      } else if (filtroAtivo === 'Lixo') {
+        url += '&relevancia=Lixo';
+        if (selectedDateLixeira) {
+          const selectedDateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
       } else {
         if (selectedDate) {
           const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
           url += `&date=${selectedDateFormatted}`;
-        }
-        if (filtroAtivo === 'Lixo') {
-          url += '&relevancia=Lixo';
         }
       }
       fetch(url)
@@ -668,10 +786,9 @@ const Spreadsheet: React.FC = () => {
 
   const handlePrevious = () => {
     if (hasPrevious && currentDate) {
-      // Converter DD/MM/YYYY para YYYY-MM-dd
       const [day, month, year] = currentDate.split('/');
       const dateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
-      setCurrentDate(null); // Limpar data atual
+      setCurrentDate(null);
       let url = `${API_BASE_URL}/noticias?after=${dateFormatted}`;
       if (filtroAtivo === 'Estrategica') {
         url += '&estrategica=true';
@@ -679,13 +796,16 @@ const Spreadsheet: React.FC = () => {
           const selectedDateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
           url += `&date=${selectedDateFormatted}`;
         }
+      } else if (filtroAtivo === 'Lixo') {
+        url += '&relevancia=Lixo';
+        if (selectedDateLixeira) {
+          const selectedDateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
       } else {
         if (selectedDate) {
           const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
           url += `&date=${selectedDateFormatted}`;
-        }
-        if (filtroAtivo === 'Lixo') {
-          url += '&relevancia=Lixo';
         }
       }
       fetch(url)
@@ -738,40 +858,27 @@ const Spreadsheet: React.FC = () => {
             <p className="text-gray-400">Gerenciamento e análise de notícias</p>
           </div>
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <Button
-              variant="default"
-              onClick={toggleFiltroEstrategica}
-              className={
-                filtroAtivo === 'Estrategica'
-                  ? 'bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800'
-                  : 'bg-[#FAF9BF] hover:bg-[#FAF9BF]/90 text-yellow-800'
-              }
-            >
-              {filtroAtivo === 'Estrategica' ? 'Voltar' : 'Abrir Estratégicas'}
-              {filtroAtivo === 'Estrategica' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <Star className="ml-2 h-4 w-4" />}
-            </Button>
-            {filtroAtivo !== 'Estrategica' && (
-              <Button
-                variant="default"
-                onClick={toggleFiltroLixo}
-                className={
-                  filtroAtivo === 'Lixo'
-                    ? 'bg-[#E2F2FC] hover:bg-[#E2F2FC]/90 text-blue-800'
-                    : 'bg-[#FFDEE2] hover:bg-[#FFDEE2]/90 text-red-800'
-                }
+            {filtroAtivo !== 'Lixo' && (
+              <span
+                onClick={toggleFiltroEstrategica}
+                className="cursor-pointer text-yellow-300 hover:text-yellow-200"
               >
-                {filtroAtivo === 'Lixo' ? 'Voltar' : 'Abrir Lixos'}
-                {filtroAtivo === 'Lixo' ? (
-                  <CircleArrowLeft className="ml-2 h-4 w-4" />
+                {filtroAtivo === 'Estrategica' ? (
+                  <CircleArrowLeft className="h-6 w-6" />
                 ) : (
-                  <Trash2 className="ml-2 h-4 w-4" />
+                  <Star className="h-6 w-6" />
                 )}
-              </Button>
+              </span>
             )}
-            {filtroAtivo !== 'Estrategica' ? (
-              <DatePicker onChange={handleDateChange} />
-            ) : (
+            {filtroAtivo !== 'Estrategica' && (
+              <Lixeira filtroAtivo={filtroAtivo} toggleFiltroLixo={toggleFiltroLixo} />
+            )}
+            {filtroAtivo === 'Estrategica' ? (
               <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
+            ) : filtroAtivo === 'Lixo' ? (
+              <DatePickerLixeira onChange={handleDateChangeLixeira} trashDates={trashDates} />
+            ) : (
+              <DatePicker onChange={handleDateChange} />
             )}
           </div>
         </div>
