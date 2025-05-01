@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { format } from 'date-fns';
+import { format, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronDown } from 'lucide-react';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
@@ -8,9 +8,10 @@ import { Calendar as CalendarComponent } from '@/components/ui/calendar';
 
 type DatePickerEstrategicasProps = {
   onChange: (date: Date | undefined) => void;
+  strategicDates: Date[];
 };
 
-const DatePickerEstrategicas = ({ onChange }: DatePickerEstrategicasProps) => {
+const DatePickerEstrategicas = ({ onChange, strategicDates }: DatePickerEstrategicasProps) => {
   const [isOpen, setIsOpen] = useState(false);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
 
@@ -33,6 +34,22 @@ const DatePickerEstrategicas = ({ onChange }: DatePickerEstrategicasProps) => {
       return 'Selecione uma data (Estratégicas)';
     }
     return format(selectedDate, 'dd/MM/yyyy', { locale: ptBR });
+  };
+
+  // Função para determinar se a data é estratégica
+  const isStrategicDate = (day: Date) => {
+    return strategicDates.some((strategicDate) => isSameDay(day, strategicDate));
+  };
+
+  // Definir modificadores para os dias não estratégicos e não selecionados
+  const modifiers = {
+    nonStrategic: (day: Date) =>
+      !isStrategicDate(day) && !isSameDay(day, selectedDate || new Date(0)),
+  };
+
+  // Mapear modificadores para classes CSS
+  const modifiersClassNames = {
+    nonStrategic: 'opacity-30',
   };
 
   return (
@@ -80,6 +97,8 @@ const DatePickerEstrategicas = ({ onChange }: DatePickerEstrategicasProps) => {
               day_range_middle: "bg-yellow-500/20",
               day_hidden: "invisible",
             }}
+            modifiers={modifiers}
+            modifiersClassNames={modifiersClassNames}
           />
           <div className="flex justify-end">
             <Button

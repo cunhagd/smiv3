@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Noticia, ColumnDef } from '@/types/noticia';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { TituloCell } from '@/pages/Spreadsheet';
@@ -97,7 +98,6 @@ function CategoriaCell({ row, setNoticias }: { row: Noticia; setNoticias: React.
             {cat}
           </option>
         ))}
-     九
       </select>
       <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-white/60">
         <ChevronDown className="h-4 w-4" />
@@ -227,17 +227,56 @@ function CicloCell({ row, setNoticias }: { row: Noticia; setNoticias: React.Disp
     </div>
   );
 }
+// Componente para a célula de Estratégica
+function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>> }) {
+    const { id, estrategica } = row;
+    const [isChecked, setIsChecked] = useState(estrategica || false);
+    const [isSaving, setIsSaving] = useState(false);
+    const { toast } = useToast();
+  
+    const handleChange = async (checked: boolean) => {
+      setIsChecked(checked);
+      setIsSaving(true);
+      try {
+        const response = await fetch(`${API_BASE_URL}/noticias/${id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ estrategica: checked }),
+        });
+        if (!response.ok) throw new Error('Falha ao salvar estratégica');
+        setNoticias((prevNoticias) =>
+          prevNoticias.map((noticia) =>
+            noticia.id === id ? { ...noticia, estrategica: checked } : noticia
+          )
+        );
+      } catch (error: any) {
+        toast({
+          title: 'Erro ao salvar',
+          description: 'Não foi possível salvar a marcação estratégica. Tente novamente.',
+          variant: 'destructive',
+        });
+        setIsChecked(estrategica || false); // Reverter em caso de erro
+      } finally {
+        setIsSaving(false);
+      }
+    };
+  
+    return (
+      <div className="flex justify-center items-center h-full">
+        <Checkbox
+          checked={isChecked}
+          onCheckedChange={handleChange}
+          disabled={isSaving}
+          className="border-white/20 data-[state=checked]:bg-yellow-200 data-[state=checked]:border-yellow-200"
+        />
+      </div>
+    );
+  }
 
 function Estrategicas({ noticias, setNoticias }: EstrategicasProps): EstrategicasReturn {
   const [isLoading] = useState(false);
 
   const columns: ColumnDef[] = [
-    {
-      id: 'relevancia',
-      header: 'Utilidade',
-      accessorKey: 'relevancia',
-      sortable: true,
-    },
     {
       id: 'data',
       header: 'Data',
@@ -258,28 +297,11 @@ function Estrategicas({ noticias, setNoticias }: EstrategicasProps): Estrategica
       cell: ({ row }) => <TituloCell row={row} />,
     },
     {
-      id: 'tema',
-      header: 'Tema',
-      accessorKey: 'tema',
+      id: 'ciclo',
+      header: 'Ciclo',
+      accessorKey: 'ciclo',
       sortable: true,
-    },
-    {
-      id: 'avaliacao',
-      header: 'Avaliação',
-      accessorKey: 'avaliacao',
-      sortable: true,
-    },
-    {
-      id: 'pontos',
-      header: 'Pontos',
-      accessorKey: 'pontos',
-      sortable: true,
-    },
-    {
-      id: 'estrategica',
-      header: 'Estratégica',
-      accessorKey: 'estrategica',
-      sortable: true,
+      cell: ({ row }) => <CicloCell row={row} setNoticias={setNoticias} />,
     },
     {
       id: 'categoria',
@@ -296,12 +318,12 @@ function Estrategicas({ noticias, setNoticias }: EstrategicasProps): Estrategica
       cell: ({ row }) => <SubcategoriaCell row={row} setNoticias={setNoticias} />,
     },
     {
-      id: 'ciclo',
-      header: 'Ciclo',
-      accessorKey: 'ciclo',
-      sortable: true,
-      cell: ({ row }) => <CicloCell row={row} setNoticias={setNoticias} />,
-    },
+    id: 'estrategica',
+    header: 'Estratégica',
+    accessorKey: 'estrategica',
+    sortable: true,
+    cell: ({ row }) => <EstrategicaCell row={row} setNoticias={setNoticias} />,
+  },
   ];
 
   return {

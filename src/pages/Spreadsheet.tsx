@@ -3,12 +3,12 @@ import Navbar from '@/components/Navbar';
 import DataTable from '@/components/DataTable';
 import DatePicker from '@/components/DateRangePicker';
 import DatePickerEstrategicas from '@/components/DatePickerEstrategicas';
-import { ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, CircleX, ShieldPlus, ExternalLink } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Minus, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, ShieldPlus, ExternalLink, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import Estrategicas from '@/components/planilha/Estrategicas';
-import { format } from 'date-fns';
+import { format, parse } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 
 // Centralizar a URL base
@@ -35,7 +35,7 @@ const AVALIACOES = [
 
 const RELEVANCIA = [
   { valor: 'Útil', cor: '#F2FCE2', icone: CircleCheckBig },
-  { valor: 'Lixo', cor: '#FFDEE2', icone: CircleX },
+  { valor: 'Lixo', cor: '#FFDEE2', icone: Trash2 },
   { valor: 'Suporte', cor: '#B8E2F4', icone: ShieldPlus },
 ];
 
@@ -371,7 +371,7 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
         checked={isChecked}
         onCheckedChange={handleChange}
         disabled={isSaving}
-        className="border-white/20 data-[state=checked]:bg-blue-500 data-[state=checked]:border-blue-500"
+        className="border-white/20 data-[state=checked]:bg-yellow-200 data-[state=checked]:border-yellow-200"
       />
     </div>
   );
@@ -451,6 +451,7 @@ const Spreadsheet: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedDateEstrategicas, setSelectedDateEstrategicas] = useState<Date | undefined>(undefined);
   const [noticias, setNoticias] = useState<Noticia[]>([]);
+  const [strategicDates, setStrategicDates] = useState<Date[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [currentDate, setCurrentDate] = useState<string | null>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -499,6 +500,28 @@ const Spreadsheet: React.FC = () => {
       })
     );
   };
+
+  // Buscar as datas com notícias estratégicas
+  useEffect(() => {
+    const fetchStrategicDates = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/noticias/strategic-dates`);
+        if (!response.ok) {
+          throw new Error('Erro ao buscar datas estratégicas');
+        }
+        const dates: string[] = await response.json();
+        const parsedDates = dates
+          .map((dateStr) => parse(dateStr, 'dd/MM/yyyy', new Date()))
+          .filter((date) => !isNaN(date.getTime()));
+        setStrategicDates(parsedDates);
+      } catch (error: any) {
+        console.error('Erro ao buscar datas estratégicas:', error.message);
+        setStrategicDates([]);
+      }
+    };
+
+    fetchStrategicDates();
+  }, []);
 
   useEffect(() => {
     const fetchNoticias = async () => {
@@ -719,7 +742,7 @@ const Spreadsheet: React.FC = () => {
               }
             >
               {filtroAtivo === 'Estrategica' ? 'Voltar' : 'Abrir Estratégicas'}
-              {filtroAtivo === 'Estrategica' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : null}
+              {filtroAtivo === 'Estrategica' ? <CircleArrowLeft className="ml-2 h-4 w-4" /> : <Star className="ml-2 h-4 w-4" />}
             </Button>
             {filtroAtivo !== 'Estrategica' && (
               <Button
@@ -735,14 +758,14 @@ const Spreadsheet: React.FC = () => {
                 {filtroAtivo === 'Lixo' ? (
                   <CircleArrowLeft className="ml-2 h-4 w-4" />
                 ) : (
-                  <CircleX className="ml-2 h-4 w-4" />
+                  <Trash2 className="ml-2 h-4 w-4" />
                 )}
               </Button>
             )}
             {filtroAtivo !== 'Estrategica' ? (
               <DatePicker onChange={handleDateChange} />
             ) : (
-              <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} />
+              <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
             )}
           </div>
         </div>

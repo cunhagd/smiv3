@@ -40,11 +40,11 @@ const DatePicker = ({ onChange }: DatePickerProps) => {
       <PopoverTrigger asChild>
         <Button
           variant="outline"
-          className="flex items-center gap-2 px-4 py-2 bg-dark-card border border-white/10 rounded-lg hover:bg-dark-card-hover transition-all text-white"
+          className="flex items-center gap-2 px-4 py-2 bg-dark-card border border-white/10 rounded-lg hover:bg-gray-200/10 hover:border-white/30 transition-all text-white group"
         >
-          <Calendar className="h-4 w-4 text-gray-400" />
-          <span className="text-sm whitespace-nowrap">{formatSelectedDate()}</span>
-          <ChevronDown className="h-4 w-4 text-gray-400" />
+          <Calendar className="h-4 w-4 text-gray-400 group-hover:text-white transition-all" />
+          <span className="text-sm whitespace-nowrap group-hover:text-white transition-all">{formatSelectedDate()}</span>
+          <ChevronDown className="h-4 w-4 text-gray-400 group-hover:text-white transition-all" />
         </Button>
       </PopoverTrigger>
       <PopoverContent className="w-auto p-4 bg-dark-card border border-white/10 text-white rounded-xl shadow-lg" align="start">
@@ -59,11 +59,11 @@ const DatePicker = ({ onChange }: DatePickerProps) => {
             classNames={{
               months: "flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0",
               month: "space-y-4",
-              caption: "flex justify-center pt-1 relative items-center text-white",
+              caption: "flex justify-center pt-1 relative items-center textAuto-white",
               caption_label: "text-sm font-medium",
               nav: "space-x-1 flex items-center",
               nav_button:
-                "h-7 w-7 bg-dark-card hover:bg-blue-500/20 text-white rounded-md flex items-center justify-center transition-all",
+                "h-7 w-7 bg-dark-card hover:bg-white-500/20 text-white rounded-md flex items-center justify-center transition-all",
               nav_button_previous: "absolute left-1",
               nav_button_next: "absolute right-1",
               table: "w-full border-collapse space-y-1",
