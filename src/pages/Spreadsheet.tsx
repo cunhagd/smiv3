@@ -12,7 +12,7 @@ import { format, parse } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 
 // Centralizar a URL base
-const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
+const API_BASE_URL = 'http://localhost:3000';
 
 const TEMAS = [
   'Agricultura',
@@ -86,47 +86,46 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
 
   const handleSave = async (novaRelevancia: string) => {
     const valorEnviado = novaRelevancia === 'Selecionar' ? null : novaRelevancia;
-    if (valorEnviado !== relevancia) {
-      setIsSaving(true);
-      try {
-        const response = await fetch(`${API_BASE_URL}/noticias/${id}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ relevancia: valorEnviado }),
-        });
-        if (!response.ok) throw new Error('Falha ao salvar relevância');
+    setIsSaving(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/noticias/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ relevancia: valorEnviado }),
+      });
+      if (!response.ok) throw new Error('Falha ao salvar relevância');
 
-        setNoticias((prevNoticias) =>
-          prevNoticias.map((noticia) =>
-            noticia.id === id ? { ...noticia, relevancia: valorEnviado } : noticia
-          )
-        );
-      } catch (error: any) {
-        toast({
-          title: 'Erro ao salvar',
-          description: 'Não foi possível salvar a relevância. Tente novamente.',
-          variant: 'destructive',
-        });
-      } finally {
-        setIsSaving(false);
-      }
+      // Atualizar o estado local com o novo valor
+      setNoticias((prevNoticias) =>
+        prevNoticias.map((noticia) =>
+          noticia.id === id ? { ...noticia, relevancia: valorEnviado } : noticia
+        )
+      );
+      setRelevSelecionada(novaRelevancia); // Garantir que o estado reflete o valor enviado
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao salvar',
+        description: 'Não foi possível salvar a relevância. Tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleSelect = (novaRelevancia: string) => {
-    setRelevSelecionada(novaRelevancia);
     handleSave(novaRelevancia);
-    if (novaRelevancia !== 'Selecionar') {
-      setIsMenuOpen(false);
-    } else {
-      setIsMenuOpen(true);
-    }
+    setIsMenuOpen(novaRelevancia === 'Selecionar'); // Abrir o menu se for "Selecionar", fechar se for outra opção
   };
 
   const handleIconClick = () => {
-    setRelevSelecionada('selecionar'); // Resetar a seleção para "Selecionar"
-    handleSave('selecionar'); // Enviar null para o DB
-    setIsMenuOpen(true); // Abrir o menu com as três opções
+    if (relevSelecionada !== 'Selecionar') {
+      // Se já há uma relevância selecionada, resetar para null
+      handleSelect('Selecionar');
+    } else {
+      // Se já está em "Selecionar", apenas abrir/fechar o menu
+      setIsMenuOpen(true);
+    }
   };
 
   const relevanciaObj = RELEVANCIA.find((r) => r.valor === relevSelecionada);

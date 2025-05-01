@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { ArrowUpDown, MoreHorizontal, Share2, Smartphone, Ellipsis } from 'lucide-react';
+import { Smartphone, Ellipsis } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Column {
@@ -110,7 +110,6 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentDate, ha
                     <span className="text-sm font-medium">{column.header}</span>
                     {column.sortable && (
                       <button className="focus:outline-none" disabled>
-                        <ArrowUpDown className="h-4 w-4 text-gray-400" />
                       </button>
                     )}
                   </div>
