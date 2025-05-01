@@ -303,7 +303,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1">Sub Categoria</label>
+            <label className="block text-sm font-medium mb-1">Subcategoria</label>
             <input
               type="text"
               value={subCategoria}
