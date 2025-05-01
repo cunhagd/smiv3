@@ -317,17 +317,23 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
 // Componente para exibir os pontos
 function PontosCell({ row }: { row: Noticia }) {
   const { avaliacao, pontos } = row;
-  if (!avaliacao) return <span className="text-gray-400">-</span>;
+  if (!avaliacao) return <div className="flex items-center justify-center h-full"><span className="text-gray-400">-</span></div>;
 
-  const valorPontos = avaliacao === 'Negativa' ? -Math.abs(pontos || 0) : pontos || 0;
+  const valorPontos = avaliacao === 'Neutra' ? 0 : avaliacao === 'Negativa' ? -Math.abs(pontos || 0) : pontos || 0;
   return (
-    <span
-      className={`font-medium ${
-        valorPontos < 0 ? 'text-red-500' : valorPontos > 0 ? 'text-green-500' : 'text-gray-400'
-      }`}
-    >
-      {valorPontos}
-    </span>
+    <div className="flex items-center justify-center h-full">
+      <span
+        className={`font-medium ${
+          avaliacao === 'Neutra'
+            ? 'text-white'
+            : valorPontos < 0
+            ? 'text-red-500'
+            : 'text-green-500'
+        }`}
+      >
+        {valorPontos}
+      </span>
+    </div>
   );
 }
 
