@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ArrowUpDown, MoreHorizontal } from 'lucide-react';
+import React, { useState, useRef, useEffect } from 'react';
+import { ArrowUpDown, MoreHorizontal, Share2, Smartphone, Ellipsis } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Column {
@@ -23,6 +23,75 @@ interface DataTableProps {
   onPrevious: () => void;
   isLoading: boolean;
 }
+
+// Componente para exibir o menu de ações (WhatsApp)
+const ActionMenu = ({ row }: { row: any }) => {
+  const [isOpen, setIsOpen] = useState(false);
+
+  const formatMessage = () => {
+    return encodeURIComponent(
+      `*${row.titulo}* \n\n` +
+      `*Data:* ${row.data}\n` +
+      `*Portal:* ${row.portal}\n` +
+      `*Link da notícia:* ${row.link}\n\n` +
+      `---\n` +
+      `_Notícia compartilhada do Sistema de Monitoramento de Imprensa (SECOM GOV MG)_`
+    );
+  };
+
+  const handleShare = () => {
+    const whatsappURL = `https://wa.me/?text=${formatMessage()}`;
+    window.open(whatsappURL, '_blank');
+  };
+
+  // Ref para o elemento do menu
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // Função para verificar se o clique foi fora do menu
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setIsOpen(false);
+      }
+    };
+
+    // Adiciona o listener ao documento
+    document.addEventListener('mousedown', handleClickOutside);
+
+    // Remove o listener ao desmontar o componente
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="hover:bg-white/10 p-1 rounded-full"
+        aria-label="Mais ações"
+      >
+        <Ellipsis className="h-4 w-4 text-gray-400" />
+      </button>
+
+      {/* Dropdown Menu */}
+      {isOpen && (
+        <div
+          ref={menuRef} // Adiciona o ref ao menu
+          className="absolute right-0 mt-1 w-48 bg-dark-card border border-white/10 rounded shadow-lg z-10"
+        >
+          <button
+            onClick={handleShare}
+            className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 flex items-center space-x-2"
+          >
+            <span>Enviar no WhatsApp</span>
+            <span><Smartphone className="h-4 w-4 text-gray-400" /></span>
+          </button>
+        </div>
+      )}
+    </div>
+  );
+};
 
 const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentDate, hasNext, hasPrevious, totalItems, onNext, onPrevious, isLoading }: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
@@ -68,9 +137,7 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentDate, ha
                   </td>
                 ))}
                 <td className="p-3">
-                  <button className="hover:bg-white/10 p-1 rounded-full">
-                    <MoreHorizontal className="h-4 w-4 text-gray-400" />
-                  </button>
+                  <ActionMenu row={row} />
                 </td>
               </tr>
             ))}
@@ -84,33 +151,8 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentDate, ha
         )}
       </div>
 
-      <div className="mt-4 flex justify-between items-center text-sm text-gray-400">
-        <div>
-          Mostrando {displayedData.length} de {totalItems} notícias {currentDate ? `em ${currentDate}` : ''}
-        </div>
-        <div className="flex items-center gap-2">
-          {isLoading && <span className="text-gray-400">Carregando...</span>}
-          <button
-            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={!hasPrevious || isLoading}
-            onClick={() => {
-              console.log('Clicou em Data anterior');
-              onPrevious();
-            }}
-          >
-            Data anterior
-          </button>
-          <button
-            className="px-2 py-1 rounded border border-white/10 bg-dark-card hover:bg-dark-card-hover disabled:opacity-50"
-            disabled={!hasNext || isLoading}
-            onClick={() => {
-              console.log('Clicou em Data seguinte');
-              onNext();
-            }}
-          >
-            Data seguinte
-          </button>
-        </div>
+      <div className="mt-4 text-sm text-gray-400">
+        Mostrando {displayedData.length} de {totalItems} notícias {currentDate ? `em ${currentDate}` : ''}
       </div>
     </div>
   );
