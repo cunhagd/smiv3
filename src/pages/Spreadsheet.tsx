@@ -4,10 +4,12 @@ import DataTable from '@/components/DataTable';
 import DatePicker from '@/components/DateRangePicker';
 import DatePickerEstrategicas from '@/components/DatePickerEstrategicas';
 import DatePickerLixeira from '@/components/DatePickerLixeira';
+import DatePickerSuporte from '@/components/DatePickerSuporte'; 
 import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Estrategicas from '@/components/planilha/Estrategicas';
 import Lixeira from '@/components/planilha/Lixeira';
+import Suporte from '@/components/planilha/Suporte';
 import { format, parse } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 
@@ -526,10 +528,12 @@ const Spreadsheet: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedDateEstrategicas, setSelectedDateEstrategicas] = useState<Date | undefined>(undefined);
   const [selectedDateLixeira, setSelectedDateLixeira] = useState<Date | undefined>(undefined);
+  const [selectedDateSuporte, setSelectedDateSuporte] = useState<Date | undefined>(undefined);
   const [previousSelectedDate, setPreviousSelectedDate] = useState<Date | undefined>(new Date()); // Novo estado para armazenar a data anterior
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [strategicDates, setStrategicDates] = useState<Date[]>([]);
   const [trashDates, setTrashDates] = useState<Date[]>([]);
+  const [suporteDates, setSuporteDates] = useState<Date[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [currentDate, setCurrentDate] = useState<string | null>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -537,11 +541,12 @@ const Spreadsheet: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [filtroAtivo, setFiltroAtivo] = useState<'Nenhum' | 'Lixo' | 'Estrategica'>('Nenhum');
+  const [filtroAtivo, setFiltroAtivo] = useState<'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'>('Nenhum');
 
   // Integração com o componente Estrategicas
   const estrategicas: EstrategicasReturn = Estrategicas({ noticias, setNoticias });
 
+  
   const toggleFiltroLixo = () => {
     const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
     setFiltroAtivo(novoFiltro);
@@ -554,6 +559,7 @@ const Spreadsheet: React.FC = () => {
     }
     setSelectedDateEstrategicas(undefined);
     setSelectedDateLixeira(undefined);
+    setSelectedDateSuporte(undefined);
   };
 
   const toggleFiltroEstrategica = () => {
@@ -568,6 +574,7 @@ const Spreadsheet: React.FC = () => {
     }
     setSelectedDateEstrategicas(undefined);
     setSelectedDateLixeira(undefined);
+    setSelectedDateSuporte(undefined);
   };
 
   const updateTema = (id: string, novoTema: string) => {
@@ -576,6 +583,21 @@ const Spreadsheet: React.FC = () => {
         noticia.id === Number(id) ? { ...noticia, tema: novoTema || null } : noticia
       )
     );
+  };
+
+  const toggleFiltroSuporte = () => {
+    const novoFiltro = filtroAtivo === 'Suporte' ? 'Nenhum' : 'Suporte';
+    setFiltroAtivo(novoFiltro);
+    setCurrentDate(null);
+    if (novoFiltro === 'Suporte') {
+      setPreviousSelectedDate(selectedDate); // Armazenar a data atual antes de entrar no modo Lixo
+      setSelectedDate(undefined); // Limpar a data atual para evitar conflitos
+    } else {
+      setSelectedDate(previousSelectedDate || new Date()); // Restaurar a data anterior ao voltar para a planilha principal
+    }
+    setSelectedDateEstrategicas(undefined);
+    setSelectedDateSuporte (undefined);
+    setSelectedDateSuporte(undefined);
   };
 
   const updateAvaliacao = (id: string, novaAvaliacao: string) => {
@@ -635,6 +657,28 @@ const Spreadsheet: React.FC = () => {
     fetchTrashDates();
   }, []);
 
+  // Buscar as datas com notícias marcadas como "Lixo"
+  useEffect(() => {
+    const fetchSuporteDates = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/noticias/suport-dates`);
+        if (!response.ok) {
+          throw new Error('Erro ao buscar datas de notícias de suporte');
+        }
+        const dates: string[] = await response.json();
+        const parsedDates = dates
+          .map((dateStr) => parse(dateStr, 'dd/MM/yyyy', new Date()))
+          .filter((date) => !isNaN(date.getTime()));
+        setSuporteDates(parsedDates);
+      } catch (error: any) {
+        console.error('Erro ao buscar datas de notícias de suporte:', error.message);
+        setSuporteDates([]);
+      }
+    };
+
+    fetchSuporteDates();
+  }, []);
+
   useEffect(() => {
     const fetchNoticias = async () => {
       setIsLoading(true);
@@ -654,6 +698,13 @@ const Spreadsheet: React.FC = () => {
           url += `?relevancia=Lixo&date=${dateFormatted}`;
         } else {
           url += `?relevancia=Lixo&all=true`;
+        }
+      } else if (filtroAtivo === 'Suporte') {
+        if (selectedDateSuporte) {
+          const dateFormatted = format(selectedDateSuporte, 'yyyy-MM-dd');
+          url += `?relevancia=Suporte&date=${dateFormatted}`;
+        } else {
+          url += `?relevancia=Suporte&all=true`;
         }
       } else {
         if (selectedDate) {
@@ -715,7 +766,7 @@ const Spreadsheet: React.FC = () => {
     };
 
     fetchNoticias();
-  }, [selectedDate, selectedDateEstrategicas, selectedDateLixeira, filtroAtivo, toast]);
+  }, [selectedDate, selectedDateEstrategicas, selectedDateLixeira, selectedDateSuporte, filtroAtivo, toast]);
 
   const handleDateChange = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -729,6 +780,10 @@ const Spreadsheet: React.FC = () => {
 
   const handleDateChangeLixeira = (date: Date | undefined) => {
     setSelectedDateLixeira(date);
+    setCurrentDate(null);
+  };
+  const handleDateChangeSuporte = (date: Date | undefined) => {
+    setSelectedDateSuporte(date);
     setCurrentDate(null);
   };
 
@@ -748,6 +803,12 @@ const Spreadsheet: React.FC = () => {
         url += '&relevancia=Lixo';
         if (selectedDateLixeira) {
           const selectedDateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
+      } else if (filtroAtivo === 'Suporte') {
+        url += '&relevancia=Suporte';
+        if (selectedDateSuporte) {
+          const selectedDateFormatted = format(selectedDateSuporte, 'yyyy-MM-dd');
           url += `&date=${selectedDateFormatted}`;
         }
       } else {
@@ -799,6 +860,12 @@ const Spreadsheet: React.FC = () => {
         url += '&relevancia=Lixo';
         if (selectedDateLixeira) {
           const selectedDateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
+          url += `&date=${selectedDateFormatted}`;
+        }
+      } else if (filtroAtivo === 'Suporte') {
+        url += '&relevancia=Suporte';
+        if (selectedDateSuporte) {
+          const selectedDateFormatted = format(selectedDateSuporte, 'yyyy-MM-dd');
           url += `&date=${selectedDateFormatted}`;
         }
       } else {
@@ -857,7 +924,7 @@ const Spreadsheet: React.FC = () => {
             <p className="text-gray-400">Gerenciamento e análise de notícias</p>
           </div>
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            {filtroAtivo !== 'Lixo' && (
+            {filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' && (
               <span
                 onClick={toggleFiltroEstrategica}
                 className="cursor-pointer text-yellow-300 hover:text-yellow-200"
@@ -869,13 +936,18 @@ const Spreadsheet: React.FC = () => {
                 )}
               </span>
             )}
-            {filtroAtivo !== 'Estrategica' && (
+            {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' && (
               <Lixeira filtroAtivo={filtroAtivo} toggleFiltroLixo={toggleFiltroLixo} />
+            )}
+            {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' && (
+              <Suporte filtroAtivo={filtroAtivo} toggleFiltroSuporte={toggleFiltroSuporte} />
             )}
             {filtroAtivo === 'Estrategica' ? (
               <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
             ) : filtroAtivo === 'Lixo' ? (
               <DatePickerLixeira onChange={handleDateChangeLixeira} trashDates={trashDates} />
+            ) : filtroAtivo === 'Suporte' ? (
+              <DatePickerSuporte onChange={handleDateChangeSuporte} suporteDates={suporteDates} />
             ) : (
               <DatePicker onChange={handleDateChange} />
             )}
