@@ -14,7 +14,7 @@ import { format, parse } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 
 // Centralizar a URL base
-const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
+const API_BASE_URL = 'http://localhost:3000';
 
 const TEMAS = [
   'Agricultura',
@@ -59,13 +59,7 @@ interface DataTableProps {
   filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte';
 }
 
-// Tipagem para as props do componente TituloCell
-interface TituloCellProps {
-  row: Noticia;
-}
-
-// Componente para renderizar o título com link externo (exportado para reutilização)
-export const TituloCell: React.FC<TituloCellProps> = ({ row }) => (
+export const TituloCell: React.FC<{ row: Noticia }> = ({ row }) => (
   <a
     href={row.link}
     target="_blank"
@@ -77,7 +71,6 @@ export const TituloCell: React.FC<TituloCellProps> = ({ row }) => (
   </a>
 );
 
-// Componente para o menu de Relevância
 function RelevanciaCell({
   row,
   setNoticias,
@@ -109,20 +102,17 @@ function RelevanciaCell({
         body: JSON.stringify({ relevancia: valorEnviado }),
       });
       if (!response.ok) throw new Error('Falha ao salvar relevância');
-
       setNoticias((prevNoticias) =>
         prevNoticias.map((noticia) =>
           noticia.id === id ? { ...noticia, relevancia: valorEnviado } : noticia
         )
       );
       setRelevSelecionada(novaRelevancia);
-
       if (onRowRemove) {
         const shouldRemove =
           (filterMode === 'Lixo' && novaRelevancia !== 'Lixo') ||
           (filterMode === 'Suporte' && novaRelevancia !== 'Suporte') ||
-          (filterMode === 'Nenhum' && novaRelevancia === 'Lixo');
-
+          (filterMode === 'Nenhum' && (novaRelevancia === 'Lixo' || novaRelevancia === 'Suporte'));
         if (shouldRemove) {
           onRowRemove(id.toString(), () => {
             setNoticias((prevNoticias) =>
@@ -148,7 +138,8 @@ function RelevanciaCell({
     setIsMenuOpen(novaRelevancia === 'Selecionar');
   };
 
-  const handleIconClick = () => {
+  const handleIconClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevenir comportamento padrão
     if (relevSelecionada !== 'Selecionar') {
       handleSelect('Selecionar');
     } else {
@@ -172,7 +163,7 @@ function RelevanciaCell({
             return (
               <span
                 key={relevancia.valor}
-                onClick={() => handleSelect(relevancia.valor)}
+                onClick={(e) => { e.preventDefault(); handleSelect(relevancia.valor); }}
                 className={`relative cursor-pointer transition-all duration-300 ease-in-out transform ${
                   isMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
                 } ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
@@ -224,7 +215,6 @@ function RelevanciaCell({
   );
 }
 
-// Componente para o dropdown de Tema
 function TemaFloatingCell({ row, updateTema }: { row: Noticia; updateTema: (id: string, tema: string) => void }) {
   const { id, tema } = row;
   const [temaSelecionado, setTemaSelecionado] = useState<string>(tema || '');
@@ -255,21 +245,23 @@ function TemaFloatingCell({ row, updateTema }: { row: Noticia; updateTema: (id: 
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const novoTema = e.target.value;
+    setTemaSelecionado(novoTema);
+    handleSave(novoTema);
+  };
+
   return (
     <div className="relative">
       <select
         value={temaSelecionado}
-        onChange={(e) => {
-          const novoTema = e.target.value;
-          setTemaSelecionado(novoTema);
-          handleSave(novoTema);
-        }}
+        onChange={handleChange}
         disabled={isSaving}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all"
       >
-        <option value="" className="text-left">{MENSAGEM_PADRAO}</option>
+        <option value="">{MENSAGEM_PADRAO}</option>
         {TEMAS.map((tema) => (
-          <option key={tema} value={tema} className="text-left">
+          <option key={tema} value={tema}>
             {tema}
           </option>
         ))}
@@ -281,7 +273,6 @@ function TemaFloatingCell({ row, updateTema }: { row: Noticia; updateTema: (id: 
   );
 }
 
-// Componente para o menu de Avaliação
 function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; updateAvaliacao: (id: string, avaliacao: string) => void; setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>> }) {
   const { id, avaliacao, pontos } = row;
   const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState<string>(
@@ -304,7 +295,6 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
           body: JSON.stringify({ avaliacao: valorEnviado }),
         });
         if (!response.ok) throw new Error('Falha ao salvar a avaliação');
-
         const pontosBrutos = Math.abs(pontos || 0);
         const novosPontos = valorEnviado === 'Negativa' ? -pontosBrutos : pontosBrutos;
         setNoticias((prevNoticias) =>
@@ -337,7 +327,8 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
     }
   };
 
-  const handleIconClick = () => {
+  const handleIconClick = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevenir comportamento padrão
     setAvaliacaoSelecionada('');
     handleSave('');
     setIsMenuOpen(true);
@@ -359,7 +350,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
             return (
               <span
                 key={avaliacao.valor}
-                onClick={() => handleSelect(avaliacao.valor)}
+                onClick={(e) => { e.preventDefault(); handleSelect(avaliacao.valor); }}
                 className={`relative cursor-pointer transition-all duration-300 ease-in-out transform ${
                   isMenuOpen ? 'opacity-100 scale-100' : 'opacity-0 scale-0'
                 } ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
@@ -411,11 +402,9 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
   );
 }
 
-// Componente para exibir os pontos
 function PontosCell({ row }: { row: Noticia }) {
   const { avaliacao, pontos } = row;
   if (!avaliacao) return <div className="flex items-center justify-center h-full"><span className="text-gray-400">-</span></div>;
-
   const valorPontos = avaliacao === 'Neutra' ? 0 : avaliacao === 'Negativa' ? -Math.abs(pontos || 0) : pontos || 0;
   return (
     <div className="flex items-center justify-center h-full">
@@ -434,21 +423,23 @@ function PontosCell({ row }: { row: Noticia }) {
   );
 }
 
-// Componente para a célula de Estratégica
 function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>> }) {
   const { id, estrategica } = row;
   const [isChecked, setIsChecked] = useState(estrategica || false);
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  const handleChange = async (checked: boolean) => {
+  const handleChange = async (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevenir comportamento padrão
+    const checked = !isChecked;
     setIsChecked(checked);
     setIsSaving(true);
     try {
+      const body = { estrategica: checked };
       const response = await fetch(`${API_BASE_URL}/noticias/${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ estrategica: checked }),
+        body: JSON.stringify(body),
       });
       if (!response.ok) throw new Error('Falha ao salvar estratégica');
       setNoticias((prevNoticias) =>
@@ -471,7 +462,7 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
   return (
     <div className="flex justify-center items-center h-full">
       <span
-        onClick={() => handleChange(!isChecked)}
+        onClick={handleChange}
         className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
       >
         <Star
@@ -486,7 +477,6 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
   );
 }
 
-// Definição das colunas padrão
 const getColumns = (
   noticias: Noticia[],
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>,
@@ -551,13 +541,11 @@ const getColumns = (
   },
 ];
 
-// Tipagem para o retorno do componente Estrategicas
 interface EstrategicasReturn {
   columns: ColumnDef[];
   isLoading: boolean;
 }
 
-// Componente principal
 const Spreadsheet: React.FC = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [selectedDateEstrategicas, setSelectedDateEstrategicas] = useState<Date | undefined>(undefined);
@@ -577,7 +565,6 @@ const Spreadsheet: React.FC = () => {
   const { toast } = useToast();
   const [filtroAtivo, setFiltroAtivo] = useState<'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'>('Nenhum');
 
-  // Movendo a definição de handleRowRemove para antes de sua utilização
   const handleRowRemove = (id: string, callback: () => void) => {
     const rowElement = document.querySelector(`[data-row-id="${id}"]`);
     if (rowElement) {
@@ -590,7 +577,6 @@ const Spreadsheet: React.FC = () => {
     }
   };
 
-  // Agora podemos usar handleRowRemove aqui
   const estrategicas: EstrategicasReturn = Estrategicas({
     noticias,
     setNoticias,
@@ -598,7 +584,8 @@ const Spreadsheet: React.FC = () => {
     filterMode: filtroAtivo,
   });
 
-  const toggleFiltroLixo = () => {
+  const toggleFiltroLixo = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevenir comportamento padrão
     const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
@@ -613,11 +600,28 @@ const Spreadsheet: React.FC = () => {
     setSelectedDateSuporte(undefined);
   };
 
-  const toggleFiltroEstrategica = () => {
+  const toggleFiltroEstrategica = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevenir comportamento padrão
     const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
     if (novoFiltro === 'Estrategica') {
+      setPreviousSelectedDate(selectedDate);
+      setSelectedDate(undefined);
+    } else {
+      setSelectedDate(previousSelectedDate || new Date());
+    }
+    setSelectedDateEstrategicas(undefined);
+    setSelectedDateLixeira(undefined);
+    setSelectedDateSuporte(undefined);
+  };
+
+  const toggleFiltroSuporte = (e: React.MouseEvent) => {
+    e.preventDefault(); // Prevenir comportamento padrão
+    const novoFiltro = filtroAtivo === 'Suporte' ? 'Nenhum' : 'Suporte';
+    setFiltroAtivo(novoFiltro);
+    setCurrentDate(null);
+    if (novoFiltro === 'Suporte') {
       setPreviousSelectedDate(selectedDate);
       setSelectedDate(undefined);
     } else {
@@ -634,21 +638,6 @@ const Spreadsheet: React.FC = () => {
         noticia.id === Number(id) ? { ...noticia, tema: novoTema || null } : noticia
       )
     );
-  };
-
-  const toggleFiltroSuporte = () => {
-    const novoFiltro = filtroAtivo === 'Suporte' ? 'Nenhum' : 'Suporte';
-    setFiltroAtivo(novoFiltro);
-    setCurrentDate(null);
-    if (novoFiltro === 'Suporte') {
-      setPreviousSelectedDate(selectedDate);
-      setSelectedDate(undefined);
-    } else {
-      setSelectedDate(previousSelectedDate || new Date());
-    }
-    setSelectedDateEstrategicas(undefined);
-    setSelectedDateLixeira(undefined);
-    setSelectedDateSuporte(undefined);
   };
 
   const updateAvaliacao = (id: string, novaAvaliacao: string) => {
@@ -668,9 +657,7 @@ const Spreadsheet: React.FC = () => {
     const fetchStrategicDates = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/noticias/strategic-dates`);
-        if (!response.ok) {
-          throw new Error('Erro ao buscar datas estratégicas');
-        }
+        if (!response.ok) throw new Error('Erro ao buscar datas estratégicas');
         const dates: string[] = await response.json();
         const parsedDates = dates
           .map((dateStr) => parse(dateStr, 'dd/MM/yyyy', new Date()))
@@ -681,7 +668,6 @@ const Spreadsheet: React.FC = () => {
         setStrategicDates([]);
       }
     };
-
     fetchStrategicDates();
   }, []);
 
@@ -689,9 +675,7 @@ const Spreadsheet: React.FC = () => {
     const fetchTrashDates = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/noticias/trash-dates`);
-        if (!response.ok) {
-          throw new Error('Erro ao buscar datas de notícias na lixeira');
-        }
+        if (!response.ok) throw new Error('Erro ao buscar datas de notícias na lixeira');
         const dates: string[] = await response.json();
         const parsedDates = dates
           .map((dateStr) => parse(dateStr, 'dd/MM/yyyy', new Date()))
@@ -702,7 +686,6 @@ const Spreadsheet: React.FC = () => {
         setTrashDates([]);
       }
     };
-
     fetchTrashDates();
   }, []);
 
@@ -710,9 +693,7 @@ const Spreadsheet: React.FC = () => {
     const fetchSuporteDates = async () => {
       try {
         const response = await fetch(`${API_BASE_URL}/noticias/suport-dates`);
-        if (!response.ok) {
-          throw new Error('Erro ao buscar datas de notícias de suporte');
-        }
+        if (!response.ok) throw new Error('Erro ao buscar datas de notícias de suporte');
         const dates: string[] = await response.json();
         const parsedDates = dates
           .map((dateStr) => parse(dateStr, 'dd/MM/yyyy', new Date()))
@@ -723,7 +704,6 @@ const Spreadsheet: React.FC = () => {
         setSuporteDates([]);
       }
     };
-
     fetchSuporteDates();
   }, []);
 
@@ -766,11 +746,9 @@ const Spreadsheet: React.FC = () => {
       try {
         const response = await fetch(url);
         console.log('Resposta da API:', response.status, response.statusText);
-        if (!response.ok) {
-          throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-        }
+        if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
         const responseData = await response.json();
-        console.log('Dados recebidos:', responseData);
+        console.log('Dados recebidos da API:', responseData);
 
         const { data, meta } = responseData;
         if (Array.isArray(data)) {
@@ -778,8 +756,11 @@ const Spreadsheet: React.FC = () => {
             ...item,
             id: item.id || `noticia-${index}`,
             pontos: item.pontos || 0,
+            ciclo: item.ciclo || null,
+            categoria: item.categoria || null,
+            subcategoria: item.subcategoria || null,
           }));
-          console.log('Notícias processadas:', dataWithIds);
+          console.log('Notícias mapeadas:', dataWithIds);
           setNoticias(dataWithIds);
           setTotalItems(meta?.total || data.length);
           setCurrentDate(meta?.date || null);
@@ -809,7 +790,6 @@ const Spreadsheet: React.FC = () => {
         setHasPrevious(false);
       } finally {
         setIsLoading(false);
-        console.log('Finalizado fetchNoticias, isLoading:', false);
       }
     };
 
@@ -876,6 +856,9 @@ const Spreadsheet: React.FC = () => {
             ...item,
             id: item.id || `noticia-${index}`,
             pontos: item.pontos || 0,
+            ciclo: item.ciclo || null,
+            categoria: item.categoria || null,
+            subcategoria: item.subcategoria || null,
           }));
           setNoticias(dataWithIds);
           setTotalItems(meta?.total || data.length);
@@ -933,6 +916,9 @@ const Spreadsheet: React.FC = () => {
             ...item,
             id: item.id || `noticia-${index}`,
             pontos: item.pontos || 0,
+            ciclo: item.ciclo || null,
+            categoria: item.categoria || null,
+            subcategoria: item.subcategoria || null,
           }));
           setNoticias(dataWithIds);
           setTotalItems(meta?.total || data.length);
@@ -954,17 +940,6 @@ const Spreadsheet: React.FC = () => {
     ? estrategicas.columns
     : getColumns(noticias, setNoticias, updateTema, updateAvaliacao, handleRowRemove, filtroAtivo);
 
-  console.log('Renderizando Spreadsheet, estado:', {
-    isLoading,
-    estrategicasIsLoading: estrategicas.isLoading,
-    noticiasLength: noticias.length,
-    error,
-    filtroAtivo,
-    currentDate,
-    hasNext,
-    hasPrevious,
-  });
-
   return (
     <>
       <style>
@@ -974,14 +949,8 @@ const Spreadsheet: React.FC = () => {
           }
 
           @keyframes slideToTrash {
-            0% {
-              transform: translateX(0);
-              opacity: 1;
-            }
-            100% {
-              transform: translateX(-100px);
-              opacity: 0;
-            }
+            0% { transform: translateX(0); opacity: 1; }
+            100% { transform: translateX(-100px); opacity: 0; }
           }
         `}
       </style>
@@ -994,24 +963,51 @@ const Spreadsheet: React.FC = () => {
               <p className="text-gray-400">Gerenciamento e análise de notícias</p>
             </div>
             <div className="flex items-center gap-3 mt-4 md:mt-0">
-              {filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' && (
+              {filtroAtivo === 'Estrategica' ? (
                 <span
                   onClick={toggleFiltroEstrategica}
                   className="cursor-pointer text-yellow-300 hover:text-yellow-200"
                 >
-                  {filtroAtivo === 'Estrategica' ? (
-                    <CircleArrowLeft className="h-6 w-6" />
-                  ) : (
-                    <Star className="h-6 w-6" />
-                  )}
+                  <CircleArrowLeft className="h-6 w-6" />
                 </span>
-              )}
-              {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' && (
-                <Lixeira filtroAtivo={filtroAtivo} toggleFiltroLixo={toggleFiltroLixo} />
-              )}
-              {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' && (
-                <Suporte filtroAtivo={filtroAtivo} toggleFiltroSuporte={toggleFiltroSuporte} />
-              )}
+              ) : filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
+                <span
+                  onClick={toggleFiltroEstrategica}
+                  className="cursor-pointer text-yellow-300 hover:text-yellow-200"
+                >
+                  <Star className="h-6 w-6" />
+                </span>
+              ) : null}
+              {filtroAtivo === 'Lixo' ? (
+                <span
+                  onClick={toggleFiltroLixo}
+                  className="cursor-pointer text-red-500 hover:text-red-400"
+                >
+                  <CircleArrowLeft className="h-6 w-6" />
+                </span>
+              ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' ? (
+                <span
+                  onClick={toggleFiltroLixo}
+                  className="cursor-pointer text-red-500 hover:text-red-400"
+                >
+                  <Trash2 className="h-6 w-6" />
+                </span>
+              ) : null}
+              {filtroAtivo === 'Suporte' ? (
+                <span
+                  onClick={toggleFiltroSuporte}
+                  className="cursor-pointer text-blue-400 hover:text-blue-300"
+                >
+                  <CircleArrowLeft className="h-6 w-6" />
+                </span>
+              ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' ? (
+                <span
+                  onClick={toggleFiltroSuporte}
+                  className="cursor-pointer text-blue-400 hover:text-blue-300"
+                >
+                  <Lightbulb className="h-6 w-6" />
+                </span>
+              ) : null}
               {filtroAtivo === 'Estrategica' ? (
                 <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
               ) : filtroAtivo === 'Lixo' ? (

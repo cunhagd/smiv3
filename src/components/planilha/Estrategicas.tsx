@@ -1,17 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Noticia, ColumnDef } from '@/types/noticia';
-import { ChevronDown, ChevronRight, Star } from 'lucide-react';
+import { ChevronDown, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Button } from '@/components/ui/button';
 import { TituloCell } from '@/pages/Spreadsheet';
 
-const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
+const API_BASE_URL = 'http://localhost:3000';
 
 interface EstrategicasProps {
   noticias: Noticia[];
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
-  onRowRemove?: (id: string, callback: () => void) => void; // Adicionado para animação
-  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'; // Adicionado para verificar o modo
+  onRowRemove?: (id: string, callback: () => void) => void;
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte';
 }
 
 interface EstrategicasReturn {
@@ -39,10 +38,14 @@ function CicloCell({
   ciclosDisponiveis: number[];
   onCicloChange: (id: number, ciclo: number | null) => void;
 }) {
-  const { id, estrategica } = row;
-  const [cicloSelecionado, setCicloSelecionado] = useState<number | ''>('');
+  const { id, estrategica, ciclo } = row;
+  const [cicloSelecionado, setCicloSelecionado] = useState<number | ''>(ciclo ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
+
+  useEffect(() => {
+    setCicloSelecionado(ciclo ?? '');
+  }, [ciclo]);
 
   const handleSave = async (novoCiclo: number | '') => {
     const valorEnviado = novoCiclo === '' ? null : novoCiclo;
@@ -81,15 +84,17 @@ function CicloCell({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const novoCiclo = e.target.value === '' ? '' : Number(e.target.value);
+    setCicloSelecionado(novoCiclo);
+    handleSave(novoCiclo);
+  };
+
   return (
     <div className="relative">
       <select
         value={cicloSelecionado}
-        onChange={(e) => {
-          const novoCiclo = e.target.value === '' ? '' : Number(e.target.value);
-          setCicloSelecionado(novoCiclo);
-          handleSave(novoCiclo);
-        }}
+        onChange={handleChange}
         disabled={isSaving || !estrategica}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all disabled:opacity-50"
       >
@@ -118,17 +123,18 @@ function CategoriaCell({
   categoriasPorCiclo: string[];
   onCategoriaChange: (id: number, categoria: string | null) => void;
 }) {
-  const { id, ciclo, estrategica } = row;
-  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>('');
+  const { id, ciclo, estrategica, categoria } = row;
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string>(categoria ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Resetar o estado de categoriaSelecionada quando o ciclo for null
   useEffect(() => {
     if (!ciclo) {
       setCategoriaSelecionada('');
+    } else {
+      setCategoriaSelecionada(categoria ?? '');
     }
-  }, [ciclo]);
+  }, [ciclo, categoria]);
 
   const handleSave = async (novaCategoria: string) => {
     const valorEnviado = novaCategoria === '' ? null : novaCategoria;
@@ -167,15 +173,17 @@ function CategoriaCell({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const novaCategoria = e.target.value;
+    setCategoriaSelecionada(novaCategoria);
+    handleSave(novaCategoria);
+  };
+
   return (
     <div className="relative">
       <select
         value={categoriaSelecionada}
-        onChange={(e) => {
-          const novaCategoria = e.target.value;
-          setCategoriaSelecionada(novaCategoria);
-          handleSave(novaCategoria);
-        }}
+        onChange={handleChange}
         disabled={isSaving || !ciclo || !estrategica}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all disabled:opacity-50"
       >
@@ -202,17 +210,18 @@ function SubcategoriaCell({
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>; 
   subcategoriasPorCategoria: string[];
 }) {
-  const { id, categoria, ciclo, estrategica } = row;
-  const [subcategoriaSelecionada, setSubcategoriaSelecionada] = useState<string>('');
+  const { id, categoria, ciclo, estrategica, subcategoria } = row;
+  const [subcategoriaSelecionada, setSubcategoriaSelecionada] = useState<string>(subcategoria ?? '');
   const [isSaving, setIsSaving] = useState(false);
   const { toast } = useToast();
 
-  // Resetar o estado de subcategoriaSelecionada quando a categoria for null
   useEffect(() => {
-    if (!categoria) {
+    if (!categoria || !ciclo) {
       setSubcategoriaSelecionada('');
+    } else {
+      setSubcategoriaSelecionada(subcategoria ?? '');
     }
-  }, [categoria]);
+  }, [categoria, subcategoria, ciclo]);
 
   const handleSave = async (novaSubcategoria: string) => {
     const valorEnviado = novaSubcategoria === '' ? null : novaSubcategoria;
@@ -240,15 +249,17 @@ function SubcategoriaCell({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const novaSubcategoria = e.target.value;
+    setSubcategoriaSelecionada(novaSubcategoria);
+    handleSave(novaSubcategoria);
+  };
+
   return (
     <div className="relative">
       <select
         value={subcategoriaSelecionada}
-        onChange={(e) => {
-          const novaSubcategoria = e.target.value;
-          setSubcategoriaSelecionada(novaSubcategoria);
-          handleSave(novaSubcategoria);
-        }}
+        onChange={handleChange}
         disabled={isSaving || !categoria || !ciclo || !estrategica}
         className="p-1 pl-2 pr-8 bg-dark-card border border-white/10 rounded text-sm text-white w-full min-w-[140px] text-left appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20 transition-all disabled:opacity-50"
       >
@@ -311,7 +322,6 @@ function EstrategicaCell({
       );
       onEstrategicaChange(id, checked);
 
-      // Lógica de remoção com animação no modo "Estratégica"
       if (onRowRemove && filterMode === 'Estrategica' && !checked) {
         onRowRemove(id.toString(), () => {
           setNoticias((prevNoticias) =>
@@ -351,141 +361,116 @@ function EstrategicaCell({
 
 function Estrategicas({ noticias, setNoticias, onRowRemove, filterMode }: EstrategicasProps): EstrategicasReturn {
   const [isLoading, setIsLoading] = useState(false);
-  const [ciclosDisponiveis, setCiclosDisponiveis] = useState<number[]>([]);
-  const [categoriasPorCiclo, setCategoriasPorCiclo] = useState<{ [noticiaId: number]: string[] }>({});
-  const [subcategoriasPorCategoria, setSubcategoriasPorCategoria] = useState<{ [noticiaId: number]: string[] }>({});
+  const [semanasEstrategicas, setSemanasEstrategicas] = useState<SemanaEstrategica[]>([]);
   const { toast } = useToast();
 
+  // Buscar semanas estratégicas apenas uma vez ao montar o componente
   useEffect(() => {
-    const fetchCiclos = async () => {
+    const fetchSemanas = async () => {
       setIsLoading(true);
       try {
         const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
         if (!response.ok) throw new Error(`Falha ao buscar semanas estratégicas: ${response.statusText}`);
         const semanas: SemanaEstrategica[] = await response.json();
-        console.log('Resposta da API /semana-estrategica:', semanas);
-        const ciclosUnicos = [...new Set(semanas.map(semana => semana.ciclo))].sort((a, b) => a - b);
-        console.log('Ciclos distintos extraídos:', ciclosUnicos);
-        setCiclosDisponiveis(ciclosUnicos);
+        setSemanasEstrategicas(semanas);
       } catch (error: any) {
         console.error('Erro ao buscar semanas estratégicas:', error.message);
         toast({
-          title: 'Erro ao carregar ciclos',
-          description: 'Não foi possível carregar os ciclos. Verifique o backend.',
+          title: 'Erro ao carregar dados estratégicos',
+          description: 'Não foi possível carregar os dados. Verifique o backend.',
           variant: 'destructive',
         });
-        setCiclosDisponiveis([]);
+        setSemanasEstrategicas([]);
       } finally {
         setIsLoading(false);
       }
     };
-    fetchCiclos();
-  }, []);
+    fetchSemanas();
+  }, [toast]);
 
-  const handleCicloChange = async (noticiaId: number, ciclo: number | null) => {
-    const noticia = noticias.find(n => n.id === noticiaId);
-    if (!noticia?.estrategica) {
-      setCategoriasPorCiclo((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
-      setSubcategoriasPorCategoria((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
-      return;
-    }
+  // Mapas para acesso eficiente
+  const ciclosDisponiveis = useMemo(() => {
+    return [...new Set(semanasEstrategicas.map(semana => semana.ciclo))].sort((a, b) => a - b);
+  }, [semanasEstrategicas]);
 
-    if (ciclo) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
-        if (!response.ok) throw new Error('Falha ao buscar semanas estratégicas');
-        const semanas: SemanaEstrategica[] = await response.json();
-        const categorias = [...new Set(
-          semanas
+  const categoriasPorCicloMap = useMemo(() => {
+    const map: { [ciclo: number]: string[] } = {};
+    ciclosDisponiveis.forEach(ciclo => {
+      const categorias = [
+        ...new Set(
+          semanasEstrategicas
             .filter(semana => semana.ciclo === ciclo)
             .map(semana => semana.categoria)
-        )];
-        console.log(`Categorias para o ciclo ${ciclo}:`, categorias);
-        setCategoriasPorCiclo((prev) => ({
-          ...prev,
-          [noticiaId]: categorias,
-        }));
-        setSubcategoriasPorCategoria((prev) => ({
-          ...prev,
-          [noticiaId]: [],
-        }));
-      } catch (error: any) {
-        console.error('Erro ao buscar categorias:', error.message);
-        toast({
-          title: 'Erro ao carregar categorias',
-          description: 'Não foi possível carregar as categorias. Tente novamente.',
-          variant: 'destructive',
-        });
-      }
-    } else {
-      setCategoriasPorCiclo((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
-      setSubcategoriasPorCategoria((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
+        ),
+      ];
+      map[ciclo] = categorias;
+    });
+    return map;
+  }, [semanasEstrategicas, ciclosDisponiveis]);
+
+  const subcategoriasPorCategoriaMap = useMemo(() => {
+    const map: { [key: string]: string[] } = {};
+    ciclosDisponiveis.forEach(ciclo => {
+      const categorias = categoriasPorCicloMap[ciclo] || [];
+      categorias.forEach(categoria => {
+        const subcategorias = [
+          ...new Set(
+            semanasEstrategicas
+              .filter(semana => semana.ciclo === ciclo && semana.categoria === categoria)
+              .map(semana => semana.subcategoria)
+          ),
+        ];
+        map[`${ciclo}-${categoria}`] = subcategorias;
+      });
+    });
+    return map;
+  }, [semanasEstrategicas, categoriasPorCicloMap, ciclosDisponiveis]);
+
+  // Funções para obter categorias e subcategorias com base no ciclo e categoria
+  const getCategoriasPorCiclo = (ciclo: number | null): string[] => {
+    if (!ciclo) return [];
+    return categoriasPorCicloMap[ciclo] || [];
+  };
+
+  const getSubcategoriasPorCategoria = (ciclo: number | null, categoria: string | null): string[] => {
+    if (!ciclo || !categoria) return [];
+    const key = `${ciclo}-${categoria}`;
+    return subcategoriasPorCategoriaMap[key] || [];
+  };
+
+  // Funções para lidar com mudanças
+  const handleCicloChange = (noticiaId: number, ciclo: number | null) => {
+    const noticia = noticias.find(n => n.id === noticiaId);
+    if (!noticia?.estrategica) {
+      // Limpar categorias e subcategorias se não for estratégica
+      setNoticias(prevNoticias =>
+        prevNoticias.map(n =>
+          n.id === noticiaId ? { ...n, categoria: null, subcategoria: null } : n
+        )
+      );
     }
   };
 
-  const handleCategoriaChange = async (noticiaId: number, categoria: string | null, ciclo: number | null) => {
+  const handleCategoriaChange = (noticiaId: number, categoria: string | null) => {
     const noticia = noticias.find(n => n.id === noticiaId);
-    if (!noticia?.estrategica) {
-      setSubcategoriasPorCategoria((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
-      return;
-    }
-
-    if (categoria && ciclo) {
-      try {
-        const response = await fetch(`${API_BASE_URL}/semana-estrategica`);
-        if (!response.ok) throw new Error('Falha ao buscar semanas estratégicas');
-        const semanas: SemanaEstrategica[] = await response.json();
-        const subcategorias = [...new Set(
-          semanas
-            .filter(semana => semana.ciclo === ciclo && semana.categoria === categoria)
-            .map(semana => semana.subcategoria)
-        )];
-        console.log(`Subcategorias para o ciclo ${ciclo} e categoria ${categoria}:`, subcategorias);
-        setSubcategoriasPorCategoria((prev) => ({
-          ...prev,
-          [noticiaId]: subcategorias,
-        }));
-      } catch (error: any) {
-        console.error('Erro ao buscar subcategorias:', error.message);
-        toast({
-          title: 'Erro ao carregar subcategorias',
-          description: 'Não foi possível carregar as subcategorias. Tente novamente.',
-          variant: 'destructive',
-        });
-      }
-    } else {
-      setSubcategoriasPorCategoria((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
+    if (!noticia?.estrategica || !categoria) {
+      // Limpar subcategorias se não for estratégica ou categoria for nula
+      setNoticias(prevNoticias =>
+        prevNoticias.map(n =>
+          n.id === noticiaId ? { ...n, subcategoria: null } : n
+        )
+      );
     }
   };
 
   const handleEstrategicaChange = (noticiaId: number, checked: boolean) => {
     if (!checked) {
-      setCategoriasPorCiclo((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
-      setSubcategoriasPorCategoria((prev) => ({
-        ...prev,
-        [noticiaId]: [],
-      }));
+      // Limpar ciclo, categoria e subcategoria ao desmarcar estratégica
+      setNoticias(prevNoticias =>
+        prevNoticias.map(n =>
+          n.id === noticiaId ? { ...n, ciclo: null, categoria: null, subcategoria: null } : n
+        )
+      );
     }
   };
 
@@ -532,8 +517,8 @@ function Estrategicas({ noticias, setNoticias, onRowRemove, filterMode }: Estrat
         <CategoriaCell 
           row={row} 
           setNoticias={setNoticias} 
-          categoriasPorCiclo={categoriasPorCiclo[row.id] || []} 
-          onCategoriaChange={(id, categoria) => handleCategoriaChange(id, categoria, row.ciclo)}
+          categoriasPorCiclo={getCategoriasPorCiclo(row.ciclo)} 
+          onCategoriaChange={handleCategoriaChange}
         />
       ),
     },
@@ -546,7 +531,7 @@ function Estrategicas({ noticias, setNoticias, onRowRemove, filterMode }: Estrat
         <SubcategoriaCell 
           row={row} 
           setNoticias={setNoticias} 
-          subcategoriasPorCategoria={subcategoriasPorCategoria[row.id] || []} 
+          subcategoriasPorCategoria={getSubcategoriasPorCategoria(row.ciclo, row.categoria)} 
         />
       ),
     },
