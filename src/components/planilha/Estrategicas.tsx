@@ -4,7 +4,7 @@ import { ChevronDown, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TituloCell } from '@/pages/Spreadsheet';
 
-const API_BASE_URL = 'http://localhost:3000';
+const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
 
 interface EstrategicasProps {
   noticias: Noticia[];
