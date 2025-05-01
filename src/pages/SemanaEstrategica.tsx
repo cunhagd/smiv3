@@ -7,9 +7,10 @@ import { Button } from "@/components/ui/button";
 import { format, parse, isValid } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
+import AddSemana from '@/components/semana/AddSemana'; // Novo componente importado
 
 const CATEGORIAS = [
-  'Todas', // Adicionado para o filtro
+  'Todas',
   'Selecionar',
   'Educação',
   'Social',
@@ -17,7 +18,7 @@ const CATEGORIAS = [
   'Saúde',
 ];
 
-interface Semana {
+export interface Semana {
   id: number;
   data_inicial: Date | string;
   data_final: Date | string;
@@ -26,17 +27,26 @@ interface Semana {
   subcategoria: string;
 }
 
-interface FormularioSemanaEstrategicaProps {
+export interface FormularioSemanaEstrategicaProps {
   onSubmit: (novaSemana: Semana) => void;
 }
 
-const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = ({ onSubmit }) => {
+export interface Noticia {
+  id: number;
+  data: string;
+  categoria: string;
+  subcategoria: string;
+  ciclo: number;
+  estrategica: boolean;
+}
+
+export const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = ({ onSubmit }) => {
   const [dataInicial, setDataInicial] = useState<Date | undefined>(undefined);
   const [dataFinal, setDataFinal] = useState<Date | undefined>(undefined);
   const [ciclo, setCiclo] = useState<string>("");
   const [categoria, setCategoria] = useState<string>("Selecionar");
   const [subCategoria, setSubCategoria] = useState<string>("");
-  const [isFormActive, setIsFormActive] = useState(false); // Estado para rastrear interação
+  const [isFormActive, setIsFormActive] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -51,7 +61,6 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
     }
   };
 
-  // Função para resetar o formulário
   const resetForm = () => {
     setDataInicial(undefined);
     setDataFinal(undefined);
@@ -61,7 +70,6 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
     setIsFormActive(false);
   };
 
-  // Efeito para monitorar mudanças nos campos e ativar o ícone
   useEffect(() => {
     const hasInteracted = 
       dataInicial !== undefined ||
@@ -178,7 +186,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       const semanaCadastrada = await response.json();
       console.log('Semana cadastrada:', semanaCadastrada);
 
-      resetForm(); // Resetar o formulário após sucesso
+      resetForm();
 
       toast({
         title: "Sucesso!",
@@ -322,7 +330,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
               className="text-red-500 hover:text-red-400 transition-colors"
               aria-label="Cancelar cadastro e limpar formulário"
             >
-              <X size={20} />
+              <X size={28} />
             </button>
           )}
           <Button
@@ -341,14 +349,16 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
 
 const SemanaEstrategica = () => {
   const [semanas, setSemanas] = useState<Semana[]>([]);
+  const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [editedData, setEditedData] = useState<Partial<Semana>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas'); // Novo estado para o filtro
+  const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
   const { toast } = useToast();
 
+  // Fetch semanas
   useEffect(() => {
     const fetchSemanas = async () => {
       setIsLoading(true);
@@ -367,7 +377,7 @@ const SemanaEstrategica = () => {
           throw new Error(errorData.message || 'Falha ao buscar semanas estratégicas');
         }
         const semanasData = await response.json();
-        console.log('Dados brutos recebidos do backend:', semanasData);
+        console.log('Dados brutos recebidos do backend (semanas):', semanasData);
         if (!Array.isArray(semanasData)) {
           throw new Error('Resposta do servidor não contém uma lista de semanas estratégicas.');
         }
@@ -393,16 +403,53 @@ const SemanaEstrategica = () => {
       }
     };
 
+    const fetchNoticias = async () => {
+      try {
+        const response = await fetch('https://smi-api-production-fae2.up.railway.app/noticias?all=true&estrategica=true');
+        if (!response.ok) {
+          throw new Error('Falha ao buscar notícias estratégicas');
+        }
+        const data = await response.json();
+        const noticiasData = data.data.map((noticia: any) => ({
+          id: noticia.id,
+          data: parse(noticia.data, 'dd/MM/yyyy', new Date()),
+          categoria: noticia.categoria,
+          subcategoria: noticia.subcategoria,
+          ciclo: noticia.ciclo,
+          estrategica: noticia.estrategica,
+        }));
+        setNoticias(noticiasData);
+      } catch (error: any) {
+        console.error('Erro ao buscar notícias:', error.message);
+        toast({
+          title: "Erro ao carregar notícias",
+          description: error.message || "Não foi possível carregar as notícias estratégicas. Tente novamente.",
+          variant: "destructive",
+        });
+      }
+    };
+
     fetchSemanas();
+    fetchNoticias();
   }, [toast]);
 
-  // Filtrar semanas com base na categoria selecionada
   const semanasFiltradas = useMemo(() => {
     if (filtroCategoria === 'Todas') {
       return semanas;
     }
     return semanas.filter(semana => semana.categoria === filtroCategoria);
   }, [semanas, filtroCategoria]);
+
+  const contarNoticias = (semana: Semana): number => {
+    return noticias.filter(noticia => {
+      return (
+        noticia.ciclo === semana.ciclo &&
+        noticia.categoria === semana.categoria &&
+        noticia.subcategoria === semana.subcategoria &&
+        noticia.estrategica
+      );
+    }).length;
+  };
 
   const handleEdit = (semana: Semana) => {
     console.log('Botão de edição clicado para semana:', semana);
@@ -440,7 +487,6 @@ const SemanaEstrategica = () => {
     console.log('Botão de salvar clicado para ID:', id);
     setIsSaving(true);
     try {
-      // Validações
       if (!editedData.data_inicial || !isValid(editedData.data_inicial)) {
         throw new Error('Data inicial inválida ou não definida.');
       }
@@ -604,12 +650,11 @@ const SemanaEstrategica = () => {
           <p className="text-gray-400">Cadastro e gerenciamento de semanas estratégicas</p>
         </div>
 
-        <FormularioSemanaEstrategica onSubmit={adicionarSemana} />
+        <AddSemana onAddSemana={adicionarSemana} />
 
         <div className="dashboard-card">
           <h2 className="text-lg font-semibold mb-4">Semanas Estratégicas Cadastradas</h2>
 
-          {/* Filtro por Categoria */}
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Filtrar por Categoria</label>
             <div className="relative w-64">
@@ -659,6 +704,7 @@ const SemanaEstrategica = () => {
                   <th className="py-2 px-4">Ciclo</th>
                   <th className="py-2 px-4">Categoria</th>
                   <th className="py-2 px-4">Subcategoria</th>
+                  <th className="py-2 px-4">Notícias</th>
                   <th className="py-2 px-4">Ações</th>
                 </tr>
               </thead>
@@ -761,6 +807,10 @@ const SemanaEstrategica = () => {
                       ) : (
                         semana.subcategoria || '-'
                       )}
+                    </td>
+
+                    <td className="py-2 px-4">
+                      {contarNoticias(semana)}
                     </td>
 
                     <td className="py-2 px-4">
