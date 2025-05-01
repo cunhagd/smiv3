@@ -10,6 +10,8 @@ const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
 interface EstrategicasProps {
   noticias: Noticia[];
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
+  onRowRemove?: (id: string, callback: () => void) => void; // Adicionado para animação
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'; // Adicionado para verificar o modo
 }
 
 interface EstrategicasReturn {
@@ -264,10 +266,18 @@ function SubcategoriaCell({
   );
 }
 
-function EstrategicaCell({ row, setNoticias, onEstrategicaChange }: { 
+function EstrategicaCell({ 
+  row, 
+  setNoticias, 
+  onEstrategicaChange, 
+  onRowRemove, 
+  filterMode 
+}: { 
   row: Noticia; 
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
   onEstrategicaChange: (id: number, checked: boolean) => void;
+  onRowRemove?: (id: string, callback: () => void) => void;
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte';
 }) {
   const { id, estrategica } = row;
   const [isChecked, setIsChecked] = useState(estrategica || false);
@@ -300,6 +310,15 @@ function EstrategicaCell({ row, setNoticias, onEstrategicaChange }: {
         )
       );
       onEstrategicaChange(id, checked);
+
+      // Lógica de remoção com animação no modo "Estratégica"
+      if (onRowRemove && filterMode === 'Estrategica' && !checked) {
+        onRowRemove(id.toString(), () => {
+          setNoticias((prevNoticias) =>
+            prevNoticias.filter((noticia) => noticia.id !== id)
+          );
+        });
+      }
     } catch (error: any) {
       toast({
         title: 'Erro ao salvar',
@@ -330,7 +349,7 @@ function EstrategicaCell({ row, setNoticias, onEstrategicaChange }: {
   );
 }
 
-function Estrategicas({ noticias, setNoticias }: EstrategicasProps): EstrategicasReturn {
+function Estrategicas({ noticias, setNoticias, onRowRemove, filterMode }: EstrategicasProps): EstrategicasReturn {
   const [isLoading, setIsLoading] = useState(false);
   const [ciclosDisponiveis, setCiclosDisponiveis] = useState<number[]>([]);
   const [categoriasPorCiclo, setCategoriasPorCiclo] = useState<{ [noticiaId: number]: string[] }>({});
@@ -541,6 +560,8 @@ function Estrategicas({ noticias, setNoticias }: EstrategicasProps): Estrategica
           row={row} 
           setNoticias={setNoticias} 
           onEstrategicaChange={handleEstrategicaChange}
+          onRowRemove={onRowRemove}
+          filterMode={filterMode}
         />
       ),
     },

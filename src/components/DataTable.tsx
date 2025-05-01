@@ -22,6 +22,8 @@ interface DataTableProps {
   onNext: () => void;
   onPrevious: () => void;
   isLoading: boolean;
+  onRowRemove?: (id: string, callback: () => void) => void;
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'; // Adicionando filterMode
 }
 
 // Componente para exibir o menu de ações (WhatsApp)
@@ -77,7 +79,7 @@ const ActionMenu = ({ row }: { row: any }) => {
       {/* Dropdown Menu */}
       {isOpen && (
         <div
-          ref={menuRef} // Adiciona o ref ao menu
+          ref={menuRef}
           className="absolute right-0 mt-1 w-48 bg-dark-card border border-white/10 rounded shadow-lg z-10"
         >
           <button
@@ -93,7 +95,21 @@ const ActionMenu = ({ row }: { row: any }) => {
   );
 };
 
-const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentDate, hasNext, hasPrevious, totalItems, onNext, onPrevious, isLoading }: DataTableProps) => {
+const DataTable = ({ 
+  data, 
+  columns, 
+  updateTema, 
+  updateAvaliacao, 
+  currentDate, 
+  hasNext, 
+  hasPrevious, 
+  totalItems, 
+  onNext, 
+  onPrevious, 
+  isLoading,
+  onRowRemove,
+  filterMode // Adicionando filterMode aos parâmetros desestruturados
+}: DataTableProps) => {
   const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const displayedData = data;
@@ -121,7 +137,8 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentDate, ha
           <tbody>
             {displayedData.map((row, rowIndex) => (
               <tr
-                key={rowIndex}
+                key={row.id || rowIndex} // Use o id da notícia, se disponível
+                data-row-id={row.id} // Adiciona o atributo data-row-id para identificar a linha
                 className="border-b border-white/5 hover:bg-dark-card/50 transition-colors"
               >
                 {columns.map(column => (
@@ -130,7 +147,9 @@ const DataTable = ({ data, columns, updateTema, updateAvaliacao, currentDate, ha
                       ? column.cell({
                           row,
                           updateTema,
-                          updateAvaliacao
+                          updateAvaliacao,
+                          onRowRemove,
+                          filterMode // Passando filterMode para as células
                         })
                       : row[column.accessorKey]}
                   </td>

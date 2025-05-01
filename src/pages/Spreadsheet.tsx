@@ -4,7 +4,7 @@ import DataTable from '@/components/DataTable';
 import DatePicker from '@/components/DateRangePicker';
 import DatePickerEstrategicas from '@/components/DatePickerEstrategicas';
 import DatePickerLixeira from '@/components/DatePickerLixeira';
-import DatePickerSuporte from '@/components/DatePickerSuporte'; 
+import DatePickerSuporte from '@/components/DatePickerSuporte';
 import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Star } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Estrategicas from '@/components/planilha/Estrategicas';
@@ -43,7 +43,6 @@ const RELEVANCIA = [
 
 const MENSAGEM_PADRAO = 'Selecionar';
 
-// Tipagem para as props do DataTable
 interface DataTableProps {
   data: Noticia[];
   columns: ColumnDef[];
@@ -56,6 +55,8 @@ interface DataTableProps {
   onNext: () => void;
   onPrevious: () => void;
   isLoading: boolean;
+  onRowRemove?: (id: string, callback: () => void) => void;
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte';
 }
 
 // Tipagem para as props do componente TituloCell
@@ -77,11 +78,22 @@ export const TituloCell: React.FC<TituloCellProps> = ({ row }) => (
 );
 
 // Componente para o menu de Relevância
-function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>> }) {
+function RelevanciaCell({
+  row,
+  setNoticias,
+  onRowRemove,
+  filterMode,
+}: {
+  row: Noticia;
+  setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
+  onRowRemove?: (id: string, callback: () => void) => void;
+  filterMode?: 'Lixo' | 'Suporte' | 'Nenhum';
+}) {
   const { id, relevancia } = row;
   const [relevSelecionada, setRelevSelecionada] = useState<string>(
-    relevancia === 'Útil' ? 'Útil' : relevancia === 'Lixo' ? 'Lixo' : relevancia === 'Suporte' ? 'Suporte' : 'Selecionar'
+    relevancia || 'Selecionar'
   );
+  const [tempRelevancia, setTempRelevancia] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(relevSelecionada === 'Selecionar');
   const { toast } = useToast();
@@ -89,6 +101,7 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
   const handleSave = async (novaRelevancia: string) => {
     const valorEnviado = novaRelevancia === 'Selecionar' ? null : novaRelevancia;
     setIsSaving(true);
+    setTempRelevancia(novaRelevancia);
     try {
       const response = await fetch(`${API_BASE_URL}/noticias/${id}`, {
         method: 'PUT',
@@ -97,19 +110,34 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
       });
       if (!response.ok) throw new Error('Falha ao salvar relevância');
 
-      // Atualizar o estado local com o novo valor
       setNoticias((prevNoticias) =>
         prevNoticias.map((noticia) =>
           noticia.id === id ? { ...noticia, relevancia: valorEnviado } : noticia
         )
       );
-      setRelevSelecionada(novaRelevancia); // Garantir que o estado reflete o valor enviado
+      setRelevSelecionada(novaRelevancia);
+
+      if (onRowRemove) {
+        const shouldRemove =
+          (filterMode === 'Lixo' && novaRelevancia !== 'Lixo') ||
+          (filterMode === 'Suporte' && novaRelevancia !== 'Suporte') ||
+          (filterMode === 'Nenhum' && novaRelevancia === 'Lixo');
+
+        if (shouldRemove) {
+          onRowRemove(id.toString(), () => {
+            setNoticias((prevNoticias) =>
+              prevNoticias.filter((noticia) => noticia.id !== id)
+            );
+          });
+        }
+      }
     } catch (error: any) {
       toast({
         title: 'Erro ao salvar',
         description: 'Não foi possível salvar a relevância. Tente novamente.',
         variant: 'destructive',
       });
+      setTempRelevancia(null);
     } finally {
       setIsSaving(false);
     }
@@ -117,20 +145,19 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
 
   const handleSelect = (novaRelevancia: string) => {
     handleSave(novaRelevancia);
-    setIsMenuOpen(novaRelevancia === 'Selecionar'); // Abrir o menu se for "Selecionar", fechar se for outra opção
+    setIsMenuOpen(novaRelevancia === 'Selecionar');
   };
 
   const handleIconClick = () => {
     if (relevSelecionada !== 'Selecionar') {
-      // Se já há uma relevância selecionada, resetar para null
       handleSelect('Selecionar');
     } else {
-      // Se já está em "Selecionar", apenas abrir/fechar o menu
       setIsMenuOpen(true);
     }
   };
 
-  const relevanciaObj = RELEVANCIA.find((r) => r.valor === relevSelecionada);
+  const relevanciaAtual = isSaving && tempRelevancia ? tempRelevancia : relevSelecionada;
+  const relevanciaObj = RELEVANCIA.find((r) => r.valor === relevanciaAtual);
   const IconeRelevancia = relevanciaObj?.icone;
 
   return (
@@ -171,7 +198,7 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
           onClick={handleIconClick}
           className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
         >
-          {relevSelecionada === 'Selecionar' ? (
+          {relevanciaAtual === 'Selecionar' ? (
             <span
               className="text-white text-sm cursor-pointer hover:text-blue-400 transition-colors"
               onClick={() => setIsMenuOpen(true)}
@@ -182,9 +209,9 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
             IconeRelevancia && (
               <IconeRelevancia
                 className={`h-5 w-5 transition-colors ${
-                  relevSelecionada === 'Útil'
+                  relevanciaAtual === 'Útil'
                     ? 'text-[#CAF10A] hover:text-[#eafb9a]'
-                    : relevSelecionada === 'Lixo'
+                    : relevanciaAtual === 'Lixo'
                     ? 'text-red-700 hover:text-red-500'
                     : 'text-[#72C5FD] hover:text-[#bde4fe]'
                 }`}
@@ -198,7 +225,7 @@ function RelevanciaCell({ row, setNoticias }: { row: Noticia; setNoticias: React
 }
 
 // Componente para o dropdown de Tema
-function TemaCell({ row, updateTema }: { row: Noticia; updateTema: (id: string, tema: string) => void }) {
+function TemaFloatingCell({ row, updateTema }: { row: Noticia; updateTema: (id: string, tema: string) => void }) {
   const { id, tema } = row;
   const [temaSelecionado, setTemaSelecionado] = useState<string>(tema || '');
   const [isSaving, setIsSaving] = useState(false);
@@ -260,6 +287,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
   const [avaliacaoSelecionada, setAvaliacaoSelecionada] = useState<string>(
     avaliacao === 'Positiva' ? 'Positiva' : avaliacao === 'Neutra' ? 'Neutra' : avaliacao === 'Negativa' ? 'Negativa' : ''
   );
+  const [tempAvaliacao, setTempAvaliacao] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
   const [isMenuOpen, setIsMenuOpen] = useState(!avaliacaoSelecionada);
   const { toast } = useToast();
@@ -268,6 +296,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
     const valorEnviado = novaAvaliacao === '' ? null : novaAvaliacao;
     if (valorEnviado !== avaliacao) {
       setIsSaving(true);
+      setTempAvaliacao(novaAvaliacao);
       try {
         const response = await fetch(`${API_BASE_URL}/noticias/${id}`, {
           method: 'PUT',
@@ -283,6 +312,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
             noticia.id === id ? { ...noticia, avaliacao: valorEnviado, pontos: novosPontos } : noticia
           )
         );
+        setAvaliacaoSelecionada(novaAvaliacao);
         updateAvaliacao(id.toString(), valorEnviado || '');
       } catch (error: any) {
         toast({
@@ -290,6 +320,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
           description: 'Não foi possível salvar a avaliação. Tente novamente.',
           variant: 'destructive',
         });
+        setTempAvaliacao(null);
       } finally {
         setIsSaving(false);
       }
@@ -307,12 +338,13 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
   };
 
   const handleIconClick = () => {
-    setAvaliacaoSelecionada(''); // Resetar a seleção para ""
-    handleSave(''); // Enviar null para o DB
-    setIsMenuOpen(true); // Abrir o menu com as três opções
+    setAvaliacaoSelecionada('');
+    handleSave('');
+    setIsMenuOpen(true);
   };
 
-  const avaliacaoObj = AVALIACOES.find((a) => a.valor === avaliacaoSelecionada);
+  const avaliacaoAtual = isSaving && tempAvaliacao ? tempAvaliacao : avaliacaoSelecionada;
+  const avaliacaoObj = AVALIACOES.find((a) => a.valor === avaliacaoAtual);
   const IconeAvaliacao = avaliacaoObj?.icone;
 
   return (
@@ -353,7 +385,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
           onClick={handleIconClick}
           className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
         >
-          {avaliacaoSelecionada === '' ? (
+          {avaliacaoAtual === '' ? (
             <span
               className="text-white text-sm cursor-pointer hover:text-blue-400 transition-colors"
               onClick={() => setIsMenuOpen(true)}
@@ -364,9 +396,9 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
             IconeAvaliacao && (
               <IconeAvaliacao
                 className={`h-5 w-5 transition-colors ${
-                  avaliacaoSelecionada === 'Positiva'
+                  avaliacaoAtual === 'Positiva'
                     ? 'text-green-600 hover:text-green-400'
-                    : avaliacaoSelecionada === 'Neutra'
+                    : avaliacaoAtual === 'Neutra'
                     ? 'text-gray-600 hover:text-gray-400'
                     : 'text-red-600 hover:text-red-400'
                 }`}
@@ -430,7 +462,7 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
         description: 'Não foi possível salvar a marcação estratégica. Tente novamente.',
         variant: 'destructive',
       });
-      setIsChecked(estrategica || false); // Reverter em caso de erro
+      setIsChecked(estrategica || false);
     } finally {
       setIsSaving(false);
     }
@@ -459,14 +491,16 @@ const getColumns = (
   noticias: Noticia[],
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>,
   updateTema: (id: string, tema: string) => void,
-  updateAvaliacao: (id: string, avaliacao: string) => void
+  updateAvaliacao: (id: string, avaliacao: string) => void,
+  onRowRemove: (id: string, callback: () => void) => void,
+  filterMode: 'Lixo' | 'Suporte' | 'Nenhum'
 ): ColumnDef[] => [
   {
     id: 'relevancia',
     header: 'Utilidade',
     accessorKey: 'relevancia',
     sortable: true,
-    cell: ({ row }) => <RelevanciaCell row={row} setNoticias={setNoticias} />,
+    cell: ({ row }) => <RelevanciaCell row={row} setNoticias={setNoticias} onRowRemove={onRowRemove} filterMode={filterMode} />,
   },
   {
     id: 'data',
@@ -492,7 +526,7 @@ const getColumns = (
     header: 'Tema',
     accessorKey: 'tema',
     sortable: true,
-    cell: ({ row }) => <TemaCell row={row} updateTema={updateTema} />,
+    cell: ({ row }) => <TemaFloatingCell row={row} updateTema={updateTema} />,
   },
   {
     id: 'avaliacao',
@@ -529,7 +563,7 @@ const Spreadsheet: React.FC = () => {
   const [selectedDateEstrategicas, setSelectedDateEstrategicas] = useState<Date | undefined>(undefined);
   const [selectedDateLixeira, setSelectedDateLixeira] = useState<Date | undefined>(undefined);
   const [selectedDateSuporte, setSelectedDateSuporte] = useState<Date | undefined>(undefined);
-  const [previousSelectedDate, setPreviousSelectedDate] = useState<Date | undefined>(new Date()); // Novo estado para armazenar a data anterior
+  const [previousSelectedDate, setPreviousSelectedDate] = useState<Date | undefined>(new Date());
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [strategicDates, setStrategicDates] = useState<Date[]>([]);
   const [trashDates, setTrashDates] = useState<Date[]>([]);
@@ -543,19 +577,36 @@ const Spreadsheet: React.FC = () => {
   const { toast } = useToast();
   const [filtroAtivo, setFiltroAtivo] = useState<'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'>('Nenhum');
 
-  // Integração com o componente Estrategicas
-  const estrategicas: EstrategicasReturn = Estrategicas({ noticias, setNoticias });
+  // Movendo a definição de handleRowRemove para antes de sua utilização
+  const handleRowRemove = (id: string, callback: () => void) => {
+    const rowElement = document.querySelector(`[data-row-id="${id}"]`);
+    if (rowElement) {
+      rowElement.classList.add('animate-to-trash');
+      rowElement.addEventListener('animationend', () => {
+        callback();
+      }, { once: true });
+    } else {
+      callback();
+    }
+  };
 
-  
+  // Agora podemos usar handleRowRemove aqui
+  const estrategicas: EstrategicasReturn = Estrategicas({
+    noticias,
+    setNoticias,
+    onRowRemove: handleRowRemove,
+    filterMode: filtroAtivo,
+  });
+
   const toggleFiltroLixo = () => {
     const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
     if (novoFiltro === 'Lixo') {
-      setPreviousSelectedDate(selectedDate); // Armazenar a data atual antes de entrar no modo Lixo
-      setSelectedDate(undefined); // Limpar a data atual para evitar conflitos
+      setPreviousSelectedDate(selectedDate);
+      setSelectedDate(undefined);
     } else {
-      setSelectedDate(previousSelectedDate || new Date()); // Restaurar a data anterior ao voltar para a planilha principal
+      setSelectedDate(previousSelectedDate || new Date());
     }
     setSelectedDateEstrategicas(undefined);
     setSelectedDateLixeira(undefined);
@@ -567,10 +618,10 @@ const Spreadsheet: React.FC = () => {
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
     if (novoFiltro === 'Estrategica') {
-      setPreviousSelectedDate(selectedDate); // Armazenar a data atual antes de entrar no modo Estratégica
-      setSelectedDate(undefined); // Limpar a data atual para evitar conflitos
+      setPreviousSelectedDate(selectedDate);
+      setSelectedDate(undefined);
     } else {
-      setSelectedDate(previousSelectedDate || new Date()); // Restaurar a data anterior ao voltar para a planilha principal
+      setSelectedDate(previousSelectedDate || new Date());
     }
     setSelectedDateEstrategicas(undefined);
     setSelectedDateLixeira(undefined);
@@ -590,13 +641,13 @@ const Spreadsheet: React.FC = () => {
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
     if (novoFiltro === 'Suporte') {
-      setPreviousSelectedDate(selectedDate); // Armazenar a data atual antes de entrar no modo Lixo
-      setSelectedDate(undefined); // Limpar a data atual para evitar conflitos
+      setPreviousSelectedDate(selectedDate);
+      setSelectedDate(undefined);
     } else {
-      setSelectedDate(previousSelectedDate || new Date()); // Restaurar a data anterior ao voltar para a planilha principal
+      setSelectedDate(previousSelectedDate || new Date());
     }
     setSelectedDateEstrategicas(undefined);
-    setSelectedDateSuporte (undefined);
+    setSelectedDateLixeira(undefined);
     setSelectedDateSuporte(undefined);
   };
 
@@ -613,7 +664,6 @@ const Spreadsheet: React.FC = () => {
     );
   };
 
-  // Buscar as datas com notícias estratégicas
   useEffect(() => {
     const fetchStrategicDates = async () => {
       try {
@@ -635,7 +685,6 @@ const Spreadsheet: React.FC = () => {
     fetchStrategicDates();
   }, []);
 
-  // Buscar as datas com notícias marcadas como "Lixo"
   useEffect(() => {
     const fetchTrashDates = async () => {
       try {
@@ -657,7 +706,6 @@ const Spreadsheet: React.FC = () => {
     fetchTrashDates();
   }, []);
 
-  // Buscar as datas com notícias marcadas como "Lixo"
   useEffect(() => {
     const fetchSuporteDates = async () => {
       try {
@@ -782,6 +830,7 @@ const Spreadsheet: React.FC = () => {
     setSelectedDateLixeira(date);
     setCurrentDate(null);
   };
+
   const handleDateChangeSuporte = (date: Date | undefined) => {
     setSelectedDateSuporte(date);
     setCurrentDate(null);
@@ -901,7 +950,9 @@ const Spreadsheet: React.FC = () => {
     }
   };
 
-  const columns = filtroAtivo === 'Estrategica' ? estrategicas.columns : getColumns(noticias, setNoticias, updateTema, updateAvaliacao);
+  const columns = filtroAtivo === 'Estrategica'
+    ? estrategicas.columns
+    : getColumns(noticias, setNoticias, updateTema, updateAvaliacao, handleRowRemove, filtroAtivo);
 
   console.log('Renderizando Spreadsheet, estado:', {
     isLoading,
@@ -915,75 +966,97 @@ const Spreadsheet: React.FC = () => {
   });
 
   return (
-    <div className="min-h-screen bg-dark-bg text-white">
-      <Navbar />
-      <main className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
-            <p className="text-gray-400">Gerenciamento e análise de notícias</p>
+    <>
+      <style>
+        {`
+          .animate-to-trash {
+            animation: slideToTrash 0.5s ease-in-out forwards;
+          }
+
+          @keyframes slideToTrash {
+            0% {
+              transform: translateX(0);
+              opacity: 1;
+            }
+            100% {
+              transform: translateX(-100px);
+              opacity: 0;
+            }
+          }
+        `}
+      </style>
+      <div className="min-h-screen bg-dark-bg text-white">
+        <Navbar />
+        <main className="p-6 md:p-8">
+          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+            <div>
+              <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
+              <p className="text-gray-400">Gerenciamento e análise de notícias</p>
+            </div>
+            <div className="flex items-center gap-3 mt-4 md:mt-0">
+              {filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' && (
+                <span
+                  onClick={toggleFiltroEstrategica}
+                  className="cursor-pointer text-yellow-300 hover:text-yellow-200"
+                >
+                  {filtroAtivo === 'Estrategica' ? (
+                    <CircleArrowLeft className="h-6 w-6" />
+                  ) : (
+                    <Star className="h-6 w-6" />
+                  )}
+                </span>
+              )}
+              {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' && (
+                <Lixeira filtroAtivo={filtroAtivo} toggleFiltroLixo={toggleFiltroLixo} />
+              )}
+              {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' && (
+                <Suporte filtroAtivo={filtroAtivo} toggleFiltroSuporte={toggleFiltroSuporte} />
+              )}
+              {filtroAtivo === 'Estrategica' ? (
+                <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
+              ) : filtroAtivo === 'Lixo' ? (
+                <DatePickerLixeira onChange={handleDateChangeLixeira} trashDates={trashDates} />
+              ) : filtroAtivo === 'Suporte' ? (
+                <DatePickerSuporte onChange={handleDateChangeSuporte} suporteDates={suporteDates} />
+              ) : (
+                <DatePicker onChange={handleDateChange} />
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-3 mt-4 md:mt-0">
-            {filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' && (
-              <span
-                onClick={toggleFiltroEstrategica}
-                className="cursor-pointer text-yellow-300 hover:text-yellow-200"
-              >
-                {filtroAtivo === 'Estrategica' ? (
-                  <CircleArrowLeft className="h-6 w-6" />
-                ) : (
-                  <Star className="h-6 w-6" />
-                )}
-              </span>
-            )}
-            {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' && (
-              <Lixeira filtroAtivo={filtroAtivo} toggleFiltroLixo={toggleFiltroLixo} />
-            )}
-            {filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' && (
-              <Suporte filtroAtivo={filtroAtivo} toggleFiltroSuporte={toggleFiltroSuporte} />
-            )}
-            {filtroAtivo === 'Estrategica' ? (
-              <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
-            ) : filtroAtivo === 'Lixo' ? (
-              <DatePickerLixeira onChange={handleDateChangeLixeira} trashDates={trashDates} />
-            ) : filtroAtivo === 'Suporte' ? (
-              <DatePickerSuporte onChange={handleDateChangeSuporte} suporteDates={suporteDates} />
+          <div className="dashboard-card">
+            {isLoading || estrategicas.isLoading ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-gray-400">Carregando dados...</p>
+              </div>
+            ) : error ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-red-400">Erro ao carregar dados: {error}</p>
+              </div>
+            ) : noticias.length === 0 ? (
+              <div className="flex items-center justify-center h-[300px]">
+                <p className="text-gray-400">Nenhuma notícia encontrada</p>
+              </div>
             ) : (
-              <DatePicker onChange={handleDateChange} />
+              <DataTable
+                data={noticias}
+                columns={columns}
+                updateTema={updateTema}
+                updateAvaliacao={updateAvaliacao}
+                currentDate={currentDate}
+                hasNext={hasNext}
+                hasPrevious={hasPrevious}
+                totalItems={totalItems}
+                onNext={handleNext}
+                onPrevious={handlePrevious}
+                isLoading={isLoading}
+                onRowRemove={handleRowRemove}
+                filterMode={filtroAtivo}
+              />
             )}
           </div>
-        </div>
-        <div className="dashboard-card">
-          {isLoading || estrategicas.isLoading ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Carregando dados...</p>
-            </div>
-          ) : error ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-red-400">Erro ao carregar dados: {error}</p>
-            </div>
-          ) : noticias.length === 0 ? (
-            <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Nenhuma notícia encontrada</p>
-            </div>
-          ) : (
-            <DataTable
-              data={noticias}
-              columns={columns}
-              updateTema={updateTema}
-              updateAvaliacao={updateAvaliacao}
-              currentDate={currentDate}
-              hasNext={hasNext}
-              hasPrevious={hasPrevious}
-              totalItems={totalItems}
-              onNext={handleNext}
-              onPrevious={handlePrevious}
-              isLoading={isLoading}
-            />
-          )}
-        </div>
-      </main>
-    </div>
+        </main>
+      </div>
+    </>
   );
 };
 
