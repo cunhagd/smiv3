@@ -36,6 +36,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
   const [ciclo, setCiclo] = useState<string>("");
   const [categoria, setCategoria] = useState<string>("Selecionar");
   const [subCategoria, setSubCategoria] = useState<string>("");
+  const [isFormActive, setIsFormActive] = useState(false); // Estado para rastrear interação
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
 
@@ -49,6 +50,27 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       return false;
     }
   };
+
+  // Função para resetar o formulário
+  const resetForm = () => {
+    setDataInicial(undefined);
+    setDataFinal(undefined);
+    setCiclo("");
+    setCategoria("Selecionar");
+    setSubCategoria("");
+    setIsFormActive(false);
+  };
+
+  // Efeito para monitorar mudanças nos campos e ativar o ícone
+  useEffect(() => {
+    const hasInteracted = 
+      dataInicial !== undefined ||
+      dataFinal !== undefined ||
+      ciclo !== "" ||
+      categoria !== "Selecionar" ||
+      subCategoria !== "";
+    setIsFormActive(hasInteracted);
+  }, [dataInicial, dataFinal, ciclo, categoria, subCategoria]);
 
   const handleSubmit = async () => {
     if (!dataInicial) {
@@ -156,11 +178,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
       const semanaCadastrada = await response.json();
       console.log('Semana cadastrada:', semanaCadastrada);
 
-      setDataInicial(undefined);
-      setDataFinal(undefined);
-      setCiclo("");
-      setCategoria("Selecionar");
-      setSubCategoria("");
+      resetForm(); // Resetar o formulário após sucesso
 
       toast({
         title: "Sucesso!",
@@ -272,7 +290,7 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
                 className="w-full p-2 pl-3 pr-10 bg-dark-card border border-white/10 rounded text-sm text-white appearance-none focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 hover:border-white/20"
                 aria-label="Selecionar categoria"
               >
-                {CATEGORIAS.filter(cat => cat !== 'Todas').map((cat) => ( // Exclui 'Todas' do formulário
+                {CATEGORIAS.filter(cat => cat !== 'Todas').map((cat) => (
                   <option key={cat} value={cat}>
                     {cat}
                   </option>
@@ -297,7 +315,16 @@ const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = 
           </div>
         </div>
 
-        <div className="flex justify-end pt-2">
+        <div className="flex justify-end pt-2 gap-2">
+          {isFormActive && (
+            <button
+              onClick={resetForm}
+              className="text-red-500 hover:text-red-400 transition-colors"
+              aria-label="Cancelar cadastro e limpar formulário"
+            >
+              <X size={20} />
+            </button>
+          )}
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
@@ -564,7 +591,7 @@ const SemanaEstrategica = () => {
       data_inicial: parse(novaSemana.data_inicial as string, 'dd/MM/yyyy', new Date()),
       data_final: parse(novaSemana.data_final as string, 'dd/MM/yyyy', new Date()),
     };
-    console.log('Adicionando semana ao estado:', parsedSemana);
+    console.log('Adicionando semana ao estado:', novaSemana);
     setSemanas(prev => [...prev, parsedSemana]);
   };
 
@@ -627,7 +654,6 @@ const SemanaEstrategica = () => {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="text-gray-400 border-b border-white/10">
-                  <th className="py-2 px-4">ID</th>
                   <th className="py-2 px-4">Data Inicial</th>
                   <th className="py-2 px-4">Data Final</th>
                   <th className="py-2 px-4">Ciclo</th>
@@ -639,8 +665,6 @@ const SemanaEstrategica = () => {
               <tbody>
                 {semanasFiltradas.map((semana) => (
                   <tr key={semana.id} className="border-b border-white/10">
-                    <td className="py-2 px-4">{semana.id}</td>
-
                     <td className="py-2 px-4">
                       {editingId === semana.id ? (
                         <Popover>
@@ -716,7 +740,7 @@ const SemanaEstrategica = () => {
                           className="bg-dark-card border border-white/20 rounded px-2 py-1"
                           aria-label="Editar categoria"
                         >
-                          {CATEGORIAS.filter(cat => cat !== 'Todas').map((cat) => ( // Exclui 'Todas' da edição
+                          {CATEGORIAS.filter(cat => cat !== 'Todas').map((cat) => (
                             <option key={cat} value={cat}>{cat}</option>
                           ))}
                         </select>

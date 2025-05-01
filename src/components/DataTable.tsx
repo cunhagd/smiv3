@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Smartphone, Ellipsis } from 'lucide-react';
+import { Send, Ellipsis } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 interface Column {
@@ -85,7 +85,7 @@ const ActionMenu = ({ row }: { row: any }) => {
             className="w-full text-left px-3 py-2 text-sm hover:bg-white/5 flex items-center space-x-2"
           >
             <span>Enviar no WhatsApp</span>
-            <span><Smartphone className="h-4 w-4 text-gray-400" /></span>
+            <span><Send className="h-4 w-4 text-gray-400" /></span>
           </button>
         </div>
       )}
