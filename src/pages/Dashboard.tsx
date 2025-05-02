@@ -1,17 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowRight, TrendingDown } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import StatCard from '@/components/StatCard';
-import AreaChart from '@/components/charts/AreaChart';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
 import DatePickerDash from '@/components/dashboard/DatePickerDash';
-import TotalNoticias from '@/components/dashboard/TotalNoticias';
-import NoticiasPositivas from '@/components/dashboard/NoticiasPositivas';
-import Pontuacao from '@/components/dashboard/Pontuacao';
-import NoticiasNegativas from '@/components/dashboard/NoticiasNegativas'; // Novo import
+import TotalNoticias from '@/components/dashboard/TotalNoticias.tsx';
+import NoticiasPositivas from '@/components/dashboard/NoticiasPositivas.tsx';
+import Pontuacao from '@/components/dashboard/Pontuacao.tsx';
+import NoticiasNegativas from '@/components/dashboard/NoticiasNegativas.tsx';
+import NoticiasPeriodo from '@/components/dashboard/NoticiasPeriodo.tsx'; // Novo import
 
 const lineChartData = [
   { name: '01/05', notícias: 40 },
@@ -36,10 +36,8 @@ const sentimentData = [
 ];
 
 const Dashboard = () => {
-  const [areaChartData, setAreaChartData] = useState([]);
   const [portaisRelevantes, setPortaisRelevantes] = useState({ top5: [], bottom5: [] });
   const [selectedType, setSelectedType] = useState('positivas');
-  const [isLoadingAreaChart, setIsLoadingAreaChart] = useState(true);
   const [isLoadingPortais, setIsLoadingPortais] = useState(true);
   const [dateRange, setDateRange] = useState({
     from: new Date(new Date().setDate(new Date().getDate() - 30)),
@@ -53,41 +51,6 @@ const Dashboard = () => {
     const to = dateRange.to?.toISOString().split('T')[0] || defaultTo.toISOString().split('T')[0];
 
     if (from && to) {
-      // Buscar dados para o gráfico de área
-      const startTimeAreaChart = Date.now();
-      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=noticias-por-periodo&dataInicio=${from}&dataFim=${to}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Dados brutos do gráfico recebidos da API:', data);
-          const formattedData = data.map(item => {
-            const [day, month, year] = item.name.split('/');
-            const isoDate = `${year}-${month}-${day}`;
-            const date = new Date(isoDate);
-            if (isNaN(date.getTime())) {
-              throw new Error(`Data inválida após conversão: ${isoDate}`);
-            }
-            return {
-              name: format(date, 'dd/MMM', { locale: ptBR }).toLowerCase(),
-              value: item.value
-            };
-          });
-          console.log('Dados formatados do gráfico:', formattedData);
-          console.log(`Tempo para buscar dados do gráfico: ${(Date.now() - startTimeAreaChart) / 1000} segundos`);
-          setAreaChartData(formattedData);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar dados do gráfico:', error.message);
-          console.error('Stack trace:', error.stack);
-        })
-        .finally(() => {
-          setIsLoadingAreaChart(false);
-        });
-
       // Buscar portais relevantes
       const startTimePortais = Date.now();
       fetch(`https://smi-api-production-fae2.up.railway.app/portais-relevantes?dataInicio=${from}&dataFim=${to}&type=${selectedType}`)
@@ -110,13 +73,6 @@ const Dashboard = () => {
         });
     }
   }, [dateRange, selectedType]);
-
-  const lineChartDataFromApi = React.useMemo(() => {
-    return areaChartData.map(item => ({
-      name: item.name,
-      notícias: item.value
-    }));
-  }, [areaChartData]);
 
   const handleDateRangeChange = (range) => {
     const normalizedRange = {
@@ -148,27 +104,13 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
           <TotalNoticias dateRange={dateRange} />
           <NoticiasPositivas dateRange={dateRange} />
-          <NoticiasNegativas dateRange={dateRange} /> {/* Substituído por NoticiasNegativas */}
+          <NoticiasNegativas dateRange={dateRange} />
           <Pontuacao dateRange={dateRange} />
         </div>
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <div className="dashboard-card">
-            <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Notícias por Período</h3>
-              <button className="p-1 hover:bg-white/5 rounded-full">
-                <ArrowRight className="h-4 w-4 text-gray-400" />
-              </button>
-            </div>
-            {isLoadingAreaChart ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-gray-400">Carregando dados...</p>
-              </div>
-            ) : (
-              <AreaChart data={areaChartData} height={300} gradientColor="#CAF10A" />
-            )}
-          </div>
+          <NoticiasPeriodo dateRange={dateRange} /> {/* Substituído por NoticiasPeriodo */}
 
           <div className="dashboard-card">
             <div className="dashboard-card-header">
@@ -216,7 +158,7 @@ const Dashboard = () => {
               </button>
             </div>
             <LineChart
-              data={lineChartDataFromApi}
+              data={lineChartData}
               height={300}
               lineColor="#CAF10A"
               yAxisKey="notícias"
