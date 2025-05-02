@@ -3,33 +3,15 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ArrowRight } from 'lucide-react';
 import Navbar from '@/components/Navbar';
-import StatCard from '@/components/StatCard';
 import BarChart from '@/components/charts/BarChart';
-import LineChart from '@/components/charts/LineChart';
 import DatePickerDash from '@/components/dashboard/DatePickerDash';
 import TotalNoticias from '@/components/dashboard/TotalNoticias.tsx';
 import NoticiasPositivas from '@/components/dashboard/NoticiasPositivas.tsx';
 import Pontuacao from '@/components/dashboard/Pontuacao.tsx';
 import NoticiasNegativas from '@/components/dashboard/NoticiasNegativas.tsx';
 import NoticiasPeriodo from '@/components/dashboard/NoticiasPeriodo.tsx';
-import SentimentoNoticias from '@/components/dashboard/SentimentoNoticias.tsx'; // Novo import
-
-const lineChartData = [
-  { name: '01/05', notícias: 40 },
-  { name: '02/05', notícias: 30 },
-  { name: '03/05', notícias: 35 },
-  { name: '04/05', notícias: 55 },
-  { name: '05/05', notícias: 25 },
-  { name: '06/05', notícias: 40 },
-  { name: '07/05', notícias: 45 },
-  { name: '08/05', notícias: 60 },
-  { name: '09/05', notícias: 35 },
-  { name: '10/05', notícias: 50 },
-  { name: '11/05', notícias: 45 },
-  { name: '12/05', notícias: 40 },
-  { name: '13/05', notícias: 55 },
-  { name: '14/05', notícias: 70 },
-];
+import SentimentoNoticias from '@/components/dashboard/SentimentoNoticias.tsx';
+import EvolucaoSentimento from '@/components/dashboard/EvolucaoSentimento.tsx';
 
 const Dashboard = () => {
   const [portaisRelevantes, setPortaisRelevantes] = useState({ top5: [], bottom5: [] });
@@ -47,7 +29,6 @@ const Dashboard = () => {
     const to = dateRange.to?.toISOString().split('T')[0] || defaultTo.toISOString().split('T')[0];
 
     if (from && to) {
-      // Buscar portais relevantes
       const startTimePortais = Date.now();
       fetch(`https://smi-api-production-fae2.up.railway.app/portais-relevantes?dataInicio=${from}&dataFim=${to}&type=${selectedType}`)
         .then(response => {
@@ -144,24 +125,12 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Bottom Row */}
+        {/* Bottom Row Corrigido */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          <div className="dashboard-card lg:col-span-2">
-            <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Evolução de Sentimento</h3>
-              <button className="p-1 hover:bg-white/5 rounded-full">
-                <ArrowRight className="h-4 w-4 text-gray-400" />
-              </button>
-            </div>
-            <LineChart
-              data={lineChartData}
-              height={300}
-              lineColor="#CAF10A"
-              yAxisKey="notícias"
-            />
+          <div className="lg:col-span-2">
+            <EvolucaoSentimento dateRange={dateRange} />
           </div>
-
-          <SentimentoNoticias dateRange={dateRange} /> {/* Substituído por SentimentoNoticias */}
+          <SentimentoNoticias dateRange={dateRange} />
         </div>
       </main>
     </div>
