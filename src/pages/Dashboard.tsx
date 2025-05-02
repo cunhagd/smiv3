@@ -11,7 +11,8 @@ import TotalNoticias from '@/components/dashboard/TotalNoticias.tsx';
 import NoticiasPositivas from '@/components/dashboard/NoticiasPositivas.tsx';
 import Pontuacao from '@/components/dashboard/Pontuacao.tsx';
 import NoticiasNegativas from '@/components/dashboard/NoticiasNegativas.tsx';
-import NoticiasPeriodo from '@/components/dashboard/NoticiasPeriodo.tsx'; // Novo import
+import NoticiasPeriodo from '@/components/dashboard/NoticiasPeriodo.tsx';
+import SentimentoNoticias from '@/components/dashboard/SentimentoNoticias.tsx'; // Novo import
 
 const lineChartData = [
   { name: '01/05', notícias: 40 },
@@ -28,11 +29,6 @@ const lineChartData = [
   { name: '12/05', notícias: 40 },
   { name: '13/05', notícias: 55 },
   { name: '14/05', notícias: 70 },
-];
-const sentimentData = [
-  { name: 'Positivo', value: 42, color: '#CAF10A' },
-  { name: 'Neutro', value: 38, color: '#AEAEAE' },
-  { name: 'Negativo', value: 20, color: '#FF4D4D' },
 ];
 
 const Dashboard = () => {
@@ -110,7 +106,7 @@ const Dashboard = () => {
 
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <NoticiasPeriodo dateRange={dateRange} /> {/* Substituído por NoticiasPeriodo */}
+          <NoticiasPeriodo dateRange={dateRange} />
 
           <div className="dashboard-card">
             <div className="dashboard-card-header">
@@ -152,7 +148,7 @@ const Dashboard = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="dashboard-card lg:col-span-2">
             <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Evolução de Notícias</h3>
+              <h3 className="text-lg font-medium">Evolução de Sentimento</h3>
               <button className="p-1 hover:bg-white/5 rounded-full">
                 <ArrowRight className="h-4 w-4 text-gray-400" />
               </button>
@@ -165,45 +161,7 @@ const Dashboard = () => {
             />
           </div>
 
-          <div className="dashboard-card">
-            <div className="dashboard-card-header">
-              <h3 className="text-lg font-medium">Sentimento das Notícias</h3>
-              <button className="p-1 hover:bg-white/5 rounded-full">
-                <ArrowRight className="h-4 w-4 text-gray-400" />
-              </button>
-            </div>
-            <div className="flex flex-col items-center justify-center h-[300px]">
-              <div className="w-48 h-48 relative rounded-full overflow-hidden mb-6">
-                {sentimentData.map((item, index) => (
-                  <div
-                    key={index}
-                    className="absolute"
-                    style={{
-                      width: '100%',
-                      height: '100%',
-                      clip: `rect(0, ${48 * 2}px, ${48 * 2}px, ${48}px)`,
-                      transform: `rotate(${index * 120}deg)`,
-                      transformOrigin: 'center',
-                      background: `conic-gradient(transparent ${index * (360 / sentimentData.length)}deg, ${item.color} ${index * (360 / sentimentData.length)}deg ${(index + 1) * (360 / sentimentData.length)}deg, transparent ${(index + 1) * (360 / sentimentData.length)}deg)`,
-                    }}
-                  />
-                ))}
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="bg-dark-card rounded-full h-32 w-32 flex items-center justify-center">
-                    <span className="text-xl font-bold">42%</span>
-                  </div>
-                </div>
-              </div>
-              <div className="flex items-center justify-center gap-4">
-                {sentimentData.map((item, index) => (
-                  <div key={index} className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }}></div>
-                    <span className="text-sm text-gray-400">{item.name}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
+          <SentimentoNoticias dateRange={dateRange} /> {/* Substituído por SentimentoNoticias */}
         </div>
       </main>
     </div>
