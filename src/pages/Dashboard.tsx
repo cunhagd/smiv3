@@ -1,21 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { 
-  ArrowRight, 
-  Newspaper, 
-  TrendingUp, 
-  TrendingDown, 
-  BarChart as BarChartIcon
-} from 'lucide-react';
+import { ArrowRight, TrendingDown } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import StatCard from '@/components/StatCard';
 import AreaChart from '@/components/charts/AreaChart';
 import BarChart from '@/components/charts/BarChart';
 import LineChart from '@/components/charts/LineChart';
-import DateRangePicker from '@/components/DateRangePicker';
+import DatePickerDash from '@/components/dashboard/DatePickerDash';
+import TotalNoticias from '@/components/dashboard/TotalNoticias';
+import NoticiasPositivas from '@/components/dashboard/NoticiasPositivas';
+import Pontuacao from '@/components/dashboard/Pontuacao';
+import NoticiasNegativas from '@/components/dashboard/NoticiasNegativas'; // Novo import
 
-// Mock data (manteremos apenas para os outros gráficos por enquanto)
 const lineChartData = [
   { name: '01/05', notícias: 40 },
   { name: '02/05', notícias: 30 },
@@ -32,7 +29,6 @@ const lineChartData = [
   { name: '13/05', notícias: 55 },
   { name: '14/05', notícias: 70 },
 ];
-
 const sentimentData = [
   { name: 'Positivo', value: 42, color: '#CAF10A' },
   { name: 'Neutro', value: 38, color: '#AEAEAE' },
@@ -40,83 +36,26 @@ const sentimentData = [
 ];
 
 const Dashboard = () => {
-  const [totalNoticias, setTotalNoticias] = useState(0);
   const [areaChartData, setAreaChartData] = useState([]);
-  const [totalPontuacao, setTotalPontuacao] = useState(0);
   const [portaisRelevantes, setPortaisRelevantes] = useState({ top5: [], bottom5: [] });
   const [selectedType, setSelectedType] = useState('positivas');
-  const [isLoadingNoticias, setIsLoadingNoticias] = useState(true);
-  const [isLoadingPontuacao, setIsLoadingPontuacao] = useState(true);
   const [isLoadingAreaChart, setIsLoadingAreaChart] = useState(true);
   const [isLoadingPortais, setIsLoadingPortais] = useState(true);
   const [dateRange, setDateRange] = useState({
-    from: new Date(new Date().setDate(new Date().getDate() - 30)), // Últimos 30 dias
+    from: new Date(new Date().setDate(new Date().getDate() - 30)),
     to: new Date(),
   });
 
-  // Memoizar os valores de totalNoticias e totalPontuacao
-  const totalNoticiasMemo = React.useMemo(() => {
-    console.log('Memoizando totalNoticias:', totalNoticias);
-    return totalNoticias;
-  }, [totalNoticias]);
-
-  const totalPontuacaoMemo = React.useMemo(() => {
-    console.log('Memoizando totalPontuacao:', totalPontuacao);
-    return totalPontuacao;
-  }, [totalPontuacao]);
-
   useEffect(() => {
-    const from = dateRange.from?.toISOString().split('T')[0];
-    const to = dateRange.to?.toISOString().split('T')[0];
+    const defaultFrom = new Date(new Date().setDate(new Date().getDate() - 30));
+    const defaultTo = new Date();
+    const from = dateRange.from?.toISOString().split('T')[0] || defaultFrom.toISOString().split('T')[0];
+    const to = dateRange.to?.toISOString().split('T')[0] || defaultTo.toISOString().split('T')[0];
 
     if (from && to) {
-      // Buscar total de notícias
-      const startTimeNoticias = Date.now();
-      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=total-noticias&from=${from}&to=${to}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Dados de total de notícias recebidos da API:', data);
-          console.log(`Tempo para buscar total de notícias: ${(Date.now() - startTimeNoticias) / 1000} segundos`);
-          setTotalNoticias(data.total_noticias || 0);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar total de notícias:', error.message);
-        })
-        .finally(() => {
-          setIsLoadingNoticias(false);
-          console.log(`Total de Notícias atualizado na UI: ${totalNoticias}`);
-        });
-
-      // Buscar total de pontuação
-      const startTimePontuacao = Date.now();
-      fetch(`https://smi-api-production-fae2.up.railway.app/pontuacao-total?from=${from}&to=${to}`)
-        .then(response => {
-          if (!response.ok) {
-            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
-          }
-          return response.json();
-        })
-        .then(data => {
-          console.log('Dados de pontuação total recebidos da API:', data);
-          console.log(`Tempo para buscar pontuação total: ${(Date.now() - startTimePontuacao) / 1000} segundos`);
-          setTotalPontuacao(data.total_pontuacao || 0);
-        })
-        .catch(error => {
-          console.error('Erro ao buscar pontuação total:', error.message);
-        })
-        .finally(() => {
-          setIsLoadingPontuacao(false);
-          console.log(`Pontuação Total atualizada na UI: ${totalPontuacao}`);
-        });
-
       // Buscar dados para o gráfico de área
       const startTimeAreaChart = Date.now();
-      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=noticias-por-periodo&from=${from}&to=${to}`)
+      fetch(`https://smi-api-production-fae2.up.railway.app/metrics?type=noticias-por-periodo&dataInicio=${from}&dataFim=${to}`)
         .then(response => {
           if (!response.ok) {
             throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
@@ -124,23 +63,22 @@ const Dashboard = () => {
           return response.json();
         })
         .then(data => {
-            console.log('Dados brutos do gráfico recebidos da API:', data);
-            const formattedData = data.map(item => {
-              // Converter a data de DD/MM/YYYY para um formato que o new Date() entende (YYYY-MM-DD)
-              const [day, month, year] = item.name.split('/');
-              const isoDate = `${year}-${month}-${day}`; // Ex.: "2025-03-26"
-              const date = new Date(isoDate);
-              if (isNaN(date.getTime())) {
-                throw new Error(`Data inválida após conversão: ${isoDate}`);
-              }
-              return {
-                name: format(date, 'dd/MMM', { locale: ptBR }).toLowerCase(),
-                value: item.value
-              };
-            });
-            console.log('Dados formatados do gráfico:', formattedData);
-            console.log(`Tempo para buscar dados do gráfico: ${(Date.now() - startTimeAreaChart) / 1000} segundos`);
-            setAreaChartData(formattedData);
+          console.log('Dados brutos do gráfico recebidos da API:', data);
+          const formattedData = data.map(item => {
+            const [day, month, year] = item.name.split('/');
+            const isoDate = `${year}-${month}-${day}`;
+            const date = new Date(isoDate);
+            if (isNaN(date.getTime())) {
+              throw new Error(`Data inválida após conversão: ${isoDate}`);
+            }
+            return {
+              name: format(date, 'dd/MMM', { locale: ptBR }).toLowerCase(),
+              value: item.value
+            };
+          });
+          console.log('Dados formatados do gráfico:', formattedData);
+          console.log(`Tempo para buscar dados do gráfico: ${(Date.now() - startTimeAreaChart) / 1000} segundos`);
+          setAreaChartData(formattedData);
         })
         .catch(error => {
           console.error('Erro ao buscar dados do gráfico:', error.message);
@@ -152,7 +90,7 @@ const Dashboard = () => {
 
       // Buscar portais relevantes
       const startTimePortais = Date.now();
-      fetch(`https://smi-api-production-fae2.up.railway.app/portais-relevantes?from=${from}&to=${to}&type=${selectedType}`)
+      fetch(`https://smi-api-production-fae2.up.railway.app/portais-relevantes?dataInicio=${from}&dataFim=${to}&type=${selectedType}`)
         .then(response => {
           if (!response.ok) {
             throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
@@ -181,9 +119,11 @@ const Dashboard = () => {
   }, [areaChartData]);
 
   const handleDateRangeChange = (range) => {
-    if (range.from && range.to) {
-      setDateRange({ from: range.from, to: range.to });
-    }
+    const normalizedRange = {
+      from: range.from ? new Date(range.from.setHours(0, 0, 0, 0)) : undefined,
+      to: range.to ? new Date(range.to.setHours(0, 0, 0, 0)) : undefined
+    };
+    setDateRange(normalizedRange);
   };
 
   const handleTypeChange = (event) => {
@@ -193,54 +133,25 @@ const Dashboard = () => {
   return (
     <div className="min-h-screen bg-dark-bg text-white">
       <Navbar />
-      
       <main className="p-6 md:p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Dashboard</h1>
             <p className="text-gray-400">Visão geral do monitoramento de imprensa</p>
           </div>
-          
           <div className="flex items-center gap-3 mt-4 md:mt-0">
-            <DateRangePicker onChange={handleDateRangeChange} />
+            <DatePickerDash onChange={handleDateRangeChange} />
           </div>
         </div>
-        
+
         {/* Stats Row */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <StatCard 
-            title="Total de Notícias" 
-            value={isLoadingNoticias ? "..." : totalNoticiasMemo.toString()} 
-            change="+12.5% em relação ao mês anterior" 
-            isPositive 
-            icon={<Newspaper className="h-6 w-6" />} 
-          />
-          
-          <StatCard 
-            title="Notícias Positivas" 
-            value="527" 
-            change="+8.2% em relação ao mês anterior" 
-            isPositive 
-            icon={<TrendingUp className="h-6 w-6" />} 
-          />
-          
-          <StatCard 
-            title="Notícias Negativas" 
-            value="251" 
-            change="-5.3% em relação ao mês anterior" 
-            isPositive 
-            icon={<TrendingDown className="h-6 w-6" />} 
-          />
-          
-          <StatCard 
-            title="Pontuação" 
-            value={isLoadingPontuacao ? "..." : totalPontuacaoMemo.toString()} 
-            change="+15.8% em relação ao mês anterior" 
-            isPositive 
-            icon={<BarChartIcon className="h-6 w-6" />} 
-          />
+          <TotalNoticias dateRange={dateRange} />
+          <NoticiasPositivas dateRange={dateRange} />
+          <NoticiasNegativas dateRange={dateRange} /> {/* Substituído por NoticiasNegativas */}
+          <Pontuacao dateRange={dateRange} />
         </div>
-        
+
         {/* Charts Row */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <div className="dashboard-card">
@@ -258,12 +169,12 @@ const Dashboard = () => {
               <AreaChart data={areaChartData} height={300} gradientColor="#CAF10A" />
             )}
           </div>
-          
+
           <div className="dashboard-card">
             <div className="dashboard-card-header">
               <h3 className="text-lg font-medium">Portais Relevantes</h3>
               <div className="flex items-center gap-2">
-                <select 
+                <select
                   className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm"
                   value={selectedType}
                   onChange={handleTypeChange}
@@ -285,7 +196,7 @@ const Dashboard = () => {
                 <p className="text-gray-400">Nenhuma notícia encontrada</p>
               </div>
             ) : (
-              <BarChart 
+              <BarChart
                 data={selectedType === 'positivas' ? portaisRelevantes.top5 : portaisRelevantes.bottom5}
                 height={300}
                 yAxisKey="value"
@@ -294,7 +205,7 @@ const Dashboard = () => {
             )}
           </div>
         </div>
-        
+
         {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="dashboard-card lg:col-span-2">
@@ -304,14 +215,14 @@ const Dashboard = () => {
                 <ArrowRight className="h-4 w-4 text-gray-400" />
               </button>
             </div>
-            <LineChart 
-              data={lineChartDataFromApi} 
-              height={300} 
-              lineColor="#CAF10A" 
-              yAxisKey="notícias" 
+            <LineChart
+              data={lineChartDataFromApi}
+              height={300}
+              lineColor="#CAF10A"
+              yAxisKey="notícias"
             />
           </div>
-          
+
           <div className="dashboard-card">
             <div className="dashboard-card-header">
               <h3 className="text-lg font-medium">Sentimento das Notícias</h3>
@@ -322,7 +233,7 @@ const Dashboard = () => {
             <div className="flex flex-col items-center justify-center h-[300px]">
               <div className="w-48 h-48 relative rounded-full overflow-hidden mb-6">
                 {sentimentData.map((item, index) => (
-                  <div 
+                  <div
                     key={index}
                     className="absolute"
                     style={{
@@ -341,7 +252,6 @@ const Dashboard = () => {
                   </div>
                 </div>
               </div>
-              
               <div className="flex items-center justify-center gap-4">
                 {sentimentData.map((item, index) => (
                   <div key={index} className="flex items-center gap-2">
