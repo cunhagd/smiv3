@@ -12,8 +12,8 @@ const Suporte: React.FC<SuporteProps> = ({ filtroAtivo, toggleFiltroSuporte }) =
       onClick={toggleFiltroSuporte}
       className={
         filtroAtivo === 'Suporte'
-          ? 'cursor-pointer text-[#72C5FD] hover:text-[#bde4fe]'
-          : 'cursor-pointer text-[#72C5FD] hover:text-[#bde4fe]'
+          ? 'cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]'
+          : 'cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]'
       }
     >
       {filtroAtivo === 'Suporte' ? (

@@ -350,7 +350,7 @@ function EstrategicaCell({
         <Star
           className={`h-5 w-5 transition-colors ${
             isChecked
-              ? 'fill-yellow-300 text-yellow-300 hover:text-yellow-200'
+              ? 'fill-[#fde047] text-[#fde047] hover:text-[#fef08a]'
               : 'fill-none text-white/20 hover:text-white/40'
           }`}
         />

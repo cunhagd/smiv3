@@ -12,6 +12,7 @@ import Lixeira from '@/components/planilha/Lixeira';
 import Suporte from '@/components/planilha/Suporte';
 import { format, parse } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
+import BotaoAjuda from '@/components/planilha/BotaoAjuda';
 
 // Centralizar a URL base
 const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
@@ -36,7 +37,7 @@ const AVALIACOES = [
 ];
 
 const RELEVANCIA = [
-  { valor: 'Útil', cor: '#CAF10A', icone: CircleCheckBig },
+  { valor: 'Útil', cor: '#ff69ff', icone: CircleCheckBig },
   { valor: 'Lixo', cor: '#FFFFFF', icone: Trash2 },
   { valor: 'Suporte', cor: '#FFFFFF', icone: Lightbulb },
 ];
@@ -172,9 +173,9 @@ function RelevanciaCell({
                 <Icone
                   className={`h-5 w-5 transition-colors ${
                     isUtil
-                      ? 'text-[#4c4c4c] hover:text-[#CAF10A]'
+                      ? 'text-[#4c4c4c] hover:text-[#ff69ff]'
                       : isLixo
-                      ? 'text-[#4c4c4c] hover:text-red-500'
+                      ? 'text-[#4c4c4c] hover:text-[#f5a340]'
                       : isSuporte
                       ? 'text-[#4c4c4c] hover:text-[#72C5FD]'
                       : ''
@@ -201,9 +202,9 @@ function RelevanciaCell({
               <IconeRelevancia
                 className={`h-5 w-5 transition-colors ${
                   relevanciaAtual === 'Útil'
-                    ? 'text-[#CAF10A] hover:text-[#eafb9a]'
+                    ? 'text-[#ff69ff] hover:text-[#ff99ff]'
                     : relevanciaAtual === 'Lixo'
-                    ? 'text-red-700 hover:text-red-500'
+                    ? 'text-[#f5a340] hover:text-[#f5b86e]'
                     : 'text-[#72C5FD] hover:text-[#bde4fe]'
                 }`}
               />
@@ -359,11 +360,11 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
                 <Icone
                   className={`h-5 w-5 transition-colors ${
                     isPositiva
-                      ? 'text-[#4c4c4c] hover:text-green-600'
+                      ? 'text-[#4c4c4c] hover:text-[#059669]'
                       : isNeutra
-                      ? 'text-[#4c4c4c] hover:text-gray-600'
+                      ? 'text-[#4c4c4c] hover:text-[#4b5563]'
                       : isNegativa
-                      ? 'text-[#4c4c4c] hover:text-red-600'
+                      ? 'text-[#4c4c4c] hover:text-[#dc2626]'
                       : ''
                   }`}
                 />
@@ -388,10 +389,10 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
               <IconeAvaliacao
                 className={`h-5 w-5 transition-colors ${
                   avaliacaoAtual === 'Positiva'
-                    ? 'text-green-600 hover:text-green-400'
+                    ? 'text-[#059669] hover:text-[#34d399]'
                     : avaliacaoAtual === 'Neutra'
-                    ? 'text-gray-600 hover:text-gray-400'
-                    : 'text-red-600 hover:text-red-400'
+                    ? 'text-[#4b5563] hover:text-[#9ca3af]'
+                    : 'text-[#dc2626] hover:text-[#f87171]'
                 }`}
               />
             )
@@ -404,17 +405,17 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
 
 function PontosCell({ row }: { row: Noticia }) {
   const { avaliacao, pontos } = row;
-  if (!avaliacao) return <div className="flex items-center justify-center h-full"><span className="text-gray-400">-</span></div>;
+  if (!avaliacao) return <div className="flex items-center justify-center h-full"><span className="text-[#9ca3af]">-</span></div>;
   const valorPontos = avaliacao === 'Neutra' ? 0 : avaliacao === 'Negativa' ? -Math.abs(pontos || 0) : pontos || 0;
   return (
     <div className="flex items-center justify-center h-full">
       <span
         className={`font-medium ${
           avaliacao === 'Neutra'
-            ? 'text-white'
+            ? 'text-[#4b5563]'
             : valorPontos < 0
-            ? 'text-red-500'
-            : 'text-green-500'
+            ? 'text-[#dc2626]'
+            : 'text-[#059669]'
         }`}
       >
         {valorPontos}
@@ -468,7 +469,7 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
         <Star
           className={`h-5 w-5 transition-colors ${
             isChecked
-              ? 'fill-yellow-300 text-yellow-300 hover:text-yellow-200'
+              ? 'fill-[#fde047] text-[#fde047] hover:text-[#fef08a]'
               : 'fill-none text-white/20 hover:text-white/40'
           }`}
         />
@@ -960,20 +961,20 @@ const Spreadsheet: React.FC = () => {
           <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
-              <p className="text-gray-400">Gerenciamento e análise de notícias</p>
+              <p className="text-[#9ca3af]">Gerenciamento e análise de notícias</p>
             </div>
             <div className="flex items-center gap-3 mt-4 md:mt-0">
               {filtroAtivo === 'Estrategica' ? (
                 <span
                   onClick={toggleFiltroEstrategica}
-                  className="cursor-pointer text-yellow-300 hover:text-yellow-200"
+                  className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
                 >
                   <CircleArrowLeft className="h-6 w-6" />
                 </span>
               ) : filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
                 <span
                   onClick={toggleFiltroEstrategica}
-                  className="cursor-pointer text-yellow-300 hover:text-yellow-200"
+                  className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
                 >
                   <Star className="h-6 w-6" />
                 </span>
@@ -981,14 +982,14 @@ const Spreadsheet: React.FC = () => {
               {filtroAtivo === 'Lixo' ? (
                 <span
                   onClick={toggleFiltroLixo}
-                  className="cursor-pointer text-red-500 hover:text-red-400"
+                  className="cursor-pointer text-[#f5a340] hover:text-[#f5b86e]"
                 >
                   <CircleArrowLeft className="h-6 w-6" />
                 </span>
               ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' ? (
                 <span
                   onClick={toggleFiltroLixo}
-                  className="cursor-pointer text-red-500 hover:text-red-400"
+                  className="cursor-pointer text-[#f5a340] hover:text-[#f5b86e]"
                 >
                   <Trash2 className="h-6 w-6" />
                 </span>
@@ -996,14 +997,14 @@ const Spreadsheet: React.FC = () => {
               {filtroAtivo === 'Suporte' ? (
                 <span
                   onClick={toggleFiltroSuporte}
-                  className="cursor-pointer text-blue-400 hover:text-blue-300"
+                  className="cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]"
                 >
                   <CircleArrowLeft className="h-6 w-6" />
                 </span>
               ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' ? (
                 <span
                   onClick={toggleFiltroSuporte}
-                  className="cursor-pointer text-blue-400 hover:text-blue-300"
+                  className="cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]"
                 >
                   <Lightbulb className="h-6 w-6" />
                 </span>
@@ -1017,20 +1018,21 @@ const Spreadsheet: React.FC = () => {
               ) : (
                 <DatePicker onChange={handleDateChange} />
               )}
+              <BotaoAjuda />
             </div>
           </div>
           <div className="dashboard-card">
             {isLoading || estrategicas.isLoading ? (
               <div className="flex items-center justify-center h-[300px]">
-                <p className="text-gray-400">Carregando dados...</p>
+                <p className="text-[#9ca3af]">Carregando dados...</p>
               </div>
             ) : error ? (
               <div className="flex items-center justify-center h-[300px]">
-                <p className="text-red-400">Erro ao carregar dados: {error}</p>
+                <p className="text-[#f87171]">Erro ao carregar dados: {error}</p>
               </div>
             ) : noticias.length === 0 ? (
               <div className="flex items-center justify-center h-[300px]">
-                <p className="text-gray-400">Nenhuma notícia encontrada</p>
+                <p className="text-[#9ca3af]">Nenhuma notícia encontrada</p>
               </div>
             ) : (
               <DataTable
