@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { CircleHelp, Smile, Frown, Meh, CircleCheckBig, Trash2, Lightbulb, Star, ExternalLink, CircleArrowLeft } from 'lucide-react';
+import { CircleHelp, Smile, Frown, Meh, CircleCheckBig, Trash2, Lightbulb, Sparkles, ExternalLink, CircleArrowLeft } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 
 const BotaoAjuda: React.FC = () => {
@@ -9,10 +9,10 @@ const BotaoAjuda: React.FC = () => {
     { icone: CircleCheckBig, nome: 'Utilidade: Útil', descricao: 'Marca a notícia como útil.', cor: '#fa6bfa' },
     { icone: Trash2, nome: 'Utilidade: Lixo', descricao: 'Marca a notícia como lixo / Abre a Lixeira.', cor: '#f5a340' },
     { icone: Lightbulb, nome: 'Utlidade: Suporte', descricao: 'Marca a notícia como suporte / Abre a aba de Suporte.', cor: 'blue-400' },
-    { icone: Smile, nome: 'Avaliação: Positiva', descricao: 'Indica que a notícia tem uma avaliação positiva.', cor: 'green-600' },
+    { icone: Smile, nome: 'Avaliação: Positiva', descricao: 'Indica que a notícia tem uma avaliação positiva.', cor: 'green-400' },
     { icone: Meh, nome: 'Avaliação: Neutra', descricao: 'Indica que a notícia tem uma avaliação neutra.', cor: 'gray-600' },
     { icone: Frown, nome: 'Avaliação: Negativa', descricao: 'Indica que a notícia tem uma avaliação negativa.', cor: 'red-600' },
-    { icone: Star, nome: 'Notícias Estratégicas', descricao: 'Marca a notícia como estratégica / Ativa o filtro de notícias estratégicas.', cor: 'yellow-300' },
+    { icone: Sparkles, nome: 'Notícias Estratégicas', descricao: 'Marca a notícia como estratégica / Ativa o filtro de notícias estratégicas.', cor: 'yellow-300' },
     { icone: CircleArrowLeft, nome: 'Voltar à planilha', descricao: 'Sair da aba atual e voltar à planilha principal com todas notícias.', cor: 'white' },
     { icone: ExternalLink, nome: 'Acessar notícia', descricao: 'Abre o link da notícia em uma nova aba.', cor: 'blue-400' },
   ];

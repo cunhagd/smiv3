@@ -5,7 +5,7 @@ import DatePicker from '@/components/DateRangePicker';
 import DatePickerEstrategicas from '@/components/DatePickerEstrategicas';
 import DatePickerLixeira from '@/components/DatePickerLixeira';
 import DatePickerSuporte from '@/components/DatePickerSuporte';
-import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Star } from 'lucide-react';
+import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Estrategicas from '@/components/planilha/Estrategicas';
 import Lixeira from '@/components/planilha/Lixeira';
@@ -466,7 +466,7 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
         onClick={handleChange}
         className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
       >
-        <Star
+        <Sparkles
           className={`h-5 w-5 transition-colors ${
             isChecked
               ? 'fill-[#fde047] text-[#fde047] hover:text-[#fef08a]'
@@ -976,7 +976,7 @@ const Spreadsheet: React.FC = () => {
                   onClick={toggleFiltroEstrategica}
                   className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
                 >
-                  <Star className="h-6 w-6" />
+                  <Sparkles className="h-6 w-6" />
                 </span>
               ) : null}
               {filtroAtivo === 'Lixo' ? (

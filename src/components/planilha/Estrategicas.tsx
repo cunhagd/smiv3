@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Noticia, ColumnDef } from '@/types/noticia';
-import { ChevronDown, Star } from 'lucide-react';
+import { ChevronDown, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TituloCell } from '@/pages/Spreadsheet';
 
@@ -347,7 +347,7 @@ function EstrategicaCell({
         onClick={() => handleChange(!isChecked)}
         className={`cursor-pointer ${isSaving ? 'pointer-events-none opacity-50' : ''}`}
       >
-        <Star
+        <Sparkles
           className={`h-5 w-5 transition-colors ${
             isChecked
               ? 'fill-[#fde047] text-[#fde047] hover:text-[#fef08a]'
