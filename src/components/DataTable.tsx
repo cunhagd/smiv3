@@ -23,7 +23,7 @@ interface DataTableProps {
   onPrevious: () => void;
   isLoading: boolean;
   onRowRemove?: (id: string, callback: () => void) => void;
-  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'; // Adicionando filterMode
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte' | 'Útil'; // Adicionando filterMode
 }
 
 // Componente para exibir o menu de ações (WhatsApp)

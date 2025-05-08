@@ -6,9 +6,9 @@ const BotaoAjuda: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const iconesLegenda = [
-    { icone: CircleCheckBig, nome: 'Utilidade: Útil', descricao: 'Marca a notícia como útil.', cor: '#fa6bfa' },
+    { icone: CircleCheckBig, nome: 'Utilidade: Útil', descricao: 'Marca a notícia como útil / Abre notícias Úteis.', cor: '#fa6bfa' },
     { icone: Trash2, nome: 'Utilidade: Lixo', descricao: 'Marca a notícia como lixo / Abre a Lixeira.', cor: '#f5a340' },
-    { icone: Lightbulb, nome: 'Utlidade: Suporte', descricao: 'Marca a notícia como suporte / Abre a aba de Suporte.', cor: 'blue-400' },
+    { icone: Lightbulb, nome: 'Utlidade: Suporte', descricao: 'Marca a notícia como suporte / Abre noíticas de Suporte.', cor: 'blue-400' },
     { icone: Smile, nome: 'Avaliação: Positiva', descricao: 'Indica que a notícia tem uma avaliação positiva.', cor: 'green-400' },
     { icone: Meh, nome: 'Avaliação: Neutra', descricao: 'Indica que a notícia tem uma avaliação neutra.', cor: 'gray-600' },
     { icone: Frown, nome: 'Avaliação: Negativa', descricao: 'Indica que a notícia tem uma avaliação negativa.', cor: 'red-600' },

@@ -10,7 +10,7 @@ interface EstrategicasProps {
   noticias: Noticia[];
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
   onRowRemove?: (id: string, callback: () => void) => void;
-  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte';
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte' | 'Útil';
 }
 
 interface EstrategicasReturn {
@@ -288,7 +288,7 @@ function EstrategicaCell({
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
   onEstrategicaChange: (id: number, checked: boolean) => void;
   onRowRemove?: (id: string, callback: () => void) => void;
-  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte';
+  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte' | 'Útil';
 }) {
   const { id, estrategica } = row;
   const [isChecked, setIsChecked] = useState(estrategica || false);

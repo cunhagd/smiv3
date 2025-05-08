@@ -5,12 +5,14 @@ import DatePicker from '@/components/DateRangePicker';
 import DatePickerEstrategicas from '@/components/DatePickerEstrategicas';
 import DatePickerLixeira from '@/components/DatePickerLixeira';
 import DatePickerSuporte from '@/components/DatePickerSuporte';
+import DatePickerUtil from '@/components/DatePickerUtil';
+import Util from '@/components/planilha/Util';
 import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Sparkles } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Estrategicas from '@/components/planilha/Estrategicas';
 import Lixeira from '@/components/planilha/Lixeira';
 import Suporte from '@/components/planilha/Suporte';
-import { format, parse } from 'date-fns';
+import { format, parse, addDays, subDays } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 import BotaoAjuda from '@/components/planilha/BotaoAjuda';
 
@@ -57,7 +59,7 @@ interface DataTableProps {
   onPrevious: () => void;
   isLoading: boolean;
   onRowRemove?: (id: string, callback: () => void) => void;
-  filterMode?: 'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte';
+  filterMode?: 'Nenhum' | 'Útil' | 'Lixo' | 'Estrategica' | 'Suporte';
 }
 
 export const TituloCell: React.FC<{ row: Noticia }> = ({ row }) => (
@@ -81,7 +83,7 @@ function RelevanciaCell({
   row: Noticia;
   setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
   onRowRemove?: (id: string, callback: () => void) => void;
-  filterMode?: 'Lixo' | 'Suporte' | 'Nenhum';
+  filterMode?: 'Útil' | 'Lixo' | 'Suporte' | 'Nenhum';
 }) {
   const { id, relevancia } = row;
   const [relevSelecionada, setRelevSelecionada] = useState<string>(
@@ -111,9 +113,10 @@ function RelevanciaCell({
       setRelevSelecionada(novaRelevancia);
       if (onRowRemove) {
         const shouldRemove =
+          (filterMode === 'Útil' && novaRelevancia !== 'Útil') ||
           (filterMode === 'Lixo' && novaRelevancia !== 'Lixo') ||
           (filterMode === 'Suporte' && novaRelevancia !== 'Suporte') ||
-          (filterMode === 'Nenhum' && (novaRelevancia === 'Lixo' || novaRelevancia === 'Suporte'));
+          (filterMode === 'Nenhum' && (novaRelevancia === 'Útil' || novaRelevancia === 'Lixo' || novaRelevancia === 'Suporte'));
         if (shouldRemove) {
           onRowRemove(id.toString(), () => {
             setNoticias((prevNoticias) =>
@@ -140,7 +143,7 @@ function RelevanciaCell({
   };
 
   const handleIconClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevenir comportamento padrão
+    e.preventDefault();
     if (relevSelecionada !== 'Selecionar') {
       handleSelect('Selecionar');
     } else {
@@ -329,7 +332,7 @@ function AvaliacaoCell({ row, updateAvaliacao, setNoticias }: { row: Noticia; up
   };
 
   const handleIconClick = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevenir comportamento padrão
+    e.preventDefault();
     setAvaliacaoSelecionada('');
     handleSave('');
     setIsMenuOpen(true);
@@ -431,7 +434,7 @@ function EstrategicaCell({ row, setNoticias }: { row: Noticia; setNoticias: Reac
   const { toast } = useToast();
 
   const handleChange = async (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevenir comportamento padrão
+    e.preventDefault();
     const checked = !isChecked;
     setIsChecked(checked);
     setIsSaving(true);
@@ -484,7 +487,7 @@ const getColumns = (
   updateTema: (id: string, tema: string) => void,
   updateAvaliacao: (id: string, avaliacao: string) => void,
   onRowRemove: (id: string, callback: () => void) => void,
-  filterMode: 'Lixo' | 'Suporte' | 'Nenhum'
+  filterMode: 'Útil' | 'Lixo' | 'Suporte' | 'Nenhum'
 ): ColumnDef[] => [
   {
     id: 'relevancia',
@@ -548,15 +551,17 @@ interface EstrategicasReturn {
 }
 
 const Spreadsheet: React.FC = () => {
-  const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedDateEstrategicas, setSelectedDateEstrategicas] = useState<Date | undefined>(undefined);
   const [selectedDateLixeira, setSelectedDateLixeira] = useState<Date | undefined>(undefined);
   const [selectedDateSuporte, setSelectedDateSuporte] = useState<Date | undefined>(undefined);
-  const [previousSelectedDate, setPreviousSelectedDate] = useState<Date | undefined>(new Date());
+  const [selectedDateUtil, setSelectedDateUtil] = useState<Date | undefined>(undefined);
+  const [previousSelectedDate, setPreviousSelectedDate] = useState<Date | undefined>(undefined);
   const [noticias, setNoticias] = useState<Noticia[]>([]);
   const [strategicDates, setStrategicDates] = useState<Date[]>([]);
   const [trashDates, setTrashDates] = useState<Date[]>([]);
   const [suporteDates, setSuporteDates] = useState<Date[]>([]);
+  const [utilDates, setUtilDates] = useState<Date[]>([]);
   const [totalItems, setTotalItems] = useState(0);
   const [currentDate, setCurrentDate] = useState<string | null>(null);
   const [hasNext, setHasNext] = useState(false);
@@ -564,7 +569,7 @@ const Spreadsheet: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
-  const [filtroAtivo, setFiltroAtivo] = useState<'Nenhum' | 'Lixo' | 'Estrategica' | 'Suporte'>('Nenhum');
+  const [filtroAtivo, setFiltroAtivo] = useState<'Nenhum' | 'Útil' | 'Lixo' | 'Estrategica' | 'Suporte'>('Nenhum');
 
   const handleRowRemove = (id: string, callback: () => void) => {
     const rowElement = document.querySelector(`[data-row-id="${id}"]`);
@@ -585,8 +590,25 @@ const Spreadsheet: React.FC = () => {
     filterMode: filtroAtivo,
   });
 
+  const toggleFiltroUtil = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const novoFiltro = filtroAtivo === 'Útil' ? 'Nenhum' : 'Útil';
+    setFiltroAtivo(novoFiltro);
+    setCurrentDate(null);
+    if (novoFiltro === 'Útil') {
+      setPreviousSelectedDate(selectedDate);
+      setSelectedDate(undefined);
+    } else {
+      setSelectedDate(previousSelectedDate);
+    }
+    setSelectedDateEstrategicas(undefined);
+    setSelectedDateLixeira(undefined);
+    setSelectedDateSuporte(undefined);
+    setSelectedDateUtil(undefined);
+  };
+
   const toggleFiltroLixo = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevenir comportamento padrão
+    e.preventDefault();
     const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
@@ -594,15 +616,16 @@ const Spreadsheet: React.FC = () => {
       setPreviousSelectedDate(selectedDate);
       setSelectedDate(undefined);
     } else {
-      setSelectedDate(previousSelectedDate || new Date());
+      setSelectedDate(previousSelectedDate);
     }
     setSelectedDateEstrategicas(undefined);
     setSelectedDateLixeira(undefined);
     setSelectedDateSuporte(undefined);
+    setSelectedDateUtil(undefined);
   };
 
   const toggleFiltroEstrategica = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevenir comportamento padrão
+    e.preventDefault();
     const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
@@ -610,15 +633,16 @@ const Spreadsheet: React.FC = () => {
       setPreviousSelectedDate(selectedDate);
       setSelectedDate(undefined);
     } else {
-      setSelectedDate(previousSelectedDate || new Date());
+      setSelectedDate(previousSelectedDate);
     }
     setSelectedDateEstrategicas(undefined);
     setSelectedDateLixeira(undefined);
     setSelectedDateSuporte(undefined);
+    setSelectedDateUtil(undefined);
   };
 
   const toggleFiltroSuporte = (e: React.MouseEvent) => {
-    e.preventDefault(); // Prevenir comportamento padrão
+    e.preventDefault();
     const novoFiltro = filtroAtivo === 'Suporte' ? 'Nenhum' : 'Suporte';
     setFiltroAtivo(novoFiltro);
     setCurrentDate(null);
@@ -626,11 +650,12 @@ const Spreadsheet: React.FC = () => {
       setPreviousSelectedDate(selectedDate);
       setSelectedDate(undefined);
     } else {
-      setSelectedDate(previousSelectedDate || new Date());
+      setSelectedDate(previousSelectedDate);
     }
     setSelectedDateEstrategicas(undefined);
     setSelectedDateLixeira(undefined);
     setSelectedDateSuporte(undefined);
+    setSelectedDateUtil(undefined);
   };
 
   const updateTema = (id: string, novoTema: string) => {
@@ -709,6 +734,24 @@ const Spreadsheet: React.FC = () => {
   }, []);
 
   useEffect(() => {
+    const fetchUtilDates = async () => {
+      try {
+        const response = await fetch(`${API_BASE_URL}/noticias/util-dates`);
+        if (!response.ok) throw new Error('Erro ao buscar datas de notícias úteis');
+        const dates: string[] = await response.json();
+        const parsedDates = dates
+          .map((dateStr) => parse(dateStr, 'dd/MM/yyyy', new Date()))
+          .filter((date) => !isNaN(date.getTime()));
+        setUtilDates(parsedDates);
+      } catch (error: any) {
+        console.error('Erro ao buscar datas de notícias úteis:', error.message);
+        setUtilDates([]);
+      }
+    };
+    fetchUtilDates();
+  }, []);
+
+  useEffect(() => {
     const fetchNoticias = async () => {
       setIsLoading(true);
       setError(null);
@@ -720,6 +763,13 @@ const Spreadsheet: React.FC = () => {
           url += `?estrategica=true&date=${dateFormatted}`;
         } else {
           url += `?estrategica=true&all=true`;
+        }
+      } else if (filtroAtivo === 'Útil') {
+        if (selectedDateUtil) {
+          const dateFormatted = format(selectedDateUtil, 'yyyy-MM-dd');
+          url += `?relevancia=Útil&date=${dateFormatted}`;
+        } else {
+          url += `?relevancia=Útil&all=true`;
         }
       } else if (filtroAtivo === 'Lixo') {
         if (selectedDateLixeira) {
@@ -736,10 +786,12 @@ const Spreadsheet: React.FC = () => {
           url += `?relevancia=Suporte&all=true`;
         }
       } else {
+        const queryParams = ['relevancia=null'];
         if (selectedDate) {
           const dateFormatted = format(selectedDate, 'yyyy-MM-dd');
-          url += `?date=${dateFormatted}`;
+          queryParams.push(`date=${dateFormatted}`);
         }
+        url += `?${queryParams.join('&')}`;
       }
 
       console.log('Buscando notícias com URL:', url);
@@ -795,7 +847,7 @@ const Spreadsheet: React.FC = () => {
     };
 
     fetchNoticias();
-  }, [selectedDate, selectedDateEstrategicas, selectedDateLixeira, selectedDateSuporte, filtroAtivo, toast]);
+  }, [selectedDate, selectedDateEstrategicas, selectedDateLixeira, selectedDateSuporte, selectedDateUtil, filtroAtivo, toast]);
 
   const handleDateChange = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -817,123 +869,220 @@ const Spreadsheet: React.FC = () => {
     setCurrentDate(null);
   };
 
-  const handleNext = () => {
+  const handleDateChangeUtil = (date: Date | undefined) => {
+    setSelectedDateUtil(date);
+    setCurrentDate(null);
+  };
+
+  const handleNext = async () => {
     if (hasNext && currentDate) {
-      const [day, month, year] = currentDate.split('/');
-      const dateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      setIsLoading(true);
       setCurrentDate(null);
-      let url = `${API_BASE_URL}/noticias?before=${dateFormatted}`;
-      if (filtroAtivo === 'Estrategica') {
-        url += '&estrategica=true';
-        if (selectedDateEstrategicas) {
-          const selectedDateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
+      let url = `${API_BASE_URL}/noticias`;
+      let nextDate: Date | undefined;
+
+      if (filtroAtivo === 'Nenhum') {
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        nextDate = subDays(current, 1); // Próxima data (anterior no tempo)
+        const queryParams = ['relevancia=null'];
+        if (nextDate) {
+          const dateFormatted = format(nextDate, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
         }
+        url += `?${queryParams.join('&')}`;
+      } else if (filtroAtivo === 'Estrategica') {
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        nextDate = subDays(current, 1);
+        const queryParams = ['estrategica=true'];
+        if (selectedDateEstrategicas || nextDate) {
+          const dateToUse = selectedDateEstrategicas || nextDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
+        }
+        url += `?${queryParams.join('&')}`;
+      } else if (filtroAtivo === 'Útil') {
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        nextDate = subDays(current, 1);
+        const queryParams = ['relevancia=Útil'];
+        if (selectedDateUtil || nextDate) {
+          const dateToUse = selectedDateUtil || nextDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
+        }
+        url += `?${queryParams.join('&')}`;
       } else if (filtroAtivo === 'Lixo') {
-        url += '&relevancia=Lixo';
-        if (selectedDateLixeira) {
-          const selectedDateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        nextDate = subDays(current, 1);
+        const queryParams = ['relevancia=Lixo'];
+        if (selectedDateLixeira || nextDate) {
+          const dateToUse = selectedDateLixeira || nextDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
         }
+        url += `?${queryParams.join('&')}`;
       } else if (filtroAtivo === 'Suporte') {
-        url += '&relevancia=Suporte';
-        if (selectedDateSuporte) {
-          const selectedDateFormatted = format(selectedDateSuporte, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        nextDate = subDays(current, 1);
+        const queryParams = ['relevancia=Suporte'];
+        if (selectedDateSuporte || nextDate) {
+          const dateToUse = selectedDateSuporte || nextDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
         }
-      } else {
-        if (selectedDate) {
-          const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
-        }
+        url += `?${queryParams.join('&')}`;
       }
-      fetch(url)
-        .then(response => {
-          if (!response.ok) throw new Error('Falha ao buscar próxima data');
-          return response.json();
-        })
-        .then(({ data, meta }) => {
-          const dataWithIds = data.map((item: any, index: number) => ({
-            ...item,
-            id: item.id || `noticia-${index}`,
-            pontos: item.pontos || 0,
-            ciclo: item.ciclo || null,
-            categoria: item.categoria || null,
-            subcategoria: item.subcategoria || null,
-          }));
-          setNoticias(dataWithIds);
-          setTotalItems(meta?.total || data.length);
-          setCurrentDate(meta?.date || null);
-          setHasNext(meta?.hasNext || false);
-          setHasPrevious(meta?.hasPrevious || false);
-        })
-        .catch(error => {
-          toast({
-            title: 'Erro ao buscar próxima data',
-            description: error.message,
-            variant: 'destructive',
-          });
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Falha ao buscar próxima data');
+        const { data, meta } = await response.json();
+        const dataWithIds = data.map((item: any, index: number) => ({
+          ...item,
+          id: item.id || `noticia-${index}`,
+          pontos: item.pontos || 0,
+          ciclo: item.ciclo || null,
+          categoria: item.categoria || null,
+          subcategoria: item.subcategoria || null,
+        }));
+        setNoticias(dataWithIds);
+        setTotalItems(meta?.total || data.length);
+        setCurrentDate(meta?.date || null);
+        setHasNext(meta?.hasNext || false);
+        setHasPrevious(meta?.hasPrevious || false);
+        if (filtroAtivo === 'Nenhum' && nextDate) {
+          setSelectedDate(nextDate);
+        } else if (filtroAtivo === 'Estrategica' && nextDate && !selectedDateEstrategicas) {
+          setSelectedDateEstrategicas(nextDate);
+        } else if (filtroAtivo === 'Útil' && nextDate && !selectedDateUtil) {
+          setSelectedDateUtil(nextDate);
+        } else if (filtroAtivo === 'Lixo' && nextDate && !selectedDateLixeira) {
+          setSelectedDateLixeira(nextDate);
+        } else if (filtroAtivo === 'Suporte' && nextDate && !selectedDateSuporte) {
+          setSelectedDateSuporte(nextDate);
+        }
+      } catch (error: any) {
+        toast({
+          title: 'Erro ao buscar próxima data',
+          description: error.message,
+          variant: 'destructive',
         });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
-  const handlePrevious = () => {
+  const handlePrevious = async () => {
     if (hasPrevious && currentDate) {
-      const [day, month, year] = currentDate.split('/');
-      const dateFormatted = `${year}-${month.padStart(2, '0')}-${day.padStart(2, '0')}`;
+      setIsLoading(true);
       setCurrentDate(null);
-      let url = `${API_BASE_URL}/noticias?after=${dateFormatted}`;
-      if (filtroAtivo === 'Estrategica') {
-        url += '&estrategica=true';
-        if (selectedDateEstrategicas) {
-          const selectedDateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
+      let url = `${API_BASE_URL}/noticias`;
+      let previousDate: Date | undefined;
+
+      if (filtroAtivo === 'Nenhum') {
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        previousDate = addDays(current, 1); // Data anterior (posterior no tempo)
+        const queryParams = ['relevancia=null'];
+        if (previousDate) {
+          const dateFormatted = format(previousDate, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
         }
+        url += `?${queryParams.join('&')}`;
+      } else if (filtroAtivo === 'Estrategica') {
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        previousDate = addDays(current, 1);
+        const queryParams = ['estrategica=true'];
+        if (selectedDateEstrategicas || previousDate) {
+          const dateToUse = selectedDateEstrategicas || previousDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
+        }
+        url += `?${queryParams.join('&')}`;
+      } else if (filtroAtivo === 'Útil') {
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        previousDate = addDays(current, 1);
+        const queryParams = ['relevancia=Útil'];
+        if (selectedDateUtil || previousDate) {
+          const dateToUse = selectedDateUtil || previousDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
+        }
+        url += `?${queryParams.join('&')}`;
       } else if (filtroAtivo === 'Lixo') {
-        url += '&relevancia=Lixo';
-        if (selectedDateLixeira) {
-          const selectedDateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        previousDate = addDays(current, 1);
+        const queryParams = ['relevancia=Lixo'];
+        if (selectedDateLixeira || previousDate) {
+          const dateToUse = selectedDateLixeira || previousDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
         }
+        url += `?${queryParams.join('&')}`;
       } else if (filtroAtivo === 'Suporte') {
-        url += '&relevancia=Suporte';
-        if (selectedDateSuporte) {
-          const selectedDateFormatted = format(selectedDateSuporte, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
+        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+        previousDate = addDays(current, 1);
+        const queryParams = ['relevancia=Suporte'];
+        if (selectedDateSuporte || previousDate) {
+          const dateToUse = selectedDateSuporte || previousDate;
+          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+          queryParams.push(`date=${dateFormatted}`);
+        } else {
+          queryParams.push('all=true');
         }
-      } else {
-        if (selectedDate) {
-          const selectedDateFormatted = format(selectedDate, 'yyyy-MM-dd');
-          url += `&date=${selectedDateFormatted}`;
-        }
+        url += `?${queryParams.join('&')}`;
       }
-      fetch(url)
-        .then(response => {
-          if (!response.ok) throw new Error('Falha ao buscar data anterior');
-          return response.json();
-        })
-        .then(({ data, meta }) => {
-          const dataWithIds = data.map((item: any, index: number) => ({
-            ...item,
-            id: item.id || `noticia-${index}`,
-            pontos: item.pontos || 0,
-            ciclo: item.ciclo || null,
-            categoria: item.categoria || null,
-            subcategoria: item.subcategoria || null,
-          }));
-          setNoticias(dataWithIds);
-          setTotalItems(meta?.total || data.length);
-          setCurrentDate(meta?.date || null);
-          setHasNext(meta?.hasNext || false);
-          setHasPrevious(meta?.hasPrevious || false);
-        })
-        .catch(error => {
-          toast({
-            title: 'Erro ao buscar data anterior',
-            description: error.message,
-            variant: 'destructive',
-          });
+
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Falha ao buscar data anterior');
+        const { data, meta } = await response.json();
+        const dataWithIds = data.map((item: any, index: number) => ({
+          ...item,
+          id: item.id || `noticia-${index}`,
+          pontos: item.pontos || 0,
+          ciclo: item.ciclo || null,
+          categoria: item.categoria || null,
+          subcategoria: item.subcategoria || null,
+        }));
+        setNoticias(dataWithIds);
+        setTotalItems(meta?.total || data.length);
+        setCurrentDate(meta?.date || null);
+        setHasNext(meta?.hasNext || false);
+        setHasPrevious(meta?.hasPrevious || false);
+        if (filtroAtivo === 'Nenhum' && previousDate) {
+          setSelectedDate(previousDate);
+        } else if (filtroAtivo === 'Estrategica' && previousDate && !selectedDateEstrategicas) {
+          setSelectedDateEstrategicas(previousDate);
+        } else if (filtroAtivo === 'Útil' && previousDate && !selectedDateUtil) {
+          setSelectedDateUtil(previousDate);
+        } else if (filtroAtivo === 'Lixo' && previousDate && !selectedDateLixeira) {
+          setSelectedDateLixeira(previousDate);
+        } else if (filtroAtivo === 'Suporte' && previousDate && !selectedDateSuporte) {
+          setSelectedDateSuporte(previousDate);
+        }
+      } catch (error: any) {
+        toast({
+          title: 'Erro ao buscar data anterior',
+          description: error.message,
+          variant: 'destructive',
         });
+      } finally {
+        setIsLoading(false);
+      }
     }
   };
 
@@ -971,7 +1120,7 @@ const Spreadsheet: React.FC = () => {
                 >
                   <CircleArrowLeft className="h-6 w-6" />
                 </span>
-              ) : filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
+              ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
                 <span
                   onClick={toggleFiltroEstrategica}
                   className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
@@ -986,7 +1135,7 @@ const Spreadsheet: React.FC = () => {
                 >
                   <CircleArrowLeft className="h-6 w-6" />
                 </span>
-              ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' ? (
+              ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' ? (
                 <span
                   onClick={toggleFiltroLixo}
                   className="cursor-pointer text-[#f5a340] hover:text-[#f5b86e]"
@@ -1001,7 +1150,7 @@ const Spreadsheet: React.FC = () => {
                 >
                   <CircleArrowLeft className="h-6 w-6" />
                 </span>
-              ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' ? (
+              ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' ? (
                 <span
                   onClick={toggleFiltroSuporte}
                   className="cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]"
@@ -1009,8 +1158,20 @@ const Spreadsheet: React.FC = () => {
                   <Lightbulb className="h-6 w-6" />
                 </span>
               ) : null}
+              {filtroAtivo === 'Útil' ? (
+                <span
+                  onClick={toggleFiltroUtil}
+                  className="cursor-pointer text-[#ff69ff] hover:text-[#ff99ff]"
+                >
+                  <CircleArrowLeft className="h-6 w-6" />
+                </span>
+              ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
+                <Util filtroAtivo={filtroAtivo} toggleFiltroUtil={toggleFiltroUtil} />
+              ) : null}
               {filtroAtivo === 'Estrategica' ? (
                 <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
+              ) : filtroAtivo === 'Útil' ? (
+                <DatePickerUtil onChange={handleDateChangeUtil} utilDates={utilDates} />
               ) : filtroAtivo === 'Lixo' ? (
                 <DatePickerLixeira onChange={handleDateChangeLixeira} trashDates={trashDates} />
               ) : filtroAtivo === 'Suporte' ? (
