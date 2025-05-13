@@ -15,6 +15,7 @@ import Suporte from '@/components/planilha/Suporte';
 import { format, parse, addDays, subDays } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 import BotaoAjuda from '@/components/planilha/BotaoAjuda';
+import { EsvaziarLixeiraButton } from '@/components/planilha/Estrategicas';
 
 // Centralizar a URL base
 const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
@@ -1105,116 +1106,122 @@ const Spreadsheet: React.FC = () => {
         `}
       </style>
       <div className="min-h-screen bg-dark-bg text-white">
-        <Navbar />
-        <main className="p-6 md:p-8">
-          <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
-              <p className="text-[#9ca3af]">Gerenciamento e análise de notícias</p>
-            </div>
-            <div className="flex items-center gap-3 mt-4 md:mt-0">
-              {filtroAtivo === 'Estrategica' ? (
-                <span
-                  onClick={toggleFiltroEstrategica}
-                  className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
-                >
-                  <CircleArrowLeft className="h-6 w-6" />
-                </span>
-              ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
-                <span
-                  onClick={toggleFiltroEstrategica}
-                  className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
-                >
-                  <Sparkles className="h-6 w-6" />
-                </span>
-              ) : null}
-              {filtroAtivo === 'Lixo' ? (
-                <span
-                  onClick={toggleFiltroLixo}
-                  className="cursor-pointer text-[#f5a340] hover:text-[#f5b86e]"
-                >
-                  <CircleArrowLeft className="h-6 w-6" />
-                </span>
-              ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' ? (
-                <span
-                  onClick={toggleFiltroLixo}
-                  className="cursor-pointer text-[#f5a340] hover:text-[#f5b86e]"
-                >
-                  <Trash2 className="h-6 w-6" />
-                </span>
-              ) : null}
-              {filtroAtivo === 'Suporte' ? (
-                <span
-                  onClick={toggleFiltroSuporte}
-                  className="cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]"
-                >
-                  <CircleArrowLeft className="h-6 w-6" />
-                </span>
-              ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' ? (
-                <span
-                  onClick={toggleFiltroSuporte}
-                  className="cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]"
-                >
-                  <Lightbulb className="h-6 w-6" />
-                </span>
-              ) : null}
-              {filtroAtivo === 'Útil' ? (
-                <span
-                  onClick={toggleFiltroUtil}
-                  className="cursor-pointer text-[#ff69ff] hover:text-[#ff99ff]"
-                >
-                  <CircleArrowLeft className="h-6 w-6" />
-                </span>
-              ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
-                <Util filtroAtivo={filtroAtivo} toggleFiltroUtil={toggleFiltroUtil} />
-              ) : null}
-              {filtroAtivo === 'Estrategica' ? (
-                <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
-              ) : filtroAtivo === 'Útil' ? (
-                <DatePickerUtil onChange={handleDateChangeUtil} utilDates={utilDates} />
-              ) : filtroAtivo === 'Lixo' ? (
-                <DatePickerLixeira onChange={handleDateChangeLixeira} trashDates={trashDates} />
-              ) : filtroAtivo === 'Suporte' ? (
-                <DatePickerSuporte onChange={handleDateChangeSuporte} suporteDates={suporteDates} />
-              ) : (
-                <DatePicker onChange={handleDateChange} />
-              )}
-              <BotaoAjuda />
-            </div>
-          </div>
-          <div className="dashboard-card">
-            {isLoading || estrategicas.isLoading ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-[#9ca3af]">Carregando dados...</p>
-              </div>
-            ) : error ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-[#f87171]">Erro ao carregar dados: {error}</p>
-              </div>
-            ) : noticias.length === 0 ? (
-              <div className="flex items-center justify-center h-[300px]">
-                <p className="text-[#9ca3af]">Nenhuma notícia encontrada</p>
-              </div>
-            ) : (
-              <DataTable
-                data={noticias}
-                columns={columns}
-                updateTema={updateTema}
-                updateAvaliacao={updateAvaliacao}
-                currentDate={currentDate}
-                hasNext={hasNext}
-                hasPrevious={hasPrevious}
-                totalItems={totalItems}
-                onNext={handleNext}
-                onPrevious={handlePrevious}
-                isLoading={isLoading}
-                onRowRemove={handleRowRemove}
-                filterMode={filtroAtivo}
-              />
-            )}
-          </div>
-        </main>
+  <Navbar />
+  <main className="p-6 md:p-8">
+    <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+      <div>
+        <h1 className="text-2xl md:text-3xl font-bold">Planilha de Matérias</h1>
+        <p className="text-[#9ca3af]">Gerenciamento e análise de notícias</p>
       </div>
+      <div className="flex items-center gap-3 mt-4 md:mt-0">
+        {filtroAtivo === 'Estrategica' ? (
+          <span
+            onClick={toggleFiltroEstrategica}
+            className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
+          >
+            <CircleArrowLeft className="h-6 w-6" />
+          </span>
+        ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
+          <span
+            onClick={toggleFiltroEstrategica}
+            className="cursor-pointer text-[#fde047] hover:text-[#fef08a]"
+          >
+            <Sparkles className="h-6 w-6" />
+          </span>
+        ) : null}
+        {filtroAtivo === 'Lixo' ? (
+          <>
+            <span
+              onClick={toggleFiltroLixo}
+              className="cursor-pointer text-[#f5a340] hover:text-[#f5b86e]"
+            >
+              <CircleArrowLeft className="h-6 w-6" />
+            </span>
+            <EsvaziarLixeiraButton
+              onClick={() => console.log('Esvaziar Lixeira clicado')}
+              disabled={noticias.length === 0}
+            />
+          </>
+        ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Suporte' ? (
+          <span
+            onClick={toggleFiltroLixo}
+            className="cursor-pointer text-[#f5a340] hover:text-[#f5b86e]"
+          >
+            <Trash2 className="h-6 w-6" />
+          </span>
+        ) : null}
+        {filtroAtivo === 'Suporte' ? (
+          <span
+            onClick={toggleFiltroSuporte}
+            className="cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]"
+          >
+            <CircleArrowLeft className="h-6 w-6" />
+          </span>
+        ) : filtroAtivo !== 'Útil' && filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' ? (
+          <span
+            onClick={toggleFiltroSuporte}
+            className="cursor-pointer text-[#72c5fd] hover:text-[#bde4fe]"
+          >
+            <Lightbulb className="h-6 w-6" />
+          </span>
+        ) : null}
+        {filtroAtivo === 'Útil' ? (
+          <span
+            onClick={toggleFiltroUtil}
+            className="cursor-pointer text-[#ff69ff] hover:text-[#ff99ff]"
+          >
+            <CircleArrowLeft className="h-6 w-6" />
+          </span>
+        ) : filtroAtivo !== 'Estrategica' && filtroAtivo !== 'Lixo' && filtroAtivo !== 'Suporte' ? (
+          <Util filtroAtivo={filtroAtivo} toggleFiltroUtil={toggleFiltroUtil} />
+        ) : null}
+        {filtroAtivo === 'Estrategica' ? (
+          <DatePickerEstrategicas onChange={handleDateChangeEstrategicas} strategicDates={strategicDates} />
+        ) : filtroAtivo === 'Útil' ? (
+          <DatePickerUtil onChange={handleDateChangeUtil} utilDates={utilDates} />
+        ) : filtroAtivo === 'Lixo' ? (
+          <DatePickerLixeira onChange={handleDateChangeLixeira} trashDates={trashDates} />
+        ) : filtroAtivo === 'Suporte' ? (
+          <DatePickerSuporte onChange={handleDateChangeSuporte} suporteDates={suporteDates} />
+        ) : (
+          <DatePicker onChange={handleDateChange} />
+        )}
+        <BotaoAjuda />
+      </div>
+    </div>
+    <div className="dashboard-card">
+      {isLoading || estrategicas.isLoading ? (
+        <div className="flex items-center justify-center h-[300px]">
+          <p className="text-[#9ca3af]">Carregando dados...</p>
+        </div>
+      ) : error ? (
+        <div className="flex items-center justify-center h-[300px]">
+          <p className="text-[#f87171]">Erro ao carregar dados: {error}</p>
+        </div>
+      ) : noticias.length === 0 ? (
+        <div className="flex items-center justify-center h-[300px]">
+          <p className="text-[#9ca3af]">Nenhuma notícia encontrada</p>
+        </div>
+      ) : (
+        <DataTable
+          data={noticias}
+          columns={columns}
+          updateTema={updateTema}
+          updateAvaliacao={updateAvaliacao}
+          currentDate={currentDate}
+          hasNext={hasNext}
+          hasPrevious={hasPrevious}
+          totalItems={totalItems}
+          onNext={handleNext}
+          onPrevious={handlePrevious}
+          isLoading={isLoading}
+          onRowRemove={handleRowRemove}
+          filterMode={filtroAtivo}
+        />
+      )}
+    </div>
+  </main>
+</div>
     </>
   );
 };

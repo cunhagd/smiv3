@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Noticia, ColumnDef } from '@/types/noticia';
-import { ChevronDown, Sparkles } from 'lucide-react';
+import { ChevronDown, Sparkles, Paintbrush } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TituloCell } from '@/pages/Spreadsheet';
 
@@ -26,6 +26,22 @@ interface SemanaEstrategica {
   categoria: string;
   subcategoria: string;
 }
+
+// Componente do botão "Esvaziar Lixeira"
+export const EsvaziarLixeiraButton: React.FC<{ onClick: () => void; disabled?: boolean }> = ({ onClick, disabled }) => {
+  return (
+    <button
+      onClick={onClick}
+      disabled={disabled}
+      className={`flex items-center gap-2 px-4 py-2 bg-dark-card border border-white/10 rounded text-sm text-white hover:bg-[#f5a340]/20 hover:border-[#f5a340]/50 transition-all duration-300 ${
+        disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
+      }`}
+    >
+      <Paintbrush className="h-5 w-5 text-[#f5a340] hover:text-[#f5b86e] transition-colors" />
+      <span>Esvaziar Lixeira</span>
+    </button>
+  );
+};
 
 function CicloCell({ 
   row, 
