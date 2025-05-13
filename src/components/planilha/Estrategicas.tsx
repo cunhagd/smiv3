@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Noticia, ColumnDef } from '@/types/noticia';
-import { ChevronDown, Sparkles, Paintbrush } from 'lucide-react';
+import { ChevronDown, Sparkles, Paintbrush, CircleCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { TituloCell } from '@/pages/Spreadsheet';
 
@@ -27,7 +27,6 @@ interface SemanaEstrategica {
   subcategoria: string;
 }
 
-// Componente do botão "Esvaziar Lixeira"
 export const EsvaziarLixeiraButton: React.FC<{ onClick: () => void; disabled?: boolean }> = ({ onClick, disabled }) => {
   return (
     <button
@@ -40,6 +39,108 @@ export const EsvaziarLixeiraButton: React.FC<{ onClick: () => void; disabled?: b
       <Paintbrush className="h-5 w-5 text-[#f5a340] hover:text-[#f5b86e] transition-colors" />
       <span>Esvaziar Lixeira</span>
     </button>
+  );
+};
+
+// Componente do Modal de Confirmação
+export const ConfirmationModal: React.FC<{
+  isOpen: boolean;
+  onClose: () => void;
+  onConfirm: () => void;
+  noticias: Noticia[];
+  setNoticias: React.Dispatch<React.SetStateAction<Noticia[]>>;
+}> = ({ isOpen, onClose, onConfirm, noticias, setNoticias }) => {
+  const [confirmationText, setConfirmationText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const isConfirmDisabled = confirmationText.toLowerCase() !== 'esvaziar lixeira' || isLoading;
+  const { toast } = useToast();
+
+  if (!isOpen) return null;
+
+  const handleConfirm = async () => {
+    setIsLoading(true);
+    try {
+      const response = await fetch(`${API_BASE_URL}/noticias/move-to-trash`, {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+      });
+
+      if (!response.ok) throw new Error('Falha ao esvaziar a lixeira');
+
+      const deletedCount = noticias.length; // Considerando que todas as notícias visíveis na lixeira serão excluídas
+      setNoticias([]); // Limpa as notícias da lixeira no frontend
+
+      onConfirm(); // Chama a função de confirmação passada como prop
+      onClose(); // Fecha o modal
+
+      // Exibe o pop-up de sucesso
+      toast({
+        title: "Lixeira Esvaziada", // Simplified to a string to match the expected type
+        description: (
+          <div className="flex items-center gap-2">
+            <CircleCheck className="h-5 w-5 text-green-500" />
+            <span>{`${deletedCount} notícia${deletedCount !== 1 ? 's' : ''} excluída${deletedCount !== 1 ? 's' : ''} com sucesso.`}</span>
+          </div>
+        ),
+        variant: 'default',
+        duration: 5000,
+        className: 'bg-green-600/80 border-green-500 text-white',
+      });
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao esvaziar a lixeira',
+        description: 'Não foi possível esvaziar a lixeira. Tente novamente.',
+        variant: 'destructive',
+        duration: 5000,
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
+      <div className="bg-dark-bg border border-white/10 rounded-lg p-6 w-full max-w-md">
+        <h2 className="text-xl font-bold text-white mb-4">ATENÇÃO</h2>
+        <p className="text-[#9ca3af] mb-4">
+          Você está prestes a <strong>excluir permanentemente</strong> todas as notícias do sistema marcadas como 'Lixo'. Essa ação não pode ser desfeita!
+        </p>
+        <div className="mb-6">
+          <label htmlFor="confirmationText" className="block text-sm text-white mb-2">
+            Digite "esvaziar lixeira" para confirmar:
+          </label>
+          <input
+            id="confirmationText"
+            type="text"
+            value={confirmationText}
+            onChange={(e) => setConfirmationText(e.target.value)}
+            className="w-full p-2 bg-dark-card border border-white/10 rounded text-sm text-white focus:border-blue-400/50 focus:ring-1 focus:ring-blue-400/30 outline-none transition-all"
+            placeholder="esvaziar lixeira"
+            disabled={isLoading}
+          />
+        </div>
+        <div className="flex justify-end gap-3">
+          <button
+            onClick={onClose}
+            className="px-4 py-2 bg-dark-card border border-white/10 rounded text-sm text-white hover:bg-white/10 transition-all"
+            disabled={isLoading}
+          >
+            Cancelar
+          </button>
+          <button
+            onClick={handleConfirm}
+            disabled={isConfirmDisabled}
+            className={`px-4 py-2 rounded text-sm text-white transition-all ${
+              isConfirmDisabled
+                ? 'bg-[#f5a340]/10 border border-[#f5a340]/30 opacity-50 cursor-not-allowed'
+                : 'bg-[#f5a340]/20 border border-[#f5a340]/50 hover:bg-[#f5a340]/30 hover:border-[#f5a340]/70'
+            }`}
+          >
+            {isLoading ? 'Excluindo...' : 'Confirmar'}
+          </button>
+        </div>
+      </div>
+    </div>
   );
 };
 
@@ -342,7 +443,7 @@ function EstrategicaCell({
         onRowRemove(id.toString(), () => {
           setNoticias((prevNoticias) =>
             prevNoticias.filter((noticia) => noticia.id !== id)
-          );
+        );
         });
       }
     } catch (error: any) {
