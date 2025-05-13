@@ -510,7 +510,7 @@ function Estrategicas({ noticias, setNoticias, onRowRemove, filterMode }: Estrat
     },
     {
       id: 'categoria',
-      header: 'Categoria',
+      header: 'Área Principal',
       accessorKey: 'categoria',
       sortable: true,
       cell: ({ row }) => (
@@ -524,7 +524,7 @@ function Estrategicas({ noticias, setNoticias, onRowRemove, filterMode }: Estrat
     },
     {
       id: 'subcategoria',
-      header: 'Subcategoria',
+      header: 'Área Complementar',
       accessorKey: 'subcategoria',
       sortable: true,
       cell: ({ row }) => (
