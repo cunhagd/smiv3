@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { format, parse, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowRight } from 'lucide-react';
 import LineChart from '@/components/charts/LineChart';
 
 interface GraficoCategoriaProps {
@@ -72,10 +71,7 @@ const GraficoCategoria: React.FC<GraficoCategoriaProps> = ({ dateRange }) => {
   return (
     <div className="dashboard-card">
       <div className="dashboard-card-header">
-        <h3 className="text-lg font-medium">Notícias por Categoria</h3>
-        <button className="p-1 hover:bg-white/5 rounded-full">
-          <ArrowRight className="h-4 w-4 text-[#fde047] hover:text-[#fef08a] transition-colors" />
-        </button>
+        <h3 className="text-lg font-medium">Notícias por Área Principal</h3>
       </div>
       {isLoadingCategoria ? (
         <div className="flex items-center justify-center h-[300px]">

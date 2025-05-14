@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, subDays, startOfMonth, isSameDay } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronDown } from 'lucide-react';
@@ -17,10 +17,10 @@ const DatePickerSemana = ({ onChange, strategicDates }: DatePickerSemanaProps) =
     from: Date | undefined;
     to: Date | undefined;
   }>({
-    from: undefined,
-    to: undefined,
+    from: startOfMonth(new Date()),
+    to: new Date(),
   });
-  const [selectedOption, setSelectedOption] = useState<string>('personalizado');
+  const [selectedOption, setSelectedOption] = useState<string>('esteMes');
 
   const predefinedRanges = {
     hoje: {
@@ -47,6 +47,17 @@ const DatePickerSemana = ({ onChange, strategicDates }: DatePickerSemanaProps) =
       range: dateRange,
     },
   };
+
+  // Set default range to "Este mês" on mount
+  useEffect(() => {
+    const defaultRange = predefinedRanges.esteMes.range;
+    const normalizedRange = {
+      from: defaultRange.from ? new Date(defaultRange.from.setHours(0, 0, 0, 0)) : undefined,
+      to: defaultRange.to ? new Date(defaultRange.to.setHours(0, 0, 0, 0)) : undefined,
+    };
+    setDateRange(normalizedRange);
+    onChange(normalizedRange);
+  }, []);
 
   const handleOptionSelect = (option: string) => {
     setSelectedOption(option);
@@ -88,16 +99,20 @@ const DatePickerSemana = ({ onChange, strategicDates }: DatePickerSemanaProps) =
   };
 
   const clearFilter = () => {
-    const newRange = { from: undefined, to: undefined };
-    setDateRange(newRange);
-    setSelectedOption('personalizado');
-    onChange(newRange);
+    const newRange = predefinedRanges.esteMes.range;
+    const normalizedRange = {
+      from: newRange.from ? new Date(newRange.from.setHours(0, 0, 0, 0)) : undefined,
+      to: newRange.to ? new Date(newRange.to.setHours(0, 0, 0, 0)) : undefined,
+    };
+    setDateRange(normalizedRange);
+    setSelectedOption('esteMes');
+    onChange(normalizedRange);
     setIsOpen(false);
   };
 
   const formatSelectedRange = () => {
     if (!dateRange.from || !dateRange.to) {
-      return 'Selecione um período (Estratégicas)';
+      return predefinedRanges.esteMes.label; // Default to "Este mês" label
     }
     if (selectedOption && selectedOption !== 'personalizado') {
       return predefinedRanges[selectedOption].label;

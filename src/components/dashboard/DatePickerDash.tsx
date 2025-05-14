@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format, subDays, startOfMonth } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { Calendar, ChevronDown } from 'lucide-react';
@@ -16,15 +16,15 @@ const DatePickerDash = ({ onChange }: DatePickerDashProps) => {
     from: Date | undefined;
     to: Date | undefined;
   }>({
-    from: subDays(new Date(), 29),
+    from: startOfMonth(new Date()),
     to: new Date(),
   });
-  const [selectedOption, setSelectedOption] = useState<string>('ultimos30dias');
+  const [selectedOption, setSelectedOption] = useState<string>('esteMes');
 
   const predefinedRanges = {
     hoje: {
       label: 'Hoje',
-      get range() { // Usando um getter para sempre retornar a data atual
+      get range() {
         const today = new Date();
         return { from: today, to: today };
       },
@@ -47,17 +47,25 @@ const DatePickerDash = ({ onChange }: DatePickerDashProps) => {
     },
   };
 
+  // Set default range to "Este mês" on mount
+  useEffect(() => {
+    const defaultRange = predefinedRanges.esteMes.range;
+    const normalizedRange = {
+      from: defaultRange.from ? new Date(defaultRange.from.setHours(0, 0, 0, 0)) : undefined,
+      to: defaultRange.to ? new Date(defaultRange.to.setHours(0, 0, 0, 0)) : undefined,
+    };
+    setDateRange(normalizedRange);
+    onChange(normalizedRange);
+  }, []);
+
   const handleOptionSelect = (option: string) => {
     setSelectedOption(option);
     if (option !== 'personalizado') {
       const newRange = predefinedRanges[option].range;
-      
-      // Normaliza as datas (remove horas, minutos, segundos e milissegundos)
       const normalizedRange = {
         from: newRange.from ? new Date(newRange.from.setHours(0, 0, 0, 0)) : undefined,
-        to: newRange.to ? new Date(newRange.to.setHours(0, 0, 0, 0)) : undefined
+        to: newRange.to ? new Date(newRange.to.setHours(0, 0, 0, 0)) : undefined,
       };
-      
       setDateRange(normalizedRange);
       onChange(normalizedRange);
       setIsOpen(false);
@@ -65,18 +73,18 @@ const DatePickerDash = ({ onChange }: DatePickerDashProps) => {
   };
 
   const handleDateChange = (range: { from: Date | undefined; to: Date | undefined }) => {
-    let adjustedRange = { 
-      from: range.from ? new Date(range.from.setHours(0, 0, 0, 0)) : undefined, 
-      to: range.to ? new Date(range.to.setHours(0, 0, 0, 0)) : undefined 
+    let adjustedRange = {
+      from: range.from ? new Date(range.from.setHours(0, 0, 0, 0)) : undefined,
+      to: range.to ? new Date(range.to.setHours(0, 0, 0, 0)) : undefined,
     };
     if (range.from && range.to && range.from > range.to) {
-      adjustedRange = { from: range.from, to: range.from }; // Garante que 'to' não seja menor que 'from'
+      adjustedRange = { from: range.from, to: range.from };
     }
     if (range.from && !range.to) {
-      adjustedRange = { from: range.from, to: range.from }; // Mesmo dia se 'to' não for selecionado
+      adjustedRange = { from: range.from, to: range.from };
     }
     if (!range.from && range.to) {
-      adjustedRange = { from: range.to, to: range.to }; // Mesmo dia se 'from' não for selecionado
+      adjustedRange = { from: range.to, to: range.to };
     }
     if (adjustedRange.from && adjustedRange.to && adjustedRange.from > adjustedRange.to) {
       adjustedRange = { from: adjustedRange.from, to: adjustedRange.from };
@@ -90,15 +98,20 @@ const DatePickerDash = ({ onChange }: DatePickerDashProps) => {
   };
 
   const clearFilter = () => {
-    const newRange = { from: undefined, to: undefined };
-    setDateRange(newRange);
-    setSelectedOption('personalizado');
-    onChange(newRange);
+    const newRange = predefinedRanges.esteMes.range;
+    const normalizedRange = {
+      from: newRange.from ? new Date(newRange.from.setHours(0, 0, 0, 0)) : undefined,
+      to: newRange.to ? new Date(newRange.to.setHours(0, 0, 0, 0)) : undefined,
+    };
+    setDateRange(normalizedRange);
+    setSelectedOption('esteMes');
+    onChange(normalizedRange);
+    setIsOpen(false);
   };
 
   const formatSelectedRange = () => {
     if (!dateRange.from || !dateRange.to) {
-      return 'Selecione um período';
+      return predefinedRanges.esteMes.label;
     }
     if (selectedOption && selectedOption !== 'personalizado') {
       return predefinedRanges[selectedOption].label;

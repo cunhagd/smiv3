@@ -4,7 +4,8 @@ import Navbar from '@/components/Navbar';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { format, parse, isValid, eachDayOfInterval } from "date-fns";
+import { format, parse, isValid, eachDayOfInterval, startOfMonth, isSameDay } from "date-fns";
+import { ptBR } from 'date-fns/locale';
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import AddSemana from '@/components/semana/AddSemana';
@@ -15,7 +16,6 @@ import DatePickerSemana from '@/components/semana/DatePickerSemana';
 
 const CATEGORIAS = [
   'Todas',
-  'Selecionar',
   'Educação',
   'Social',
   'Infraestrutura',
@@ -44,7 +44,6 @@ export interface Noticia {
   estrategica: boolean;
 }
 
-// Definir interfaces para os componentes, usando dateRange
 export interface TotalNoticiasSemanaProps {
   dateRange: { from: Date | undefined; to: Date | undefined };
 }
@@ -307,7 +306,7 @@ export const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaPr
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Categoria</label>
+            <label className="block text-sm font-medium mb-1">Área Principal</label>
             <div className="relative">
               <select
                 value={categoria}
@@ -328,7 +327,7 @@ export const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaPr
           </div>
 
           <div className="md:col-span-2">
-            <label className="block text-sm font-medium mb-1">Subcategoria</label>
+            <label className="block text-sm font-medium mb-1">Área Complementar</label>
             <input
               type="text"
               value={subCategoria}
@@ -374,8 +373,8 @@ const SemanaEstrategica = () => {
   const [error, setError] = useState<string | null>(null);
   const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
   const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
-    from: undefined,
-    to: undefined,
+    from: startOfMonth(new Date()),
+    to: new Date(),
   });
   const { toast } = useToast();
 
@@ -396,6 +395,22 @@ const SemanaEstrategica = () => {
     });
     return dates;
   }, [semanas]);
+
+  // Definir modifiers para destacar datas estratégicas
+  const isStrategicDate = (day: Date) => {
+    return strategicDates.some((strategicDate) => isSameDay(day, strategicDate));
+  };
+
+  const modifiers = {
+    nonStrategic: (day: Date) =>
+      !isStrategicDate(day) &&
+      !isSameDay(day, editedData.data_inicial || new Date(0)) &&
+      !isSameDay(day, editedData.data_final || new Date(0)),
+  };
+
+  const modifiersClassNames = {
+    nonStrategic: 'opacity-30',
+  };
 
   // Fetch semanas
   useEffect(() => {
@@ -715,7 +730,7 @@ const SemanaEstrategica = () => {
         <div className="dashboard-card">
           <h2 className="text-lg font-semibold mb-4">Semanas Estratégicas Cadastradas</h2>
           <div className="mb-4">
-            <label className="block text-sm font-medium mb-1">Filtrar por Categoria</label>
+            <label className="block text-sm font-medium mb-1">Filtrar por Área Principal</label>
             <div className="relative w-64">
               <select
                 value={filtroCategoria}
@@ -761,9 +776,9 @@ const SemanaEstrategica = () => {
                   <th className="py-2 px-4">Data Inicial</th>
                   <th className="py-2 px-4">Data Final</th>
                   <th className="py-2 px-4">Ciclo</th>
-                  <th className="py-2 px-4">Categoria</th>
-                  <th className="py-2 px-4">Subcategoria</th>
-                  <th className="py-2 px-4">Notícias</th>
+                  <th className="py-2 px-4">Área Principal</th>
+                  <th className="py-2 px-4">Área Complementar</th>
+                  <th className="py-2 px-4">Notícias Relacionadas</th>
                   <th className="py-2 px-4">Ações</th>
                 </tr>
               </thead>
@@ -776,17 +791,42 @@ const SemanaEstrategica = () => {
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
-                              className="h-8 p-2 text-xs border-white/20"
+                              className="h-8 p-2 text-xs border-white/20 bg-[#fde047] hover:bg-[#fef08a] text-black transition-colors"
                               aria-label="Editar data inicial"
                             >
                               {editedData.data_inicial ? format(editedData.data_inicial as Date, 'dd/MM/yyyy') : 'Selecionar'}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
+                          <PopoverContent className="p-4 bg-dark-card border border-yellow-500/50 text-white rounded-xl shadow-lg" align="start">
                             <Calendar
                               mode="single"
                               selected={editedData.data_inicial as Date}
                               onSelect={(date) => handleFieldChange('data_inicial', date)}
+                              locale={ptBR}
+                              className="rounded-lg bg-dark-card"
+                              classNames={{
+                                months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
+                                month: 'space-y-4',
+                                caption: 'flex justify-center pt-1 relative items-center text-white',
+                                caption_label: 'text-sm font-medium',
+                                nav: 'space-x-1 flex items-center',
+                                nav_button: 'h-7 w-7 bg-dark-card hover:bg-yellow-500/20 text-white rounded-md flex items-center justify-center transition-all',
+                                nav_button_previous: 'absolute left-1',
+                                nav_button_next: 'absolute right-1',
+                                table: 'w-full border-collapse space-y-1',
+                                head_row: 'flex',
+                                head_cell: 'text-gray-400 rounded-md w-9 font-normal text-[0.8rem]',
+                                row: 'flex w-full mt-2',
+                                cell: 'text-center text-sm p-0 relative w-9 h-9',
+                                day: 'h-9 w-9 p-0 font-normal rounded-md transition-all',
+                                day_selected: 'bg-yellow-500 text-white hover:bg-yellow-600 focus:bg-yellow-600',
+                                day_today: 'border border-yellow-400/50 text-yellow-400',
+                                day_outside: 'text-gray-500 opacity-50',
+                                day_disabled: 'text-gray-600 opacity-50',
+                                day_hidden: 'invisible',
+                              }}
+                              modifiers={modifiers}
+                              modifiersClassNames={modifiersClassNames}
                             />
                           </PopoverContent>
                         </Popover>
@@ -801,17 +841,42 @@ const SemanaEstrategica = () => {
                           <PopoverTrigger asChild>
                             <Button
                               variant="outline"
-                              className="h-8 p-2 text-xs border-white/20"
+                              className="h-8 p-2 text-xs border-white/20 bg-[#fde047] hover:bg-[#fef08a] text-black transition-colors"
                               aria-label="Editar data final"
                             >
                               {editedData.data_final ? format(editedData.data_final as Date, 'dd/MM/yyyy') : 'Selecionar'}
                             </Button>
                           </PopoverTrigger>
-                          <PopoverContent className="w-auto p-0">
+                          <PopoverContent className="p-4 bg-dark-card border border-yellow-500/50 text-white rounded-xl shadow-lg" align="start">
                             <Calendar
                               mode="single"
                               selected={editedData.data_final as Date}
                               onSelect={(date) => handleFieldChange('data_final', date)}
+                              locale={ptBR}
+                              className="rounded-lg bg-dark-card"
+                              classNames={{
+                                months: 'flex flex-col sm:flex-row space-y-4 sm:space-x-4 sm:space-y-0',
+                                month: 'space-y-4',
+                                caption: 'flex justify-center pt-1 relative items-center text-white',
+                                caption_label: 'text-sm font-medium',
+                                nav: 'space-x-1 flex items-center',
+                                nav_button: 'h-7 w-7 bg-dark-card hover:bg-yellow-500/20 text-white rounded-md flex items-center justify-center transition-all',
+                                nav_button_previous: 'absolute left-1',
+                                nav_button_next: 'absolute right-1',
+                                table: 'w-full border-collapse space-y-1',
+                                head_row: 'flex',
+                                head_cell: 'text-gray-400 rounded-md w-9 font-normal text-[0.8rem]',
+                                row: 'flex w-full mt-2',
+                                cell: 'text-center text-sm p-0 relative w-9 h-9',
+                                day: 'h-9 w-9 p-0 font-normal rounded-md transition-all',
+                                day_selected: 'bg-yellow-500 text-white hover:bg-yellow-600 focus:bg-yellow-600',
+                                day_today: 'border border-yellow-400/50 text-yellow-400',
+                                day_outside: 'text-gray-500 opacity-50',
+                                day_disabled: 'text-gray-600 opacity-50',
+                                day_hidden: 'invisible',
+                              }}
+                              modifiers={modifiers}
+                              modifiersClassNames={modifiersClassNames}
                             />
                           </PopoverContent>
                         </Popover>
@@ -880,7 +945,7 @@ const SemanaEstrategica = () => {
                               console.log('Clicou no botão de salvar para ID:', semana.id);
                               handleSave(semana.id);
                             }}
-                            className="text-[#fde047] hover:text-[#fef08a]"
+                            className="text-[#CAF10A] hover:text-[#CAF163]"
                             disabled={isSaving}
                             aria-label="Salvar alterações"
                           >
