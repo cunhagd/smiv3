@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import { TrendingUp } from 'lucide-react';
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -45,13 +44,21 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
         })
         .then(data => {
           console.log(`Dados de portais relevantes (${selectedType}) recebidos da API:`, data);
+          // Garantir que os dados estejam no formato esperado
+          const formattedData = Array.isArray(data)
+            ? data.map(item => ({
+                portal: item.portal || 'Desconhecido',
+                pontuacao: item.pontuacao || item.value || 0,
+              })).slice(0, 5) // Limitar a 5 portais
+            : [];
           setPortaisData({
-            top5: selectedType === 'positivas' ? data : [],
-            bottom5: selectedType === 'negativas' ? data : [],
+            top5: selectedType === 'positivas' ? formattedData : [],
+            bottom5: selectedType === 'negativas' ? formattedData : [],
           });
         })
         .catch(error => {
           console.error('Erro ao buscar portais relevantes:', error.message);
+          setPortaisData({ top5: [], bottom5: [] });
         })
         .finally(() => {
           setIsLoadingPortais(false);
@@ -84,7 +91,6 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
     <div className="dashboard-card">
       <div className="dashboard-card-header flex items-center justify-between">
         <div className="flex items-center">
-          <TrendingUp className="h-5 w-5 text-[#fde047] hover:text-[#fef08a] transition-colors mr-2" />
           <h3 className="text-lg font-medium">Portais Relevantes</h3>
         </div>
         <select
@@ -99,10 +105,6 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
       {isLoadingPortais ? (
         <div className="flex items-center justify-center h-[300px]">
           <p className="text-gray-400">Carregando dados...</p>
-        </div>
-      ) : selectedType === 'negativas' && portaisData.bottom5.length === 0 ? (
-        <div className="flex items-center justify-center h-[300px]">
-          <p className="text-gray-400">Nenhuma notícia encontrada</p>
         </div>
       ) : chartData.length === 0 ? (
         <div className="flex items-center justify-center h-[300px]">
