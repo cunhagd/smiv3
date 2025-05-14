@@ -37,7 +37,7 @@ const AreaChart = ({
             padding: '8px',
           }}
         >
-          <p style={{ color: 'rgba(255,255,255,0.7)', margin: 0 }}>{`Nome: ${label}`}</p>
+          <p style={{ color: 'rgba(255,255,255,0.7)', margin: 0 }}>{`Dia: ${label}`}</p>
           <p style={{ color: '#fff', margin: 0 }}>{`Quantidade: ${payload[0].value}`}</p>
         </div>
       );
