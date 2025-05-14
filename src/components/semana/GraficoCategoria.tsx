@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, parse, isValid } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { Turtle } from 'lucide-react';
 import LineChart from '@/components/charts/LineChart';
 
 interface GraficoCategoriaProps {
@@ -75,7 +76,7 @@ const GraficoCategoria: React.FC<GraficoCategoriaProps> = ({ dateRange }) => {
       </div>
       {isLoadingCategoria ? (
         <div className="flex items-center justify-center h-[300px]">
-          <p className="text-gray-400">Carregando dados...</p>
+          <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
         </div>
       ) : chartData.length === 0 || chartData.every(item => item.educacao === 0 && item.saude === 0 && item.infraestrutura === 0 && item.social === 0) ? (
         <div className="flex items-center justify-center h-[300px]">

@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format, addDays } from 'date-fns'; // Adicionado addDays
 import { ptBR } from 'date-fns/locale';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Turtle } from 'lucide-react';
 import AreaChart from '@/components/charts/AreaChart';
 
 interface NoticiasPeriodoProps {
@@ -70,7 +70,7 @@ const NoticiasPeriodo: React.FC<NoticiasPeriodoProps> = ({ dateRange }) => {
       </div>
       {isLoadingAreaChart ? (
         <div className="flex items-center justify-center h-[300px]">
-          <p className="text-gray-400">Carregando dados...</p>
+          <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
         </div>
       ) : areaChartData.length === 0 ? (
         <div className="flex items-center justify-center h-[300px]">

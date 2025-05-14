@@ -1,4 +1,4 @@
-import { Pencil, Save, X, CalendarIcon, ChevronDown, Trash2 } from 'lucide-react';
+import { Pencil, Save, X, CalendarIcon, ChevronDown, Trash2, Turtle } from 'lucide-react';
 import React, { useState, useEffect, useMemo } from 'react';
 import Navbar from '@/components/Navbar';
 import { Calendar } from "@/components/ui/calendar";
@@ -755,7 +755,7 @@ const SemanaEstrategica = () => {
 
           {isLoading ? (
             <div className="flex items-center justify-center h-[300px]">
-              <p className="text-gray-400">Carregando dados...</p>
+              <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
             </div>
           ) : error ? (
             <div className="flex items-center justify-center h-[300px]">
@@ -764,8 +764,8 @@ const SemanaEstrategica = () => {
           ) : semanasFiltradas.length === 0 ? (
             <div className="flex items-center justify-center h-[300px]">
               <p className="text-gray-400">
-                {filtroCategoria === 'Todas' 
-                  ? 'Nenhuma semana estratégica encontrada' 
+                {filtroCategoria === 'Todas'
+                  ? 'Nenhuma semana estratégica encontrada'
                   : `Nenhuma semana estratégica encontrada para a categoria "${filtroCategoria}"`}
               </p>
             </div>

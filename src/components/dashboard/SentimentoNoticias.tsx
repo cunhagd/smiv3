@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Turtle } from 'lucide-react';
 
 interface SentimentoNoticiasProps {
   dateRange: {
@@ -101,7 +101,7 @@ const SentimentoNoticias: React.FC<SentimentoNoticiasProps> = ({ dateRange }) =>
       </div>
       {isLoadingSentiment ? (
         <div className="flex items-center justify-center h-[300px]">
-          <p className="text-gray-400">Carregando dados...</p>
+            <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
         </div>
       ) : sentimentData.every(item => item.value === 0) ? (
         <div className="flex items-center justify-center h-[300px]">

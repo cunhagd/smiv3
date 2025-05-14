@@ -9,6 +9,7 @@ import {
   ResponsiveContainer,
   Cell,
 } from 'recharts';
+import { Turtle } from 'lucide-react';
 
 interface PortaisRelevantesProps {
   dateRange: {
@@ -104,7 +105,7 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
       </div>
       {isLoadingPortais ? (
         <div className="flex items-center justify-center h-[300px]">
-          <p className="text-gray-400">Carregando dados...</p>
+          <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
         </div>
       ) : chartData.length === 0 ? (
         <div className="flex items-center justify-center h-[300px]">

@@ -7,7 +7,7 @@ import DatePickerLixeira from '@/components/DatePickerLixeira';
 import DatePickerSuporte from '@/components/DatePickerSuporte';
 import DatePickerUtil from '@/components/DatePickerUtil';
 import Util from '@/components/planilha/Util';
-import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Sparkles } from 'lucide-react';
+import { Smile, Frown, Meh, ChevronDown, CircleArrowLeft, CircleCheckBig, Trash2, Lightbulb, ExternalLink, Sparkles, Turtle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import Estrategicas, { ConfirmationModal } from '@/components/planilha/Estrategicas';
 import Lixeira from '@/components/planilha/Lixeira';
@@ -1206,7 +1206,7 @@ const Spreadsheet: React.FC = () => {
           <div className="dashboard-card">
             {isLoading || estrategicas.isLoading ? (
               <div className="flex items-center justify-center h-[300px]">
-                <p className="text-[#9ca3af]">Carregando dados...</p>
+                <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
               </div>
             ) : error ? (
               <div className="flex items-center justify-center h-[300px]">
