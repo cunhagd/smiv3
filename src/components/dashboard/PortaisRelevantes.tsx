@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ArrowRight } from 'lucide-react';
+import { TrendingUp } from 'lucide-react';
 import {
   BarChart as RechartsBarChart,
   Bar,
@@ -15,7 +15,7 @@ interface PortaisRelevantesProps {
   dateRange: {
     from: Date | undefined;
     to: Date | undefined;
-  };
+  } | undefined;
 }
 
 const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
@@ -27,8 +27,8 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
   useEffect(() => {
     const defaultFrom = new Date(new Date().setDate(new Date().getDate() - 30));
     const defaultTo = new Date();
-    const from = dateRange.from?.toISOString().split('T')[0] || defaultFrom.toISOString().split('T')[0];
-    const to = dateRange.to?.toISOString().split('T')[0] || defaultTo.toISOString().split('T')[0];
+    const from = dateRange?.from?.toISOString().split('T')[0] || defaultFrom.toISOString().split('T')[0];
+    const to = dateRange?.to?.toISOString().split('T')[0] || defaultTo.toISOString().split('T')[0];
 
     if (from && to) {
       setIsLoadingPortais(true);
@@ -82,21 +82,19 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
 
   return (
     <div className="dashboard-card">
-      <div className="dashboard-card-header">
-        <h3 className="text-lg font-medium">Portais Relevantes</h3>
-        <div className="flex items-center gap-2">
-          <select
-            className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm"
-            value={selectedType}
-            onChange={handleTypeChange}
-          >
-            <option value="positivas">Positivas</option>
-            <option value="negativas">Negativas</option>
-          </select>
-          <button className="p-1 hover:bg-white/5 rounded-full">
-            <ArrowRight className="h-4 w-4 text-gray-400" />
-          </button>
+      <div className="dashboard-card-header flex items-center justify-between">
+        <div className="flex items-center">
+          <TrendingUp className="h-5 w-5 text-[#fde047] hover:text-[#fef08a] transition-colors mr-2" />
+          <h3 className="text-lg font-medium">Portais Relevantes</h3>
         </div>
+        <select
+          className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm"
+          value={selectedType}
+          onChange={handleTypeChange}
+        >
+          <option value="positivas">Positivas</option>
+          <option value="negativas">Negativas</option>
+        </select>
       </div>
       {isLoadingPortais ? (
         <div className="flex items-center justify-center h-[300px]">

@@ -4,10 +4,14 @@ import Navbar from '@/components/Navbar';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { format, parse, isValid } from "date-fns";
+import { format, parse, isValid, eachDayOfInterval } from "date-fns";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
-import AddSemana from '@/components/semana/AddSemana'; // Novo componente importado
+import AddSemana from '@/components/semana/AddSemana';
+import PontuacaoSemana from '@/components/semana/Pontuacao';
+import TotalNoticiasSemana from '@/components/semana/TotalNoticias';
+import GraficoCategoria from '@/components/semana/GraficoCategoria';
+import DatePickerSemana from '@/components/semana/DatePickerSemana';
 
 const CATEGORIAS = [
   'Todas',
@@ -38,6 +42,19 @@ export interface Noticia {
   subcategoria: string;
   ciclo: number;
   estrategica: boolean;
+}
+
+// Definir interfaces para os componentes, usando dateRange
+export interface TotalNoticiasSemanaProps {
+  dateRange: { from: Date | undefined; to: Date | undefined };
+}
+
+export interface PontuacaoSemanaProps {
+  dateRange: { from: Date | undefined; to: Date | undefined };
+}
+
+export interface GraficoCategoriaProps {
+  dateRange: { from: Date | undefined; to: Date | undefined };
 }
 
 export const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaProps> = ({ onSubmit }) => {
@@ -218,8 +235,8 @@ export const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaPr
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dataInicial && "text-muted-foreground"
+                    "w-full justify-start text-left font-bold text-black",
+                    !dataInicial ? "bg-[#fde047] hover:bg-[#fef08a] transition-colors" : "bg-white"
                   )}
                   aria-label="Selecionar data inicial"
                 >
@@ -246,8 +263,8 @@ export const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaPr
                 <Button
                   variant="outline"
                   className={cn(
-                    "w-full justify-start text-left font-normal",
-                    !dataFinal && "text-muted-foreground"
+                    "w-full justify-start text-left font-bold text-black",
+                    !dataFinal ? "bg-[#fde047] hover:bg-[#fef08a] transition-colors" : "bg-white"
                   )}
                   aria-label="Selecionar data final"
                 >
@@ -336,7 +353,7 @@ export const FormularioSemanaEstrategica: React.FC<FormularioSemanaEstrategicaPr
           <Button
             onClick={handleSubmit}
             disabled={isLoading}
-            className="bg-brand-yellow text-black hover:bg-brand-yellow/90"
+            className="bg-[#fde047] hover:bg-[#fef08a] text-black font-bold transition-colors"
             aria-label="Cadastrar semana estratégica"
           >
             {isLoading ? "Cadastrando..." : "Cadastrar"}
@@ -356,7 +373,29 @@ const SemanaEstrategica = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [filtroCategoria, setFiltroCategoria] = useState<string>('Todas');
+  const [dateRange, setDateRange] = useState<{ from: Date | undefined; to: Date | undefined }>({
+    from: undefined,
+    to: undefined,
+  });
   const { toast } = useToast();
+
+  // Extrair datas estratégicas
+  const strategicDates = useMemo(() => {
+    const dates: Date[] = [];
+    semanas.forEach(semana => {
+      const startDate = typeof semana.data_inicial === 'string'
+        ? parse(semana.data_inicial, 'dd/MM/yyyy', new Date())
+        : semana.data_inicial;
+      const endDate = typeof semana.data_final === 'string'
+        ? parse(semana.data_final, 'dd/MM/yyyy', new Date())
+        : semana.data_final;
+      if (isValid(startDate) && isValid(endDate)) {
+        const interval = eachDayOfInterval({ start: startDate, end: endDate });
+        dates.push(...interval);
+      }
+    });
+    return dates;
+  }, [semanas]);
 
   // Fetch semanas
   useEffect(() => {
@@ -645,16 +684,36 @@ const SemanaEstrategica = () => {
     <div className="min-h-screen bg-dark-bg text-white">
       <Navbar />
       <main className="p-6 md:p-8">
-        <div className="mb-6">
-          <h1 className="text-2xl md:text-3xl font-bold">Semana Estratégica</h1>
-          <p className="text-gray-400">Cadastro e gerenciamento de semanas estratégicas</p>
+        <div className="mb-6 flex items-center">
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">Semana Estratégica</h1>
+            <p className="text-gray-400">Cadastro e gerenciamento de semanas estratégicas</p>
+          </div>
+          <div className="ml-auto">
+            <DatePickerSemana
+              onChange={setDateRange}
+              strategicDates={strategicDates}
+            />
+          </div>
+        </div>
+
+        <div className="mb-6 flex gap-4">
+          <div className="flex-1">
+            <TotalNoticiasSemana dateRange={dateRange} />
+          </div>
+          <div className="flex-1">
+            <PontuacaoSemana dateRange={dateRange} />
+          </div>
+        </div>
+
+        <div className="mb-6 w-full">
+          <GraficoCategoria dateRange={dateRange} />
         </div>
 
         <AddSemana onAddSemana={adicionarSemana} />
 
         <div className="dashboard-card">
           <h2 className="text-lg font-semibold mb-4">Semanas Estratégicas Cadastradas</h2>
-
           <div className="mb-4">
             <label className="block text-sm font-medium mb-1">Filtrar por Categoria</label>
             <div className="relative w-64">
@@ -821,7 +880,7 @@ const SemanaEstrategica = () => {
                               console.log('Clicou no botão de salvar para ID:', semana.id);
                               handleSave(semana.id);
                             }}
-                            className="text-green-400 hover:text-green-300"
+                            className="text-[#fde047] hover:text-[#fef08a]"
                             disabled={isSaving}
                             aria-label="Salvar alterações"
                           >

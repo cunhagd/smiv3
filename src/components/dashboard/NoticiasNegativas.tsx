@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { TrendingUp } from 'lucide-react';
+import { Frown } from 'lucide-react';
 import StatCard from '../StatCard';
 
 interface NoticiasNegativasProps {
@@ -58,7 +58,7 @@ const NoticiasNegativas: React.FC<NoticiasNegativasProps> = ({ dateRange }) => {
       title="Notícias Negativas"
       value={isLoadingNoticiasNegativas ? "..." : totalNoticiasNegativasMemo.toString()}
       isPositive
-      icon={<TrendingUp className="h-6 w-6" />}
+      icon={<Frown className="text-[#f87171]" />}
     />
   );
 };

@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { ArrowRight } from 'lucide-react';
 import Navbar from '@/components/Navbar';
 import BarChart from '@/components/charts/BarChart';
 import DatePickerDash from '@/components/dashboard/DatePickerDash';
 import TotalNoticias from '@/components/dashboard/TotalNoticias.tsx';
 import NoticiasPositivas from '@/components/dashboard/NoticiasPositivas.tsx';
-import Pontuacao from '@/components/dashboard/Pontuacao.tsx';
+import NoticiasNeutras from '@/components/dashboard/NoticiasNeutras.tsx';
 import NoticiasNegativas from '@/components/dashboard/NoticiasNegativas.tsx';
+import Pontuacao from '@/components/dashboard/Pontuacao.tsx';
 import NoticiasPeriodo from '@/components/dashboard/NoticiasPeriodo.tsx';
 import SentimentoNoticias from '@/components/dashboard/SentimentoNoticias.tsx';
 import EvolucaoSentimento from '@/components/dashboard/EvolucaoSentimento.tsx';
@@ -78,11 +78,22 @@ const Dashboard = () => {
         </div>
 
         {/* Stats Row */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
-          <TotalNoticias dateRange={dateRange} />
-          <NoticiasPositivas dateRange={dateRange} />
-          <NoticiasNegativas dateRange={dateRange} />
-          <Pontuacao dateRange={dateRange} />
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
+          <div className="w-full">
+            <TotalNoticias dateRange={dateRange} />
+          </div>
+          <div className="w-full">
+            <NoticiasPositivas dateRange={dateRange} />
+          </div>
+          <div className="w-full">
+            <NoticiasNeutras dateRange={dateRange} />
+          </div>
+          <div className="w-full">
+            <NoticiasNegativas dateRange={dateRange} />
+          </div>
+          <div className="w-full">
+            <Pontuacao dateRange={dateRange} />
+          </div>
         </div>
 
         {/* Charts Row */}
@@ -101,9 +112,6 @@ const Dashboard = () => {
                   <option value="positivas">Positivas</option>
                   <option value="negativas">Negativas</option>
                 </select>
-                <button className="p-1 hover:bg-white/5 rounded-full">
-                  <ArrowRight className="h-4 w-4 text-gray-400" />
-                </button>
               </div>
             </div>
             {isLoadingPortais ? (
@@ -125,7 +133,7 @@ const Dashboard = () => {
           </div>
         </div>
 
-        {/* Bottom Row Corrigido */}
+        {/* Bottom Row */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           <div className="lg:col-span-2">
             <EvolucaoSentimento dateRange={dateRange} />

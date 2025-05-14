@@ -18,13 +18,13 @@ const AddSemana: React.FC<AddSemanaProps> = ({ onAddSemana }) => {
       <div className="flex justify-end">
         <span
           onClick={toggleFormulario}
-          className="cursor-pointer text-[#CAF10A] hover:text-[#A8CC00] transition-colors"
+          className="cursor-pointer text-[#fde047] hover:text-[#fef08a] transition-colors"
           aria-label={isFormularioAtivo ? "Ocultar formulário de cadastro de semana estratégica" : "Mostrar formulário de cadastro de semana estratégica"}
         >
           {isFormularioAtivo ? (
-            <CircleArrowLeft className="h-6 w-6" />
+            <CircleArrowLeft className="h-6 w-6 text-[#fde047] hover:text-[#fef08a] transition-colors" />
           ) : (
-            <CalendarPlus className="h-6 w-6" />
+            <CalendarPlus className="h-6 w-6 text-[#fde047] hover:text-[#fef08a] transition-colors" />
           )}
         </span>
       </div>

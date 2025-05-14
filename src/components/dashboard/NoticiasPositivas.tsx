@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
-import { TrendingUp } from 'lucide-react';
+import { Smile } from 'lucide-react';
 import StatCard from '../StatCard';
 
 interface NoticiasPositivasProps {
@@ -60,7 +60,7 @@ const NoticiasPositivas: React.FC<NoticiasPositivasProps> = ({ dateRange }) => {
       title="Notícias Positivas"
       value={isLoadingNoticiasPositivas ? "..." : totalNoticiasPositivasMemo.toString()}
       isPositive
-      icon={<TrendingUp className="h-6 w-6" />}
+      icon={<Smile className="text-[#34d399]" />}
     />
   );
 };

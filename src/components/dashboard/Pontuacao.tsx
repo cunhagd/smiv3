@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BarChart as BarChartIcon } from 'lucide-react';
+import { Trophy as Trophy } from 'lucide-react';
 import StatCard from '../StatCard';
 
 interface PontuacaoProps {
@@ -55,7 +55,7 @@ const Pontuacao: React.FC<PontuacaoProps> = ({ dateRange }) => {
       title="Pontuação"
       value={isLoadingPontuacao ? "..." : totalPontuacaoMemo.toString()}
       isPositive
-      icon={<BarChartIcon className="h-6 w-6" />}
+      icon={<Trophy className="h-6 w-6" />}
     />
   );
 };
