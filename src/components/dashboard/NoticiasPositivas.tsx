@@ -59,7 +59,6 @@ const NoticiasPositivas: React.FC<NoticiasPositivasProps> = ({ dateRange }) => {
     <StatCard
       title="Notícias Positivas"
       value={isLoadingNoticiasPositivas ? "..." : totalNoticiasPositivasMemo.toString()}
-      change="+8.2% em relação ao mês anterior"
       isPositive
       icon={<TrendingUp className="h-6 w-6" />}
     />

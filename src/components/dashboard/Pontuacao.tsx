@@ -54,7 +54,6 @@ const Pontuacao: React.FC<PontuacaoProps> = ({ dateRange }) => {
     <StatCard
       title="Pontuação"
       value={isLoadingPontuacao ? "..." : totalPontuacaoMemo.toString()}
-      change="+15.8% em relação ao mês anterior"
       isPositive
       icon={<BarChartIcon className="h-6 w-6" />}
     />
