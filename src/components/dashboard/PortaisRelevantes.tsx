@@ -91,7 +91,7 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
     <div className="dashboard-card">
       <div className="dashboard-card-header flex items-center justify-between">
         <div className="flex items-center">
-          <h3 className="text-lg font-medium">Portais Relevantes</h3>
+          <h3 className="text-lg font-medium">Portais Relevantes por Pontuação</h3>
         </div>
         <select
           className="bg-dark-card border border-white/10 rounded-lg p-1 text-sm"
