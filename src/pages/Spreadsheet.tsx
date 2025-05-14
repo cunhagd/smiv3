@@ -16,6 +16,7 @@ import { format, parse, addDays, subDays } from 'date-fns';
 import { Noticia, ColumnDef } from '@/types/noticia';
 import BotaoAjuda from '@/components/planilha/BotaoAjuda';
 import { EsvaziarLixeiraButton } from '@/components/planilha/Estrategicas';
+import FiltroGlobal from '@/components/planilha/FiltroGlobal';
 
 // Centralizar a URL base
 const API_BASE_URL = 'https://smi-api-production-fae2.up.railway.app';
@@ -572,6 +573,10 @@ const Spreadsheet: React.FC = () => {
   const { toast } = useToast();
   const [filtroAtivo, setFiltroAtivo] = useState<'Nenhum' | 'Útil' | 'Lixo' | 'Estrategica' | 'Suporte'>('Nenhum');
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedPortal, setSelectedPortal] = useState<string | null>(null);
+  const [selectedTitle, setSelectedTitle] = useState<string | null>(null);
+  const [selectedTema, setSelectedTema] = useState<string | null>(null);
+  const [selectedAvaliacao, setSelectedAvaliacao] = useState<string | null>(null);
 
   const handleRowRemove = (id: string, callback: () => void) => {
     const rowElement = document.querySelector(`[data-row-id="${id}"]`);
@@ -593,72 +598,88 @@ const Spreadsheet: React.FC = () => {
   });
 
   const toggleFiltroUtil = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const novoFiltro = filtroAtivo === 'Útil' ? 'Nenhum' : 'Útil';
-    setFiltroAtivo(novoFiltro);
-    setCurrentDate(null);
-    if (novoFiltro === 'Útil') {
-      setPreviousSelectedDate(selectedDate);
-      setSelectedDate(undefined);
-    } else {
-      setSelectedDate(previousSelectedDate);
-    }
-    setSelectedDateEstrategicas(undefined);
-    setSelectedDateLixeira(undefined);
-    setSelectedDateSuporte(undefined);
-    setSelectedDateUtil(undefined);
-  };
+  e.preventDefault();
+  const novoFiltro = filtroAtivo === 'Útil' ? 'Nenhum' : 'Útil';
+  setFiltroAtivo(novoFiltro);
+  setCurrentDate(null);
+  if (novoFiltro === 'Útil') {
+    setPreviousSelectedDate(selectedDate);
+    setSelectedDate(undefined);
+  } else {
+    setSelectedDate(previousSelectedDate);
+  }
+  setSelectedDateEstrategicas(undefined);
+  setSelectedDateLixeira(undefined);
+  setSelectedDateSuporte(undefined);
+  setSelectedDateUtil(undefined);
+  setSelectedPortal(null);
+  setSelectedTitle(null);
+  setSelectedTema(null);
+  setSelectedAvaliacao(null);
+};
 
-  const toggleFiltroLixo = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
-    setFiltroAtivo(novoFiltro);
-    setCurrentDate(null);
-    if (novoFiltro === 'Lixo') {
-      setPreviousSelectedDate(selectedDate);
-      setSelectedDate(undefined);
-    } else {
-      setSelectedDate(previousSelectedDate);
-    }
-    setSelectedDateEstrategicas(undefined);
-    setSelectedDateLixeira(undefined);
-    setSelectedDateSuporte(undefined);
-    setSelectedDateUtil(undefined);
-  };
+const toggleFiltroLixo = (e: React.MouseEvent) => {
+  e.preventDefault();
+  const novoFiltro = filtroAtivo === 'Lixo' ? 'Nenhum' : 'Lixo';
+  setFiltroAtivo(novoFiltro);
+  setCurrentDate(null);
+  if (novoFiltro === 'Lixo') {
+    setPreviousSelectedDate(selectedDate);
+    setSelectedDate(undefined);
+  } else {
+    setSelectedDate(previousSelectedDate);
+  }
+  setSelectedDateEstrategicas(undefined);
+  setSelectedDateLixeira(undefined);
+  setSelectedDateSuporte(undefined);
+  setSelectedDateUtil(undefined);
+  setSelectedPortal(null);
+  setSelectedTitle(null);
+  setSelectedTema(null);
+  setSelectedAvaliacao(null);
+};
 
-  const toggleFiltroEstrategica = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
-    setFiltroAtivo(novoFiltro);
-    setCurrentDate(null);
-    if (novoFiltro === 'Estrategica') {
-      setPreviousSelectedDate(selectedDate);
-      setSelectedDate(undefined);
-    } else {
-      setSelectedDate(previousSelectedDate);
-    }
-    setSelectedDateEstrategicas(undefined);
-    setSelectedDateLixeira(undefined);
-    setSelectedDateSuporte(undefined);
-    setSelectedDateUtil(undefined);
-  };
+const toggleFiltroEstrategica = (e: React.MouseEvent) => {
+  e.preventDefault();
+  const novoFiltro = filtroAtivo === 'Estrategica' ? 'Nenhum' : 'Estrategica';
+  setFiltroAtivo(novoFiltro);
+  setCurrentDate(null);
+  if (novoFiltro === 'Estrategica') {
+    setPreviousSelectedDate(selectedDate);
+    setSelectedDate(undefined);
+  } else {
+    setSelectedDate(previousSelectedDate);
+  }
+  setSelectedDateEstrategicas(undefined);
+  setSelectedDateLixeira(undefined);
+  setSelectedDateSuporte(undefined);
+  setSelectedDateUtil(undefined);
+  setSelectedPortal(null);
+  setSelectedTitle(null);
+  setSelectedTema(null);
+  setSelectedAvaliacao(null);
+};
 
-  const toggleFiltroSuporte = (e: React.MouseEvent) => {
-    e.preventDefault();
-    const novoFiltro = filtroAtivo === 'Suporte' ? 'Nenhum' : 'Suporte';
-    setFiltroAtivo(novoFiltro);
-    setCurrentDate(null);
-    if (novoFiltro === 'Suporte') {
-      setPreviousSelectedDate(selectedDate);
-      setSelectedDate(undefined);
-    } else {
-      setSelectedDate(previousSelectedDate);
-    }
-    setSelectedDateEstrategicas(undefined);
-    setSelectedDateLixeira(undefined);
-    setSelectedDateSuporte(undefined);
-    setSelectedDateUtil(undefined);
-  };
+const toggleFiltroSuporte = (e: React.MouseEvent) => {
+  e.preventDefault();
+  const novoFiltro = filtroAtivo === 'Suporte' ? 'Nenhum' : 'Suporte';
+  setFiltroAtivo(novoFiltro);
+  setCurrentDate(null);
+  if (novoFiltro === 'Suporte') {
+    setPreviousSelectedDate(selectedDate);
+    setSelectedDate(undefined);
+  } else {
+    setSelectedDate(previousSelectedDate);
+  }
+  setSelectedDateEstrategicas(undefined);
+  setSelectedDateLixeira(undefined);
+  setSelectedDateSuporte(undefined);
+  setSelectedDateUtil(undefined);
+  setSelectedPortal(null);
+  setSelectedTitle(null);
+  setSelectedTema(null);
+  setSelectedAvaliacao(null);
+};
 
   const updateTema = (id: string, novoTema: string) => {
     setNoticias((prevNoticias) =>
@@ -692,6 +713,14 @@ const Spreadsheet: React.FC = () => {
   const handleConfirmEsvaziar = () => {
     console.log('Confirmação para esvaziar lixeira recebida');
     setIsModalOpen(false);
+  };
+
+  const handleFilterChange = (filter: { portal: string | null; title: string | null; tema: string | null; avaliacao: string | null }) => {
+    setSelectedPortal(filter.portal);
+    setSelectedTitle(filter.title);
+    setSelectedTema(filter.tema);
+    setSelectedAvaliacao(filter.avaliacao);
+    setCurrentDate(null);
   };
 
   useEffect(() => {
@@ -767,102 +796,125 @@ const Spreadsheet: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    const fetchNoticias = async () => {
-      setIsLoading(true);
-      setError(null);
+  const fetchNoticias = async () => {
+    setIsLoading(true);
+    setError(null);
 
-      let url = `${API_BASE_URL}/noticias`;
-      if (filtroAtivo === 'Estrategica') {
-        if (selectedDateEstrategicas) {
-          const dateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
-          url += `?estrategica=true&date=${dateFormatted}`;
-        } else {
-          url += `?estrategica=true&all=true`;
-        }
-      } else if (filtroAtivo === 'Útil') {
-        if (selectedDateUtil) {
-          const dateFormatted = format(selectedDateUtil, 'yyyy-MM-dd');
-          url += `?relevancia=Útil&date=${dateFormatted}`;
-        } else {
-          url += `?relevancia=Útil&all=true`;
-        }
-      } else if (filtroAtivo === 'Lixo') {
-        if (selectedDateLixeira) {
-          const dateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
-          url += `?relevancia=Lixo&date=${dateFormatted}`;
-        } else {
-          url += `?relevancia=Lixo&all=true`;
-        }
-      } else if (filtroAtivo === 'Suporte') {
-        if (selectedDateSuporte) {
-          const dateFormatted = format(selectedDateSuporte, 'yyyy-MM-dd');
-          url += `?relevancia=Suporte&date=${dateFormatted}`;
-        } else {
-          url += `?relevancia=Suporte&all=true`;
-        }
+    let url = `${API_BASE_URL}/noticias`;
+    const queryParams: string[] = [];
+
+    if (filtroAtivo === 'Estrategica') {
+      queryParams.push('estrategica=true');
+      if (selectedDateEstrategicas) {
+        const dateFormatted = format(selectedDateEstrategicas, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
       } else {
-        const queryParams = ['relevancia=null'];
-        if (selectedDate) {
-          const dateFormatted = format(selectedDate, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        }
-        url += `?${queryParams.join('&')}`;
+        queryParams.push('all=true');
       }
+    } else if (filtroAtivo === 'Útil') {
+      queryParams.push('relevancia=Útil');
+      if (selectedDateUtil) {
+        const dateFormatted = format(selectedDateUtil, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Lixo') {
+      queryParams.push('relevancia=Lixo');
+      if (selectedDateLixeira) {
+        const dateFormatted = format(selectedDateLixeira, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Suporte') {
+      queryParams.push('relevancia=Suporte');
+      if (selectedDateSuporte) {
+        const dateFormatted = format(selectedDateSuporte, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else {
+      queryParams.push('relevancia=null');
+      if (selectedDate) {
+        const dateFormatted = format(selectedDate, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      }
+    }
 
-      console.log('Buscando notícias com URL:', url);
+    if (selectedPortal) {
+      queryParams.push(`portal=${encodeURIComponent(selectedPortal)}`);
+    }
 
-      try {
-        const response = await fetch(url);
-        console.log('Resposta da API:', response.status, response.statusText);
-        if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
-        const responseData = await response.json();
-        console.log('Dados recebidos da API:', responseData);
+    if (selectedTitle) {
+      queryParams.push(`titulo=${encodeURIComponent(selectedTitle)}`);
+    }
 
-        const { data, meta } = responseData;
-        if (Array.isArray(data)) {
-          const dataWithIds = data.map((item: any, index: number) => ({
-            ...item,
-            id: item.id || `noticia-${index}`,
-            pontos: item.pontos || 0,
-            ciclo: item.ciclo || null,
-            categoria: item.categoria || null,
-            subcategoria: item.subcategoria || null,
-          }));
-          console.log('Notícias mapeadas:', dataWithIds);
-          setNoticias(dataWithIds);
-          setTotalItems(meta?.total || data.length);
-          setCurrentDate(meta?.date || null);
-          setHasNext(meta?.hasNext || false);
-          setHasPrevious(meta?.hasPrevious || false);
-        } else {
-          console.warn('Dados não são um array:', data);
-          setNoticias([]);
-          setTotalItems(0);
-          setCurrentDate(null);
-          setHasNext(false);
-          setHasPrevious(false);
-          setError('Formato de dados inesperado retornado pela API.');
-        }
-      } catch (error: any) {
-        console.error('Erro ao buscar notícias:', error.message);
-        setError(error.message);
-        toast({
-          title: 'Erro ao buscar notícias',
-          description: error.message,
-          variant: 'destructive',
-        });
+    if (selectedTema) {
+      queryParams.push(`tema=${encodeURIComponent(selectedTema)}`);
+    }
+
+    if (selectedAvaliacao) {
+      queryParams.push(`avaliacao=${encodeURIComponent(selectedAvaliacao)}`);
+    }
+
+    url += `?${queryParams.join('&')}`;
+
+    console.log('Buscando notícias com URL:', url);
+
+    try {
+      const response = await fetch(url);
+      console.log('Resposta da API:', response.status, response.statusText);
+      if (!response.ok) throw new Error(`Erro na requisição: ${response.status} - ${response.statusText}`);
+      const responseData = await response.json();
+      console.log('Dados recebidos da API:', responseData);
+
+      const { data, meta } = responseData;
+      if (Array.isArray(data)) {
+        const dataWithIds = data.map((item: any, index: number) => ({
+          ...item,
+          id: item.id || `noticia-${index}`,
+          pontos: item.pontos || 0,
+          ciclo: item.ciclo || null,
+          categoria: item.categoria || null,
+          subcategoria: item.subcategoria || null,
+        }));
+        console.log('Notícias mapeadas:', dataWithIds);
+        setNoticias(dataWithIds);
+        setTotalItems(meta?.total || data.length);
+        setCurrentDate(meta?.date || null);
+        setHasNext(meta?.hasNext || false);
+        setHasPrevious(meta?.hasPrevious || false);
+      } else {
+        console.warn('Dados não são um array:', data);
         setNoticias([]);
         setTotalItems(0);
         setCurrentDate(null);
         setHasNext(false);
         setHasPrevious(false);
-      } finally {
-        setIsLoading(false);
+        setError('Formato de dados inesperado retornado pela API.');
       }
-    };
+    } catch (error: any) {
+      console.error('Erro ao buscar notícias:', error.message);
+      setError(error.message);
+      toast({
+        title: 'Erro ao buscar notícias',
+        description: error.message,
+        variant: 'destructive',
+      });
+      setNoticias([]);
+      setTotalItems(0);
+      setCurrentDate(null);
+      setHasNext(false);
+      setHasPrevious(false);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
-    fetchNoticias();
-  }, [selectedDate, selectedDateEstrategicas, selectedDateLixeira, selectedDateSuporte, selectedDateUtil, filtroAtivo, toast]);
+  fetchNoticias();
+}, [selectedDate, selectedDateEstrategicas, selectedDateLixeira, selectedDateSuporte, selectedDateUtil, filtroAtivo, selectedPortal, selectedTitle, selectedTema, selectedAvaliacao, toast]);
 
   const handleDateChange = (date: Date | undefined) => {
     setSelectedDate(date);
@@ -890,216 +942,244 @@ const Spreadsheet: React.FC = () => {
   };
 
   const handleNext = async () => {
-    if (hasNext && currentDate) {
-      setIsLoading(true);
-      setCurrentDate(null);
-      let url = `${API_BASE_URL}/noticias`;
-      let nextDate: Date | undefined;
+  if (hasNext && currentDate) {
+    setIsLoading(true);
+    setCurrentDate(null);
+    let url = `${API_BASE_URL}/noticias`;
+    let nextDate: Date | undefined;
+    const queryParams: string[] = [];
 
-      if (filtroAtivo === 'Nenhum') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        nextDate = subDays(current, 1); // Próxima data (anterior no tempo)
-        const queryParams = ['relevancia=null'];
-        if (nextDate) {
-          const dateFormatted = format(nextDate, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Estrategica') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        nextDate = subDays(current, 1);
-        const queryParams = ['estrategica=true'];
-        if (selectedDateEstrategicas || nextDate) {
-          const dateToUse = selectedDateEstrategicas || nextDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Útil') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        nextDate = subDays(current, 1);
-        const queryParams = ['relevancia=Útil'];
-        if (selectedDateUtil || nextDate) {
-          const dateToUse = selectedDateUtil || nextDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Lixo') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        nextDate = subDays(current, 1);
-        const queryParams = ['relevancia=Lixo'];
-        if (selectedDateLixeira || nextDate) {
-          const dateToUse = selectedDateLixeira || nextDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Suporte') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        nextDate = subDays(current, 1);
-        const queryParams = ['relevancia=Suporte'];
-        if (selectedDateSuporte || nextDate) {
-          const dateToUse = selectedDateSuporte || nextDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
+    if (filtroAtivo === 'Nenhum') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      nextDate = subDays(current, 1);
+      queryParams.push('relevancia=null');
+      if (nextDate) {
+        const dateFormatted = format(nextDate, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
       }
-
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Falha ao buscar próxima data');
-        const { data, meta } = await response.json();
-        const dataWithIds = data.map((item: any, index: number) => ({
-          ...item,
-          id: item.id || `noticia-${index}`,
-          pontos: item.pontos || 0,
-          ciclo: item.ciclo || null,
-          categoria: item.categoria || null,
-          subcategoria: item.subcategoria || null,
-        }));
-        setNoticias(dataWithIds);
-        setTotalItems(meta?.total || data.length);
-        setCurrentDate(meta?.date || null);
-        setHasNext(meta?.hasNext || false);
-        setHasPrevious(meta?.hasPrevious || false);
-        if (filtroAtivo === 'Nenhum' && nextDate) {
-          setSelectedDate(nextDate);
-        } else if (filtroAtivo === 'Estrategica' && nextDate && !selectedDateEstrategicas) {
-          setSelectedDateEstrategicas(nextDate);
-        } else if (filtroAtivo === 'Útil' && nextDate && !selectedDateUtil) {
-          setSelectedDateUtil(nextDate);
-        } else if (filtroAtivo === 'Lixo' && nextDate && !selectedDateLixeira) {
-          setSelectedDateLixeira(nextDate);
-        } else if (filtroAtivo === 'Suporte' && nextDate && !selectedDateSuporte) {
-          setSelectedDateSuporte(nextDate);
-        }
-      } catch (error: any) {
-        toast({
-          title: 'Erro ao buscar próxima data',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+    } else if (filtroAtivo === 'Estrategica') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      nextDate = subDays(current, 1);
+      queryParams.push('estrategica=true');
+      if (selectedDateEstrategicas || nextDate) {
+        const dateToUse = selectedDateEstrategicas || nextDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Útil') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      nextDate = subDays(current, 1);
+      queryParams.push('relevancia=Útil');
+      if (selectedDateUtil || nextDate) {
+        const dateToUse = selectedDateUtil || nextDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Lixo') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      nextDate = subDays(current, 1);
+      queryParams.push('relevancia=Lixo');
+      if (selectedDateLixeira || nextDate) {
+        const dateToUse = selectedDateLixeira || nextDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Suporte') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      nextDate = subDays(current, 1);
+      queryParams.push('relevancia=Suporte');
+      if (selectedDateSuporte || nextDate) {
+        const dateToUse = selectedDateSuporte || nextDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
       }
     }
-  };
+
+    if (selectedPortal) {
+      queryParams.push(`portal=${encodeURIComponent(selectedPortal)}`);
+    }
+
+    if (selectedTitle) {
+      queryParams.push(`titulo=${encodeURIComponent(selectedTitle)}`);
+    }
+
+    if (selectedTema) {
+      queryParams.push(`tema=${encodeURIComponent(selectedTema)}`);
+    }
+
+    if (selectedAvaliacao) {
+      queryParams.push(`avaliacao=${encodeURIComponent(selectedAvaliacao)}`);
+    }
+
+    url += `?${queryParams.join('&')}`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Falha ao buscar próxima data');
+      const { data, meta } = await response.json();
+      const dataWithIds = data.map((item: any, index: number) => ({
+        ...item,
+        id: item.id || `noticia-${index}`,
+        pontos: item.pontos || 0,
+        ciclo: item.ciclo || null,
+        categoria: item.categoria || null,
+        subcategoria: item.subcategoria || null,
+      }));
+      setNoticias(dataWithIds);
+      setTotalItems(meta?.total || data.length);
+      setCurrentDate(meta?.date || null);
+      setHasNext(meta?.hasNext || false);
+      setHasPrevious(meta?.hasPrevious || false);
+      if (filtroAtivo === 'Nenhum' && nextDate) {
+        setSelectedDate(nextDate);
+      } else if (filtroAtivo === 'Estrategica' && nextDate && !selectedDateEstrategicas) {
+        setSelectedDateEstrategicas(nextDate);
+      } else if (filtroAtivo === 'Útil' && nextDate && !selectedDateUtil) {
+        setSelectedDateUtil(nextDate);
+      } else if (filtroAtivo === 'Lixo' && nextDate && !selectedDateLixeira) {
+        setSelectedDateLixeira(nextDate);
+      } else if (filtroAtivo === 'Suporte' && nextDate && !selectedDateSuporte) {
+        setSelectedDateSuporte(nextDate);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao buscar próxima data',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+};
 
   const handlePrevious = async () => {
-    if (hasPrevious && currentDate) {
-      setIsLoading(true);
-      setCurrentDate(null);
-      let url = `${API_BASE_URL}/noticias`;
-      let previousDate: Date | undefined;
+  if (hasPrevious && currentDate) {
+    setIsLoading(true);
+    setCurrentDate(null);
+    let url = `${API_BASE_URL}/noticias`;
+    let previousDate: Date | undefined;
+    const queryParams: string[] = [];
 
-      if (filtroAtivo === 'Nenhum') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        previousDate = addDays(current, 1); // Data anterior (posterior no tempo)
-        const queryParams = ['relevancia=null'];
-        if (previousDate) {
-          const dateFormatted = format(previousDate, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Estrategica') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        previousDate = addDays(current, 1);
-        const queryParams = ['estrategica=true'];
-        if (selectedDateEstrategicas || previousDate) {
-          const dateToUse = selectedDateEstrategicas || previousDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Útil') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        previousDate = addDays(current, 1);
-        const queryParams = ['relevancia=Útil'];
-        if (selectedDateUtil || previousDate) {
-          const dateToUse = selectedDateUtil || previousDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Lixo') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        previousDate = addDays(current, 1);
-        const queryParams = ['relevancia=Lixo'];
-        if (selectedDateLixeira || previousDate) {
-          const dateToUse = selectedDateLixeira || previousDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
-      } else if (filtroAtivo === 'Suporte') {
-        const current = parse(currentDate, 'dd/MM/yyyy', new Date());
-        previousDate = addDays(current, 1);
-        const queryParams = ['relevancia=Suporte'];
-        if (selectedDateSuporte || previousDate) {
-          const dateToUse = selectedDateSuporte || previousDate;
-          const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
-          queryParams.push(`date=${dateFormatted}`);
-        } else {
-          queryParams.push('all=true');
-        }
-        url += `?${queryParams.join('&')}`;
+    if (filtroAtivo === 'Nenhum') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      previousDate = addDays(current, 1);
+      queryParams.push('relevancia=null');
+      if (previousDate) {
+        const dateFormatted = format(previousDate, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
       }
-
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Falha ao buscar data anterior');
-        const { data, meta } = await response.json();
-        const dataWithIds = data.map((item: any, index: number) => ({
-          ...item,
-          id: item.id || `noticia-${index}`,
-          pontos: item.pontos || 0,
-          ciclo: item.ciclo || null,
-          categoria: item.categoria || null,
-          subcategoria: item.subcategoria || null,
-        }));
-        setNoticias(dataWithIds);
-        setTotalItems(meta?.total || data.length);
-        setCurrentDate(meta?.date || null);
-        setHasNext(meta?.hasNext || false);
-        setHasPrevious(meta?.hasPrevious || false);
-        if (filtroAtivo === 'Nenhum' && previousDate) {
-          setSelectedDate(previousDate);
-        } else if (filtroAtivo === 'Estrategica' && previousDate && !selectedDateEstrategicas) {
-          setSelectedDateEstrategicas(previousDate);
-        } else if (filtroAtivo === 'Útil' && previousDate && !selectedDateUtil) {
-          setSelectedDateUtil(previousDate);
-        } else if (filtroAtivo === 'Lixo' && previousDate && !selectedDateLixeira) {
-          setSelectedDateLixeira(previousDate);
-        } else if (filtroAtivo === 'Suporte' && previousDate && !selectedDateSuporte) {
-          setSelectedDateSuporte(previousDate);
-        }
-      } catch (error: any) {
-        toast({
-          title: 'Erro ao buscar data anterior',
-          description: error.message,
-          variant: 'destructive',
-        });
-      } finally {
-        setIsLoading(false);
+    } else if (filtroAtivo === 'Estrategica') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      previousDate = addDays(current, 1);
+      queryParams.push('estrategica=true');
+      if (selectedDateEstrategicas || previousDate) {
+        const dateToUse = selectedDateEstrategicas || previousDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Útil') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      previousDate = addDays(current, 1);
+      queryParams.push('relevancia=Útil');
+      if (selectedDateUtil || previousDate) {
+        const dateToUse = selectedDateUtil || previousDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Lixo') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      previousDate = addDays(current, 1);
+      queryParams.push('relevancia=Lixo');
+      if (selectedDateLixeira || previousDate) {
+        const dateToUse = selectedDateLixeira || previousDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
+      }
+    } else if (filtroAtivo === 'Suporte') {
+      const current = parse(currentDate, 'dd/MM/yyyy', new Date());
+      previousDate = addDays(current, 1);
+      queryParams.push('relevancia=Suporte');
+      if (selectedDateSuporte || previousDate) {
+        const dateToUse = selectedDateSuporte || previousDate;
+        const dateFormatted = format(dateToUse, 'yyyy-MM-dd');
+        queryParams.push(`date=${dateFormatted}`);
+      } else {
+        queryParams.push('all=true');
       }
     }
-  };
+
+    if (selectedPortal) {
+      queryParams.push(`portal=${encodeURIComponent(selectedPortal)}`);
+    }
+
+    if (selectedTitle) {
+      queryParams.push(`titulo=${encodeURIComponent(selectedTitle)}`);
+    }
+
+    if (selectedTema) {
+      queryParams.push(`tema=${encodeURIComponent(selectedTema)}`);
+    }
+
+    if (selectedAvaliacao) {
+      queryParams.push(`avaliacao=${encodeURIComponent(selectedAvaliacao)}`);
+    }
+
+    url += `?${queryParams.join('&')}`;
+
+    try {
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Falha ao buscar data anterior');
+      const { data, meta } = await response.json();
+      const dataWithIds = data.map((item: any, index: number) => ({
+        ...item,
+        id: item.id || `noticia-${index}`,
+        pontos: item.pontos || 0,
+        ciclo: item.ciclo || null,
+        categoria: item.categoria || null,
+        subcategoria: item.subcategoria || null,
+      }));
+      setNoticias(dataWithIds);
+      setTotalItems(meta?.total || data.length);
+      setCurrentDate(meta?.date || null);
+      setHasNext(meta?.hasNext || false);
+      setHasPrevious(meta?.hasPrevious || false);
+      if (filtroAtivo === 'Nenhum' && previousDate) {
+        setSelectedDate(previousDate);
+      } else if (filtroAtivo === 'Estrategica' && previousDate && !selectedDateEstrategicas) {
+        setSelectedDateEstrategicas(previousDate);
+      } else if (filtroAtivo === 'Útil' && previousDate && !selectedDateUtil) {
+        setSelectedDateUtil(previousDate);
+      } else if (filtroAtivo === 'Lixo' && previousDate && !selectedDateLixeira) {
+        setSelectedDateLixeira(previousDate);
+      } else if (filtroAtivo === 'Suporte' && previousDate && !selectedDateSuporte) {
+        setSelectedDateSuporte(previousDate);
+      }
+    } catch (error: any) {
+      toast({
+        title: 'Erro ao buscar data anterior',
+        description: error.message,
+        variant: 'destructive',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  }
+};
 
   const columns = filtroAtivo === 'Estrategica'
     ? estrategicas.columns
@@ -1128,6 +1208,16 @@ const Spreadsheet: React.FC = () => {
               <p className="text-[#9ca3af]">Gerenciamento e análise de notícias</p>
             </div>
             <div className="flex items-center gap-3 mt-4 md:mt-0">
+              <FiltroGlobal
+                selectedDate={
+                  filtroAtivo === 'Estrategica' ? selectedDateEstrategicas :
+                  filtroAtivo === 'Útil' ? selectedDateUtil :
+                  filtroAtivo === 'Lixo' ? selectedDateLixeira :
+                  filtroAtivo === 'Suporte' ? selectedDateSuporte :
+                  selectedDate
+                }
+                onFilterChange={handleFilterChange}
+              />
               {filtroAtivo === 'Estrategica' ? (
                 <span
                   onClick={toggleFiltroEstrategica}
@@ -1210,7 +1300,7 @@ const Spreadsheet: React.FC = () => {
               </div>
             ) : error ? (
               <div className="flex items-center justify-center h-[300px]">
-                <p className="text-[#f87171]">Erro ao carregar dados: {error}</p>
+                <p className="text-[#f87171]">Erro ao carregar dados: ${error}</p>
               </div>
             ) : noticias.length === 0 ? (
               <div className="flex items-center justify-center h-[300px]">
