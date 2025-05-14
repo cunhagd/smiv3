@@ -1,20 +1,21 @@
 import React, { useState } from 'react';
-import { CircleHelp, Smile, Frown, Meh, CircleCheckBig, Trash2, Lightbulb, Sparkles, ExternalLink, CircleArrowLeft } from 'lucide-react';
+import { CircleHelp, Smile, Frown, Meh, CircleCheckBig, Trash2, Lightbulb, Sparkles, ExternalLink, CircleArrowLeft, SlidersHorizontal } from 'lucide-react';
 import * as Dialog from '@radix-ui/react-dialog';
 
 const BotaoAjuda: React.FC = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const iconesLegenda = [
-    { icone: CircleCheckBig, nome: 'Utilidade: Útil', descricao: 'Marca a notícia como útil / Abre notícias Úteis.', cor: '#fa6bfa' },
-    { icone: Trash2, nome: 'Utilidade: Lixo', descricao: 'Marca a notícia como lixo / Abre a Lixeira.', cor: '#f5a340' },
-    { icone: Lightbulb, nome: 'Utlidade: Suporte', descricao: 'Marca a notícia como suporte / Abre noíticas de Suporte.', cor: 'blue-400' },
-    { icone: Smile, nome: 'Avaliação: Positiva', descricao: 'Indica que a notícia tem uma avaliação positiva.', cor: 'green-400' },
-    { icone: Meh, nome: 'Avaliação: Neutra', descricao: 'Indica que a notícia tem uma avaliação neutra.', cor: 'gray-600' },
-    { icone: Frown, nome: 'Avaliação: Negativa', descricao: 'Indica que a notícia tem uma avaliação negativa.', cor: 'red-600' },
-    { icone: Sparkles, nome: 'Notícias Estratégicas', descricao: 'Marca a notícia como estratégica / Ativa o filtro de notícias estratégicas.', cor: 'yellow-300' },
-    { icone: CircleArrowLeft, nome: 'Voltar à planilha', descricao: 'Sair da aba atual e voltar à planilha principal com todas notícias.', cor: 'white' },
-    { icone: ExternalLink, nome: 'Acessar notícia', descricao: 'Abre o link da notícia em uma nova aba.', cor: 'blue-400' },
+    { icone: SlidersHorizontal, nome: 'Filtro Global', descricao: 'Ativa o filtro para as colunas da planilha.', cor: 'text-white', fill: false },
+    { icone: CircleCheckBig, nome: 'Utilidade: Útil', descricao: 'Marca a notícia como útil / Abre notícias Úteis.', cor: 'text-[#fa6bfa]', fill: false },
+    { icone: Trash2, nome: 'Utilidade: Lixo', descricao: 'Marca a notícia como lixo / Abre a Lixeira.', cor: 'text-[#f5a340]', fill: false },
+    { icone: Lightbulb, nome: 'Utilidade: Suporte', descricao: 'Marca a notícia como suporte / Abre notícias de Suporte.', cor: 'text-blue-400', fill: false },
+    { icone: Smile, nome: 'Avaliação: Positiva', descricao: 'Indica que a notícia tem uma avaliação positiva.', cor: 'text-[#34d399]', fill: false },
+    { icone: Meh, nome: 'Avaliação: Neutra', descricao: 'Indica que a notícia tem uma avaliação neutra.', cor: 'text-[#9ca3af]', fill: false },
+    { icone: Frown, nome: 'Avaliação: Negativa', descricao: 'Indica que a notícia tem uma avaliação negativa.', cor: 'text-[#f87171]', fill: false },
+    { icone: Sparkles, nome: 'Notícias Estratégicas', descricao: 'Marca a notícia como estratégica / Ativa o filtro de notícias estratégicas.', cor: 'text-yellow-300', fill: true },
+    { icone: CircleArrowLeft, nome: 'Voltar à planilha', descricao: 'Sair da aba atual e voltar à planilha principal com todas notícias.', cor: 'text-white', fill: false },
+    { icone: ExternalLink, nome: 'Acessar notícia', descricao: 'Abre o link da notícia em uma nova aba.', cor: 'text-blue-400', fill: false },
   ];
 
   return (
@@ -51,19 +52,11 @@ const BotaoAjuda: React.FC = () => {
             </div>
 
             <div className="space-y-4">
-              {iconesLegenda.map(({ icone: Icone, nome, descricao, cor }) => (
+              {iconesLegenda.map(({ icone: Icone, nome, descricao, cor, fill }) => (
                 <div key={nome} className="flex items-center gap-3">
                   <Icone
-                    className={`h-5 w-5 ${
-                      nome === 'Utilidade: Útil' || nome === 'Utilidade: Lixo'
-                        ? ''
-                        : `text-${cor} ${nome === 'Notícias Estratégicas' ? 'fill-yellow-300' : ''}`
-                    }`}
-                    style={
-                      nome === 'Utilidade: Útil' || nome === 'Utilidade: Lixo'
-                        ? { color: cor }
-                        : undefined
-                    }
+                    className={`h-5 w-5 ${cor} ${fill ? 'fill-current' : ''}`}
+                    stroke="currentColor"
                   />
                   <div>
                     <p className="text-sm font-medium text-white">{nome}</p>
