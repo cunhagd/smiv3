@@ -1,13 +1,12 @@
-
 import React from 'react';
-import { 
-  AreaChart as ReChartsAreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer 
+import {
+  AreaChart as ReChartsAreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
 } from 'recharts';
 
 interface AreaChartProps {
@@ -19,14 +18,33 @@ interface AreaChartProps {
   hideAxis?: boolean;
 }
 
-const AreaChart = ({ 
-  data, 
-  height = 200, 
-  gradientColor = "#CAF10A", 
-  yAxisKey = "value", 
-  xAxisKey = "name",
-  hideAxis = false
+const AreaChart = ({
+  data,
+  height = 200,
+  gradientColor = '#CAF10A',
+  yAxisKey = 'value',
+  xAxisKey = 'name',
+  hideAxis = false,
 }: AreaChartProps) => {
+  const CustomTooltip = ({ active, payload, label }: any) => {
+    if (active && payload && payload.length) {
+      return (
+        <div
+          style={{
+            backgroundColor: '#141414',
+            border: '1px solid rgba(255,255,255,0.1)',
+            borderRadius: '8px',
+            padding: '8px',
+          }}
+        >
+          <p style={{ color: 'rgba(255,255,255,0.7)', margin: 0 }}>{`Nome: ${label}`}</p>
+          <p style={{ color: '#fff', margin: 0 }}>{`Quantidade: ${payload[0].value}`}</p>
+        </div>
+      );
+    }
+    return null;
+  };
+
   return (
     <ResponsiveContainer width="100%" height={height}>
       <ReChartsAreaChart
@@ -44,39 +62,37 @@ const AreaChart = ({
             <stop offset="95%" stopColor={gradientColor} stopOpacity={0} />
           </linearGradient>
         </defs>
-        
-        {!hideAxis && <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />}
-        
-        {!hideAxis && <XAxis 
-          dataKey={xAxisKey} 
-          tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
-          axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-          tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-        />}
-        
-        {!hideAxis && <YAxis 
-          tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
-          axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-          tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
-        />}
-        
-        <Tooltip 
-          contentStyle={{ 
-            backgroundColor: '#141414', 
-            border: '1px solid rgba(255,255,255,0.1)',
-            borderRadius: '8px',
-            color: '#fff'
-          }}
-          labelStyle={{ color: 'rgba(255,255,255,0.7)' }}
-        />
-        
-        <Area 
-          type="monotone" 
-          dataKey={yAxisKey} 
-          stroke={gradientColor} 
+
+        {!hideAxis && (
+          <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
+        )}
+
+        {!hideAxis && (
+          <XAxis
+            dataKey={xAxisKey}
+            tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+            axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+          />
+        )}
+
+        {!hideAxis && (
+          <YAxis
+            tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+            axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+          />
+        )}
+
+        <Tooltip content={<CustomTooltip />} cursor={{ fill: 'rgba(255,255,255,0.1)' }} />
+
+        <Area
+          type="monotone"
+          dataKey={yAxisKey}
+          stroke={gradientColor}
           strokeWidth={2}
           fillOpacity={1}
-          fill="url(#colorGradient)" 
+          fill="url(#colorGradient)"
         />
       </ReChartsAreaChart>
     </ResponsiveContainer>
