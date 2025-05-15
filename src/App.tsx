@@ -1,7 +1,9 @@
+
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Spreadsheet from './pages/Spreadsheet';
-import SemanaEstrategica from './pages/SemanaEstrategica'; // Ajuste o caminho conforme sua estrutura
+import SemanaEstrategica from './pages/SemanaEstrategica';
+import Gerenciamento from './pages/Gerenciamento';
 import Login from './pages/Login';
 
 function App() {
@@ -17,6 +19,7 @@ function App() {
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/spreadsheet" element={<Spreadsheet />} />
         <Route path="/semana-estrategica" element={<SemanaEstrategica />} />
+        <Route path="/gerenciamento" element={<Gerenciamento />} />
         {/* Mantém a rota de login */}
         <Route path="/login" element={<Login />} />
       </Routes>

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
 
@@ -41,6 +42,12 @@ const Navbar = () => {
               className={`nav-link ${isActive("/semana-estrategica") && "active"}`}
             >
               Semana Estratégica
+            </Link>
+            <Link 
+              to="/gerenciamento" 
+              className={`nav-link ${isActive("/gerenciamento") && "active"}`}
+            >
+              Gerenciamento
             </Link>
           </nav>
         )}
