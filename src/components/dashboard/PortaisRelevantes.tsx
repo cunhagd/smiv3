@@ -50,6 +50,7 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
             ? data.map(item => ({
                 portal: item.portal || 'Desconhecido',
                 pontuacao: item.pontuacao || item.value || 0,
+                qtd: item.qtd || 0, // Adiciona o campo qtd ao formato dos dados
               })).slice(0, 5) // Limitar a 5 portais
             : [];
           setPortaisData({
@@ -82,6 +83,7 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
         <div className="custom-tooltip" style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px' }}>
           <p style={{ color: 'rgba(255,255,255,0.7)', margin: 0 }}>{`Portal: ${label}`}</p>
           <p style={{ color: '#fff', margin: 0 }}>{`Pontuação: ${payload[0].value}`}</p>
+          <p style={{ color: '#fff', margin: 0 }}>{`Quantidade: ${payload[0].payload.qtd}`}</p> {/* Adiciona a quantidade */}
         </div>
       );
     }
@@ -127,7 +129,7 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
               textAnchor="end"
               height={60}
             />
-            <YAxis stroke="#888" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} />
+            <YAxis stroke="#888" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} domain={['auto', 0]} />
             <Tooltip
               content={<CustomTooltip />}
               cursor={false}
