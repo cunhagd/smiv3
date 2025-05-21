@@ -13,6 +13,7 @@ interface NoticiasNegativasProps {
 
 const NoticiasNegativas: React.FC<NoticiasNegativasProps> = ({ dateRange }) => {
   const [totalNoticiasNegativas, setTotalNoticiasNegativas] = useState(0);
+  const [sentimentTotals, setSentimentTotals] = useState({ positivas: 0, neutras: 0, negativas: 0 });
   const [isLoadingNoticiasNegativas, setIsLoadingNoticiasNegativas] = useState(true);
 
   const totalNoticiasNegativasMemo = React.useMemo(() => {
@@ -32,7 +33,29 @@ const NoticiasNegativas: React.FC<NoticiasNegativasProps> = ({ dateRange }) => {
 
     if (from && to) {
       const startTimeNoticiasNegativas = Date.now();
-      fetch(`https://smi-api-production-fae2.up.railway.app/dashboard/noticias-negativas?dataInicio=${from}&dataFim=${to}`)
+      // Fetch para sentimento-noticias
+      fetch(`https://smi-api-production-fae2.up.railway.app/dashboard/sentimento-noticias?dataInicio=${from}&dataFim=${to}`)
+        .then(response => {
+          if (!response.ok) {
+            throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
+          }
+          return response.json();
+        })
+        .then(data => {
+          const totals = data.reduce(
+            (acc, item) => {
+              acc.positivas += item.positivas || 0;
+              acc.negativas += item.negativas || 0;
+              acc.neutras += item.neutras || 0;
+              return acc;
+            },
+            { positivas: 0, negativas: 0, neutras: 0 }
+          );
+          setSentimentTotals(totals);
+
+          // Fetch específico para notícias negativas
+          return fetch(`https://smi-api-production-fae2.up.railway.app/dashboard/noticias-negativas?dataInicio=${from}&dataFim=${to}`);
+        })
         .then(response => {
           if (!response.ok) {
             throw new Error(`Erro HTTP! Status: ${response.status} - ${response.statusText}`);
@@ -45,7 +68,7 @@ const NoticiasNegativas: React.FC<NoticiasNegativasProps> = ({ dateRange }) => {
           setTotalNoticiasNegativas(data.total || 0);
         })
         .catch(error => {
-          console.error('Erro ao buscar notícias negativas:', error.message);
+          console.error('Erro ao buscar dados:', error.message);
         })
         .finally(() => {
           setIsLoadingNoticiasNegativas(false);
@@ -53,13 +76,24 @@ const NoticiasNegativas: React.FC<NoticiasNegativasProps> = ({ dateRange }) => {
     }
   }, [dateRange]);
 
+  // Calcular o percentual de notícias negativas
+  const total = sentimentTotals.positivas + sentimentTotals.neutras + sentimentTotals.negativas;
+  const percentage = total > 0 ? (sentimentTotals.negativas / total) * 100 : 0;
+
   return (
     <StatCard
       title="Notícias Negativas"
       value={isLoadingNoticiasNegativas ? "..." : totalNoticiasNegativasMemo.toString()}
       isPositive
       icon={<Frown className="text-[#f87171]" />}
-    />
+    >
+      {!isLoadingNoticiasNegativas && (
+        <div className="mt-2 flex items-center gap-2">
+          <span className="text-sm text-[#f87171] font-medium">{Math.round(percentage)}%</span>
+          <span className="text-xs text-gray-400">do total</span>
+        </div>
+      )}
+    </StatCard>
   );
 };
 

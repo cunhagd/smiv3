@@ -1,3 +1,4 @@
+// src/components/dashboard/TotalNoticias.tsx
 import React, { useState, useEffect } from 'react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -61,7 +62,10 @@ const TotalNoticias: React.FC<TotalNoticiasProps> = ({ dateRange }) => {
       value={isLoadingNoticias ? "..." : totalNoticiasMemo.toString()}
       isPositive
       icon={<Newspaper className="h-6 w-6" />}
-    />
+    >
+      {/* Espaço reservado para manter a altura consistente */}
+      {!isLoadingNoticias && <div className="mt-1"></div>}
+    </StatCard>
   );
 };
 

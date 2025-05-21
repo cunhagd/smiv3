@@ -1,5 +1,6 @@
+// src/components/dashboard/Pontuacao.tsx
 import React, { useState, useEffect } from 'react';
-import { Trophy as Trophy } from 'lucide-react';
+import { Trophy } from 'lucide-react';
 import StatCard from '../StatCard';
 
 interface PontuacaoProps {
@@ -56,7 +57,10 @@ const Pontuacao: React.FC<PontuacaoProps> = ({ dateRange }) => {
       value={isLoadingPontuacao ? "..." : totalPontuacaoMemo.toString()}
       isPositive
       icon={<Trophy className="h-6 w-6" />}
-    />
+    >
+      {/* Espaço reservado para manter a altura consistente */}
+      {!isLoadingPontuacao && <div className="mt-1"></div>}
+    </StatCard>
   );
 };
 
