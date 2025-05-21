@@ -24,6 +24,13 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
   const [isLoadingPortais, setIsLoadingPortais] = useState(true);
   const [hoveredBar, setHoveredBar] = useState<string | null>(null);
 
+  // Definindo as cores para Positivas, Neutras e Negativas
+  const sentimentColors = {
+    Positivas: '#CAF10A',
+    Neutras: '#AEAEAE',
+    Negativas: '#FF4D4D',
+  };
+
   useEffect(() => {
     const defaultFrom = new Date(new Date().setDate(new Date().getDate() - 30));
     const defaultTo = new Date();
@@ -45,12 +52,17 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
         })
         .then(data => {
           console.log(`Dados de portais relevantes (${selectedType}) recebidos da API:`, data);
-          // Garantir que os dados estejam no formato esperado
           const formattedData = Array.isArray(data)
             ? data.map(item => ({
                 portal: item.portal || 'Desconhecido',
-                pontuacao: item.pontuacao || item.value || 0,
-                qtd: item.qtd || 0, // Adiciona o campo qtd ao formato dos dados
+                pontuacao: item.pontuacao || 0,
+                quantidade: item.quantidade || 0,
+                positivo: item.positivo || 0,
+                negativo: item.negativo || 0,
+                neutro: item.neutro || 0,
+                '%positivo': item['%positivo'] || '0%',
+                '%negativo': item['%negativo'] || '0%',
+                '%neutro': item['%neutro'] || '0%',
               })).slice(0, 5) // Limitar a 5 portais
             : [];
           setPortaisData({
@@ -79,11 +91,74 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
 
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
+      const data = payload[0].payload;
+
+      // Preparar os dados para o gráfico de pizza
+      const sentimentData = [
+        { name: 'Positivo', value: parseFloat(data['%positivo']) || 0, color: sentimentColors.Positivas },
+        { name: 'Neutro', value: parseFloat(data['%neutro']) || 0, color: sentimentColors.Neutras },
+        { name: 'Negativo', value: parseFloat(data['%negativo']) || 0, color: sentimentColors.Negativas },
+      ];
+
+      // Calcular o total de percentuais
+      const total = sentimentData.reduce((acc, item) => acc + item.value, 0);
+
+      // Calcular os ângulos acumulados para o gráfico de pizza
+      let accumulatedAngle = 0;
+      const gradientStops = sentimentData.map(item => {
+        const proportion = total > 0 ? item.value / total : 0;
+        const angle = proportion * 360;
+        const startAngle = accumulatedAngle;
+        accumulatedAngle += angle;
+        return { color: item.color, startAngle, endAngle: accumulatedAngle };
+      });
+
+      // Gerar a string de conic-gradient
+      const gradientString = gradientStops
+        .map(({ color, startAngle, endAngle }) => `${color} ${startAngle}deg ${endAngle}deg`)
+        .join(', ');
+
       return (
-        <div className="custom-tooltip" style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px' }}>
-          <p style={{ color: 'rgba(255,255,255,0.7)', margin: 0 }}>{`Portal: ${label}`}</p>
-          <p style={{ color: '#fff', margin: 0 }}>{`Pontuação: ${payload[0].value}`}</p>
-          <p style={{ color: '#fff', margin: 0 }}>{`Quantidade: ${payload[0].payload.qtd}`}</p> {/* Adiciona a quantidade */}
+        <div className="custom-tooltip" style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px' }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', margin: '0 0 8px 0' }}><strong>Portal:</strong> {label}</p>
+          <p style={{ color: '#fff', margin: '0 0 8px 0' }}><strong>Pontuação:</strong> {data.pontuacao}</p>
+          <br />
+          {/* Contêiner flex para os valores, gráfico e percentuais */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            {/* Coluna dos valores numéricos */}
+            <div>
+              <p style={{ color: sentimentColors.Positivas, margin: '0 0 8px 0' }}>Positivas: {data.positivo}</p>
+              <p style={{ color: sentimentColors.Negativas, margin: '0 0 8px 0' }}>Negativas: {data.negativo}</p>
+              <p style={{ color: sentimentColors.Neutras, margin: '0 0 8px 0' }}>Neutras: {data.neutro}</p>
+              <p style={{ margin: '0 0 8px 0' }}></p> {/* Linha vazia */}
+              <p style={{ color: '#fff', margin: '0 0 8px 0' }}><strong>Total de Notícias: </strong>{data.quantidade}</p>
+            </div>
+            {/* Gráfico de Pizza */}
+            <div className="w-20 h-20 relative rounded-full overflow-hidden">
+              <div
+                className="absolute w-full h-full"
+                style={{
+                  background: `conic-gradient(${gradientString})`,
+                  borderRadius: '50%',
+                }}
+              />
+            </div>
+            {/* Coluna dos percentuais com inline blocks à esquerda */}
+            <div>
+              <p style={{ color: sentimentColors.Positivas, margin: '0 0 8px 0' }}>
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: sentimentColors.Positivas, marginRight: '4px' }}></span>
+                {data['%positivo']}
+              </p>
+              <p style={{ color: sentimentColors.Negativas, margin: '0 0 8px 0' }}>
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: sentimentColors.Negativas, marginRight: '4px' }}></span>
+                {data['%negativo']}
+              </p>
+              <p style={{ color: sentimentColors.Neutras, margin: '0 0 8px 0' }}>
+                <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: sentimentColors.Neutras, marginRight: '4px' }}></span>
+                {data['%neutro']}
+              </p>
+            </div>
+          </div>
         </div>
       );
     }
