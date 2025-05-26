@@ -1,355 +1,209 @@
-import React from "react";
-import { useForm, Controller } from "react-hook-form";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Save } from "lucide-react";
-import Navbar from "../components/Navbar";
-import DatePicker from "@/components/DateRangePicker"; // Assuming single-date picker
+import React, { useState, useEffect } from "react";
+import { Card } from "@/components/ui/card";
+import { FilePlus, CircleArrowLeft, Turtle, HousePlus } from "lucide-react";
+import Navbar from "@/components/Navbar";
+import axios from "axios";
+import PortaisCadastrados from "@/components/gerenciamento/portaisCadastrados";
+import FiltroPortalCadastrado from "@/components/gerenciamento/FiltroPortalCadastrado";
+import AdicionarNoticia from "@/components/gerenciamento/AdicionarNoticia";
+import AdicionarPortal from "@/components/gerenciamento/AdicionarPortal";
 
-interface NoticiaFormData {
-  data?: Date;
-  portal: string;
-  titulo: string;
-  link: string;
-  corpo: string;
-  tema: string;
-  avaliacao: string;
-  pontos: number;
-  abrangencia: string;
-  prioridade: string;
-  estrategica: string;
-}
-
-interface PortalFormData {
+interface Portal {
   nome: string;
-  data?: Date;
   pontos: number;
   abrangencia: string;
   prioridade: string;
   url: string;
 }
 
+interface FilterState {
+  nome: string;
+  pontos: string;
+  abrangencia: string;
+  prioridade: string;
+  url: string;
+}
+
+const API_BASE_URL = "https://smi-api-production-fae2.up.railway.app";
+
 const Gerenciamento = () => {
-  const noticiaForm = useForm<NoticiaFormData>({
-    defaultValues: {
-      data: undefined,
-      portal: "",
-      titulo: "",
-      link: "",
-      corpo: "",
-      tema: "",
-      avaliacao: "",
-      pontos: 0,
-      abrangencia: "",
-      prioridade: "",
-      estrategica: "",
-    },
-  });
+  const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [portais, setPortais] = useState<Portal[]>([]);
+  const [filteredPortais, setFilteredPortais] = useState<Portal[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [isLoadingPortais, setIsLoadingPortais] = useState(false);
+  const [errorPortais, setErrorPortais] = useState<string | null>(null);
+  const [showNoticiaForm, setShowNoticiaForm] = useState(false);
+  const [showPortalForm, setShowPortalForm] = useState(false);
 
-  const portalForm = useForm<PortalFormData>({
-    defaultValues: {
-      nome: "",
-      data: undefined,
-      pontos: 0,
-      abrangencia: "",
-      prioridade: "",
-      url: "",
-    },
-  });
+  // Buscar lista de portais
+  useEffect(() => {
+    const fetchPortais = async () => {
+      setIsLoadingPortais(true);
+      try {
+        const response = await axios.get(`${API_BASE_URL}/portais/cadastrados`);
+        const portaisArray: Portal[] = Object.entries(response.data).map(([nome, dados]: [string, any]) => ({
+          nome,
+          pontos: dados.pontos,
+          abrangencia: dados.abrangencia,
+          prioridade: dados.prioridade,
+          url: dados.url,
+        }));
+        setPortais(portaisArray);
+        setFilteredPortais(portaisArray);
+      } catch (err) {
+        setErrorPortais("Erro ao carregar portais.");
+        console.error(err);
+      } finally {
+        setIsLoadingPortais(false);
+      }
+    };
+    fetchPortais();
+  }, []);
 
-  const onNoticiaSubmit = (data: NoticiaFormData) => {
-    console.log("Notícia:", data);
-    // TODO: Implement API call (e.g., axios.post(`${API_BASE_URL}/noticias`, data))
+  const handleSearchChange = (term: string) => {
+    setSearchTerm(term);
   };
 
-  const onPortalSubmit = (data: PortalFormData) => {
-    console.log("Portal:", data);
-    // TODO: Implement API call (e.g., axios.post(`${API_BASE_URL}/portais`, data))
+  const handleClearSearch = () => {
+    setSearchTerm("");
   };
 
-  const isNoticiaFormValid = !!noticiaForm.watch("titulo") && !!noticiaForm.watch("portal") && !!noticiaForm.watch("link");
-  const isPortalFormValid = !!portalForm.watch("nome") && !!portalForm.watch("url");
+  const handleFilterChange = (filters: FilterState) => {
+    const filtered = portais.filter((portal) => {
+      const matchesNome = filters.nome
+        ? portal.nome.toLowerCase().includes(filters.nome.toLowerCase())
+        : true;
+      const matchesPontos = filters.pontos
+        ? portal.pontos === parseInt(filters.pontos)
+        : true;
+      const matchesAbrangencia = filters.abrangencia
+        ? portal.abrangencia === filters.abrangencia
+        : true;
+      const matchesPrioridade = filters.prioridade
+        ? portal.prioridade === filters.prioridade
+        : true;
+      const matchesUrl = filters.url
+        ? portal.url.toLowerCase().includes(filters.url.toLowerCase())
+        : true;
+      return matchesNome && matchesPontos && matchesAbrangencia && matchesPrioridade && matchesUrl;
+    });
+    setFilteredPortais(filtered);
+  };
+
+  const handleToggleNoticiaForm = () => {
+    setShowNoticiaForm((prev) => !prev);
+    setShowPortalForm(false); // Ensure only one form is shown
+  };
+
+  const handleTogglePortalForm = () => {
+    setShowPortalForm((prev) => !prev);
+    setShowNoticiaForm(false); // Ensure only one form is shown
+  };
+
+  const handlePortalSubmitSuccess = (newPortal: Portal) => {
+    setPortais((prev) => [...prev, newPortal]);
+    setFilteredPortais((prev) => [...prev, newPortal]);
+    handleTogglePortalForm();
+  };
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
       <Navbar />
       <main className="p-6 md:p-8">
-        <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-6">
+        <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="text-2xl md:text-3xl font-bold">Gerenciamento</h1>
-            <p className="text-gray-400">Cadastro de notícias e portais</p>
+            <p className="text-[#9ca3af]">
+              {showNoticiaForm ? "Adicionar nova notícia" : showPortalForm ? "Adicionar novo portal" : "Gerencie notícias e portais com facilidade"}
+            </p>
           </div>
-          <div className="flex items-center gap-3 mt-4 md:mt-0"></div>
+          <div className="flex items-center gap-4">
+            {showNoticiaForm ? (
+              <span
+                onClick={handleToggleNoticiaForm}
+                className="cursor-pointer text-[#A50CE8] hover:text-[#AD8AEB] transition-colors"
+                title="Voltar"
+              >
+                <CircleArrowLeft className="h-6 w-6" />
+              </span>
+            ) : showPortalForm ? (
+              <span
+                onClick={handleTogglePortalForm}
+                className="cursor-pointer text-[#ED155A] hover:text-[#F0A1BA] transition-colors"
+                title="Voltar"
+              >
+                <CircleArrowLeft className="h-6 w-6" />
+              </span>
+            ) : (
+              <>
+                <span
+                  onClick={handleToggleNoticiaForm}
+                  className="cursor-pointer text-[#A50CE8] hover:text-[#AD8AEB] transition-colors"
+                  title="Adicionar Notícia"
+                >
+                  <FilePlus className="h-6 w-6" />
+                </span>
+                <span
+                  onClick={handleTogglePortalForm}
+                  className="cursor-pointer text-[#ED155A] hover:text-[#F0A1BA] transition-colors"
+                  title="Adicionar Portal"
+                >
+                  <HousePlus className="h-6 w-6" />
+                </span>
+                {isLoadingPortais ? (
+                  <div className="flex items-center justify-center h-[300px]">
+                    <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
+                  </div>
+                ) : errorPortais ? (
+                  <div className="text-red-400">{errorPortais}</div>
+                ) : (
+                  <FiltroPortalCadastrado
+                    searchTerm={searchTerm}
+                    onSearchChange={handleSearchChange}
+                    onClear={handleClearSearch}
+                    portais={portais}
+                    onFilterChange={handleFilterChange}
+                  />
+                )}
+              </>
+            )}
+          </div>
         </div>
+        {message && (
+          <div
+            className={`mb-6 p-4 rounded-lg ${
+              message.type === "success" ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"
+            }`}
+          >
+            {message.text}
+          </div>
+        )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Adicionar Notícia */}
-          <Card className="bg-[#141414] border border-white/10 text-white">
-            <CardHeader>
-              <CardTitle className="text-xl text-white">Adicionar Notícia</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={noticiaForm.handleSubmit(onNoticiaSubmit)} className="space-y-4">
-                <div className="grid gap-2">
-                  <label htmlFor="data" className="text-sm">Data</label>
-                  <Controller
-                    name="data"
-                    control={noticiaForm.control}
-                    render={({ field }) => (
-                      <DatePicker
-                        onChange={(date) => field.onChange(date)}
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="portal" className="text-sm">Portal</label>
-                  <select
-                    id="portal"
-                    {...noticiaForm.register("portal")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione um portal</option>
-                    <option value="g1">G1</option>
-                    <option value="uol">UOL</option>
-                    <option value="folha">Folha de São Paulo</option>
-                  </select>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="titulo" className="text-sm">Título</label>
-                  <input
-                    type="text"
-                    id="titulo"
-                    {...noticiaForm.register("titulo")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                    placeholder="Título da notícia"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="link" className="text-sm">Link</label>
-                  <input
-                    type="url"
-                    id="link"
-                    {...noticiaForm.register("link")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                    placeholder="https://"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="corpo" className="text-sm">Corpo</label>
-                  <textarea
-                    id="corpo"
-                    {...noticiaForm.register("corpo")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white min-h-[100px]"
-                    placeholder="Corpo da notícia"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="tema" className="text-sm">Tema</label>
-                  <select
-                    id="tema"
-                    {...noticiaForm.register("tema")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione um tema</option>
-                    <option value="Agricultura">Agricultura</option>
-                    <option value="Social">Social</option>
-                    <option value="Segurança Pública">Segurança Pública</option>
-                    <option value="Saúde">Saúde</option>
-                    <option value="Política">Política</option>
-                    <option value="Meio Ambiente">Meio Ambiente</option>
-                    <option value="Infraestrutura">Infraestrutura</option>
-                    <option value="Educação">Educação</option>
-                    <option value="Economia">Economia</option>
-                    <option value="Cultura">Cultura</option>
-                  </select>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="avaliacao" className="text-sm">Avaliação</label>
-                  <select
-                    id="avaliacao"
-                    {...noticiaForm.register("avaliacao")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione a avaliação</option>
-                    <option value="Positiva">Positiva</option>
-                    <option value="Negativa">Negativa</option>
-                    <option value="Neutra">Neutra</option>
-                  </select>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="pontos" className="text-sm">Pontos</label>
-                  <input
-                    type="number"
-                    id="pontos"
-                    {...noticiaForm.register("pontos", { valueAsNumber: true })}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                    placeholder="Pontuação"
-                    min="0"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="abrangencia" className="text-sm">Abrangência</label>
-                  <select
-                    id="abrangencia"
-                    {...noticiaForm.register("abrangencia")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione a abrangência</option>
-                    <option value="Nacional">Nacional</option>
-                    <option value="Regional">Regional</option>
-                    <option value="Local">Local</option>
-                  </select>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="prioridade" className="text-sm">Prioridade</label>
-                  <select
-                    id="prioridade"
-                    {...noticiaForm.register("prioridade")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione a prioridade</option>
-                    <option value="Alta">Alta</option>
-                    <option value="Média">Média</option>
-                    <option value="Baixa">Baixa</option>
-                  </select>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="estrategica" className="text-sm">Estratégica</label>
-                  <select
-                    id="estrategica"
-                    {...noticiaForm.register("estrategica")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione</option>
-                    <option value="Sim">Sim</option>
-                    <option value="Não">Não</option>
-                  </select>
-                </div>
-
-                <div className="text-right">
-                  <button
-                    type="submit"
-                    disabled={!isNoticiaFormValid}
-                    className={`flex items-center gap-2 px-4 py-2 bg-dark-card border border-white/10 rounded text-sm text-white hover:bg-[#f5a340]/20 hover:border-[#f5a340]/50 transition-all duration-300 ${
-                      !isNoticiaFormValid ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                    }`}
-                  >
-                    <Save className="h-5 w-5 text-[#f5a340] hover:text-[#f5b86e] transition-colors" />
-                    <span>Salvar Notícia</span>
-                  </button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          {/* Adicionar Portal */}
-          <Card className="bg-[#141414] border border-white/10 text-white">
-            <CardHeader>
-              <CardTitle className="text-xl text-white">Adicionar Portal</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={portalForm.handleSubmit(onPortalSubmit)} className="space-y-4">
-                <div className="grid gap-2">
-                  <label htmlFor="nome" className="text-sm">Nome</label>
-                  <input
-                    type="text"
-                    id="nome"
-                    {...portalForm.register("nome")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                    placeholder="Nome do portal"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="data" className="text-sm">Data</label>
-                  <Controller
-                    name="data"
-                    control={portalForm.control}
-                    render={({ field }) => (
-                      <DatePicker
-                        onChange={(date) => field.onChange(date)}
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="pontos" className="text-sm">Pontos</label>
-                  <input
-                    type="number"
-                    id="pontos"
-                    {...portalForm.register("pontos", { valueAsNumber: true })}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                    placeholder="Pontuação"
-                    min="0"
-                  />
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="abrangencia" className="text-sm">Abrangência</label>
-                  <select
-                    id="abrangencia"
-                    {...portalForm.register("abrangencia")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione a abrangência</option>
-                    <option value="Nacional">Nacional</option>
-                    <option value="Regional">Regional</option>
-                    <option value="Local">Local</option>
-                  </select>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="prioridade" className="text-sm">Prioridade</label>
-                  <select
-                    id="prioridade"
-                    {...portalForm.register("prioridade")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                  >
-                    <option value="">Selecione a prioridade</option>
-                    <option value="Alta">Alta</option>
-                    <option value="Média">Média</option>
-                    <option value="Baixa">Baixa</option>
-                  </select>
-                </div>
-
-                <div className="grid gap-2">
-                  <label htmlFor="url" className="text-sm">URL</label>
-                  <input
-                    type="url"
-                    id="url"
-                    {...portalForm.register("url")}
-                    className="bg-[#121212] border border-white/20 rounded p-2 text-white"
-                    placeholder="https://"
-                  />
-                </div>
-
-                <div className="text-right">
-                  <button
-                    type="submit"
-                    disabled={!isPortalFormValid}
-                    className={`flex items-center gap-2 px-4 py-2 bg-dark-card border border-white/10 rounded text-sm text-white hover:bg-[#f5a340]/20 hover:border-[#f5a340]/50 transition-all duration-300 ${
-                      !isPortalFormValid ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'
-                    }`}
-                  >
-                    <Save className="h-5 w-5 text-[#f5a340] hover:text-[#f5b86e] transition-colors" />
-                    <span>Salvar Portal</span>
-                  </button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
+        {showNoticiaForm ? (
+          <AdicionarNoticia
+            setMessage={setMessage}
+            onSubmitSuccess={handleToggleNoticiaForm}
+            onCancel={handleToggleNoticiaForm}
+          />
+        ) : showPortalForm ? (
+          <AdicionarPortal
+            setMessage={setMessage}
+            onSubmitSuccess={handlePortalSubmitSuccess}
+            onCancel={handleTogglePortalForm}
+          />
+        ) : (
+          <div className="space-y-10">
+            {/* Portais Cadastrados */}
+            <PortaisCadastrados
+              portais={filteredPortais}
+              setPortais={setPortais}
+              searchTerm={searchTerm}
+              onSearchChange={handleSearchChange}
+              onClear={handleClearSearch}
+            />
+          </div>
+        )}
       </main>
     </div>
   );
