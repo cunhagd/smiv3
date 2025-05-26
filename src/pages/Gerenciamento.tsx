@@ -3,7 +3,7 @@ import { Card } from "@/components/ui/card";
 import { FilePlus, CircleArrowLeft, Turtle, HousePlus } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import axios from "axios";
-import PortaisCadastrados from "@/components/gerenciamento/portaisCadastrados";
+import PortaisCadastrados from "@/components/gerenciamento/PortaisCadastrados";
 import FiltroPortalCadastrado from "@/components/gerenciamento/FiltroPortalCadastrado";
 import AdicionarNoticia from "@/components/gerenciamento/AdicionarNoticia";
 import AdicionarPortal from "@/components/gerenciamento/AdicionarPortal";
