@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
-import { Card } from "@/components/ui/card";
-import { FilePlus, CircleArrowLeft, Turtle, HousePlus } from "lucide-react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { FilePlus, CircleArrowLeft, Turtle, HousePlus, Lock } from "lucide-react";
 import Navbar from "@/components/Navbar";
 import axios from "axios";
 import PortaisCadastrados from "@/components/gerenciamento/PortaisCadastrados";
@@ -25,6 +25,7 @@ interface FilterState {
 }
 
 const API_BASE_URL = "https://smi-api-production-fae2.up.railway.app";
+const ADMIN_PASSWORD = "admin123"; // Senha hardcoded (alterar conforme necessário)
 
 const Gerenciamento = () => {
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
@@ -35,9 +36,24 @@ const Gerenciamento = () => {
   const [errorPortais, setErrorPortais] = useState<string | null>(null);
   const [showNoticiaForm, setShowNoticiaForm] = useState(false);
   const [showPortalForm, setShowPortalForm] = useState(false);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [password, setPassword] = useState("");
+  const [passwordError, setPasswordError] = useState<string | null>(null);
+
+  const handlePasswordSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (password === ADMIN_PASSWORD) {
+      setIsAuthenticated(true);
+      setPasswordError(null);
+      setPassword("");
+    } else {
+      setPasswordError("Senha incorreta. Tente novamente.");
+    }
+  };
 
   // Buscar lista de portais
   useEffect(() => {
+    if (!isAuthenticated) return;
     const fetchPortais = async () => {
       setIsLoadingPortais(true);
       try {
@@ -59,7 +75,7 @@ const Gerenciamento = () => {
       }
     };
     fetchPortais();
-  }, []);
+  }, [isAuthenticated]);
 
   const handleSearchChange = (term: string) => {
     setSearchTerm(term);
@@ -106,6 +122,47 @@ const Gerenciamento = () => {
     setFilteredPortais((prev) => [...prev, newPortal]);
     handleTogglePortalForm();
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-dark-bg text-white flex items-center justify-center">
+        <Card className="bg-[#141414] border border-white/10 w-full max-w-md">
+          <CardHeader>
+            <CardTitle className="text-xl font-semibold text-white flex items-center gap-2">
+              <Lock className="h-5 w-5 text-[#A50CE8]" />
+              Acesso Restrito
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={handlePasswordSubmit} className="space-y-4">
+              <div className="grid gap-2">
+                <label htmlFor="password" className="text-sm font-medium text-white">
+                  Senha
+                </label>
+                <input
+                  type="password"
+                  id="password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  className="bg-[#121212] border border-white/20 rounded-lg p-3 text-white focus:border-[#A50CE8] focus:ring-1 focus:ring-[#A50CE8] transition-all"
+                  placeholder="Digite a senha"
+                />
+                {passwordError && (
+                  <p className="text-red-400 text-sm">{passwordError}</p>
+                )}
+              </div>
+              <button
+                type="submit"
+                className="w-full bg-[#A50CE8] hover:bg-[#AD8AEB] text-white font-semibold py-2 rounded-lg transition-colors"
+              >
+                Entrar
+              </button>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-dark-bg text-white">
