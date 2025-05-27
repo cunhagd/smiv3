@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Importar apenas hooks necessários
 import { Trophy } from 'lucide-react';
 import { format } from 'date-fns';
 import StatCard from '../StatCard';
@@ -11,7 +11,7 @@ const PontuacaoSemana: React.FC<PontuacaoSemanaProps> = ({ dateRange }) => {
   const [totalPontuacao, setTotalPontuacao] = useState(0);
   const [isLoadingPontuacao, setIsLoadingPontuacao] = useState(true);
 
-  const totalPontuacaoMemo = React.useMemo(() => {
+  const totalPontuacaoMemo = useMemo(() => {
     console.log('Memoizando totalPontuacao para Semana Estratégica:', totalPontuacao);
     return totalPontuacao;
   }, [totalPontuacao]);

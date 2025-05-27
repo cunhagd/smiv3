@@ -1,5 +1,5 @@
 import { Pencil, Save, X, CalendarIcon, ChevronDown, Trash2, Turtle } from 'lucide-react';
-import React, { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Importar apenas hooks necessários
 import Navbar from '@/components/Navbar';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import AddSemana from '@/components/semana/AddSemana';
 import PontuacaoSemana from '@/components/semana/Pontuacao';
 import TotalNoticiasSemana from '@/components/semana/TotalNoticias';
-import SemanasCadastradas from '@/components/semana/SemanasCadastradas'; // Novo import
+import SemanasCadastradas from '@/components/semana/SemanasCadastradas';
 import GraficoCategoria from '@/components/semana/GraficoCategoria';
 import DatePickerSemana from '@/components/semana/DatePickerSemana';
 

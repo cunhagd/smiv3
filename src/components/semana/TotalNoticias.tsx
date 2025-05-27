@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react'; // Importar apenas hooks necessários
 import { Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import StatCard from '../StatCard';
@@ -11,7 +11,7 @@ const TotalNoticiasSemana: React.FC<TotalNoticiasSemanaProps> = ({ dateRange }) 
   const [totalNoticias, setTotalNoticias] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const totalNoticiasMemo = React.useMemo(() => {
+  const totalNoticiasMemo = useMemo(() => {
     console.log('Memoizando totalNoticias para Semana Estratégica:', totalNoticias);
     return totalNoticias;
   }, [totalNoticias]);

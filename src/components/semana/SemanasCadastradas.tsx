@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { Newspaper } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react'; // Importar apenas hooks necessários
+import { Sparkles } from 'lucide-react'; // Corrigido para Sparkles (conforme integração anterior)
 import StatCard from '../StatCard';
 
 interface SemanasCadastradasProps {
@@ -10,7 +10,7 @@ const SemanasCadastradas: React.FC<SemanasCadastradasProps> = ({ dateRange }) =>
   const [totalSemanas, setTotalSemanas] = useState<number>(0);
   const [isLoading, setIsLoading] = useState<boolean>(true);
 
-  const totalSemanasMemo = React.useMemo(() => {
+  const totalSemanasMemo = useMemo(() => {
     console.log('Memoizando totalSemanas para Semana Estratégica:', totalSemanas);
     return totalSemanas;
   }, [totalSemanas]);
@@ -45,7 +45,7 @@ const SemanasCadastradas: React.FC<SemanasCadastradasProps> = ({ dateRange }) =>
       title="Total de Semanas Cadastradas"
       value={isLoading ? "..." : totalSemanasMemo.toString()}
       isPositive
-      icon={<Newspaper className="h-6 w-6 text-[#fde047] hover:text-[#fef08a] transition-colors" />}
+      icon={<Sparkles className="h-6 w-6 text-[#fde047] hover:text-[#fef08a] transition-colors" />}
     />
   );
 };
