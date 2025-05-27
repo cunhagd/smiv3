@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Newspaper } from 'lucide-react';
+import { Sparkles } from 'lucide-react';
 import { format } from 'date-fns';
 import StatCard from '../StatCard';
 
@@ -50,7 +50,7 @@ const TotalNoticiasSemana: React.FC<TotalNoticiasSemanaProps> = ({ dateRange }) 
       title="Total de Notícias Estratégicas"
       value={isLoading ? "..." : totalNoticiasMemo.toString()}
       isPositive
-      icon={<Newspaper className="h-6 w-6 text-[#fde047] hover:text-[#fef08a] transition-colors" />}
+      icon={<Sparkles className="h-6 w-6 text-[#fde047] hover:text-[#fef08a] transition-colors" />}
     />
   );
 };

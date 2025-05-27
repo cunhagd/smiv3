@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import AddSemana from '@/components/semana/AddSemana';
 import PontuacaoSemana from '@/components/semana/Pontuacao';
 import TotalNoticiasSemana from '@/components/semana/TotalNoticias';
+import SemanasCadastradas from '@/components/semana/SemanasCadastradas'; // Novo import
 import GraficoCategoria from '@/components/semana/GraficoCategoria';
 import DatePickerSemana from '@/components/semana/DatePickerSemana';
 
@@ -717,6 +718,9 @@ const SemanaEstrategica = () => {
             <TotalNoticiasSemana dateRange={dateRange} />
           </div>
           <div className="flex-1">
+            <SemanasCadastradas dateRange={dateRange} />
+          </div>
+          <div className="flex-1">
             <PontuacaoSemana dateRange={dateRange} />
           </div>
         </div>
@@ -974,7 +978,7 @@ const SemanaEstrategica = () => {
                             console.log('Clicou no botão de edição para ID:', semana.id);
                             handleEdit(semana);
                           }}
-                          className="text-blue-400 hover:text-blue-300"
+                          className="text-blue-500 hover:text-blue-400"
                           aria-label="Editar semana estratégica"
                         >
                           <Pencil size={18} />
