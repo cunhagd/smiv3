@@ -234,6 +234,20 @@ const Gerenciamento = () => {
               </span>
             ) : (
               <>
+                {isLoadingPortais ? (
+                  <div className="flex items-center justify-center">
+                  </div>
+                ) : errorPortais ? (
+                  <div className="text-red-400">{errorPortais}</div>
+                ) : (
+                  <FiltroPortalCadastrado
+                    searchTerm={searchTerm}
+                    onSearchChange={handleSearchChange}
+                    onClear={handleClearSearch}
+                    portais={portais}
+                    onFilterChange={handleFilterChange}
+                  />
+                )}
                 <span
                   onClick={handleToggleNoticiaForm}
                   className="cursor-pointer text-[#A50CE8] hover:text-[#AD8AEB] transition-colors"
@@ -248,21 +262,6 @@ const Gerenciamento = () => {
                 >
                   <HousePlus className="h-6 w-6" />
                 </span>
-                {isLoadingPortais ? (
-                  <div className="flex items-center justify-center h-[300px]">
-                    <Turtle className="w-8 h-8 text-[#CAF10A] animate-spin" />
-                  </div>
-                ) : errorPortais ? (
-                  <div className="text-red-400">{errorPortais}</div>
-                ) : (
-                  <FiltroPortalCadastrado
-                    searchTerm={searchTerm}
-                    onSearchChange={handleSearchChange}
-                    onClear={handleClearSearch}
-                    portais={portais}
-                    onFilterChange={handleFilterChange}
-                  />
-                )}
               </>
             )}
           </div>
@@ -270,7 +269,7 @@ const Gerenciamento = () => {
         {message && (
           <div
             className={`mb-6 p-4 rounded-lg ${
-              message.type === "success" ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-green-300"
+              message.type === "success" ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300"
             }`}
           >
             {message.text}

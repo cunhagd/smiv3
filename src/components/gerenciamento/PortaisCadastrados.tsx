@@ -131,15 +131,15 @@ const PortaisCadastrados: React.FC<PortaisCadastradosProps> = ({
     }
   };
 
-  const handleDelete = async (nome: string) => {
+  const handleDelete = async (id: number) => {
     if (!confirm("Tem certeza que deseja excluir este portal?")) {
       return;
     }
 
     setIsSaving(true);
     try {
-      await axios.delete(`${API_BASE_URL}/portais/cadastrados/${encodeURIComponent(nome)}`);
-      const updatedPortais = portais.filter((portal) => portal.nome !== nome);
+      await axios.delete(`${API_BASE_URL}/portais/cadastrados/${id}`);
+      const updatedPortais = portais.filter((portal) => portal.id !== id);
       setPortais(updatedPortais);
       setFilteredPortais(
         updatedPortais
@@ -301,7 +301,7 @@ const PortaisCadastrados: React.FC<PortaisCadastradosProps> = ({
                             <Save size={18} />
                           </button>
                           <button
-                            onClick={() => handleDelete(portal.nome)}
+                            onClick={() => handleDelete(portal.id)}
                             className="text-[#f5a340] hover:text-[#f5b86e]"
                             disabled={isSaving}
                             aria-label="Excluir portal"
