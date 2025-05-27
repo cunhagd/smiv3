@@ -230,8 +230,7 @@ const AdicionarNoticia: React.FC<AdicionarNoticiaProps> = ({ onSubmitSuccess, on
 
               <div className="grid gap-2">
                 <label htmlFor="tema" className="text-base font-medium text-white">
-                  Tema <span className="text-red-4
-                00">*</span>
+                  Tema <span className="text-red-400">*</span>
                 </label>
                 <select
                   id="tema"
