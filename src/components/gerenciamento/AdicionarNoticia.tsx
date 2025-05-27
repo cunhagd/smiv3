@@ -229,11 +229,11 @@ const AdicionarNoticia: React.FC<AdicionarNoticiaProps> = ({ setMessage, onSubmi
             <button
               type="submit"
               disabled={!isNoticiaFormValid}
-              className={`flex items-center gap-2 px-4 py-2 bg-dark-card border border-white/10 rounded-lg text-sm text-white hover:bg-[#f5a340]/20 hover:border-[#f5a340]/50 transition-all duration-300 ${
+              className={`flex items-center gap-2 px-4 py-2 bg-dark-card border border-white/10 rounded-lg text-sm text-white hover:bg-[#CAF10A]/20 hover:border-[#CAF10A]/50 transition-all duration-300 ${
                 !isNoticiaFormValid ? "opacity-50 cursor-not-allowed" : "cursor-pointer"
               }`}
             >
-              <Save className="h-5 w-5 text-[#f5a340] hover:text-[#f5b86e] transition-colors" />
+              <Save className="h-5 w-5 text-[#CAF10A] hover:text-[#CAF163] transition-colors" />
               <span>Salvar Notícia</span>
             </button>
           </div>

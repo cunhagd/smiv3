@@ -953,7 +953,7 @@ const SemanaEstrategica = () => {
                           </button>
                           <button
                             onClick={() => handleDelete(semana.id)}
-                            className="text-red-600 hover:text-red-500"
+                            className="text-[#f5a340] hover:text-[#f5b86e]"
                             disabled={isSaving}
                             aria-label="Excluir semana estratégica"
                           >

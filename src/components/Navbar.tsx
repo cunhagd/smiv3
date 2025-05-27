@@ -1,6 +1,6 @@
-
 import React from 'react';
 import { useLocation, Link, useNavigate } from 'react-router-dom';
+import { Lock, LockOpen } from 'lucide-react';
 
 const Navbar = () => {
   const location = useLocation();
@@ -47,7 +47,10 @@ const Navbar = () => {
               to="/gerenciamento" 
               className={`nav-link ${isActive("/gerenciamento") && "active"}`}
             >
-              Gerenciamento
+              <span className="flex items-center gap-1">
+                {isActive("/gerenciamento") ? <LockOpen size={16} /> : <Lock size={16} />}
+                Gerenciamento
+              </span>
             </Link>
           </nav>
         )}
