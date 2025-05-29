@@ -38,12 +38,12 @@ const Login = () => {
               <span className="text-black font-bold text-xl">MG</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold">Governo de Minas Gerais</h1>
+              <h1 className="text-2xl font-bold mb-4 gradient-text text-2xl font-bold">Governo de Minas Gerais</h1>
               <p className="text-gray-400">Sistema de Monitoramento de Imprensa</p>
             </div>
           </div>
           
-          <h2 className="text-3xl font-bold mb-2">Bem-vindo</h2>
+          <h2 className="text-2xl font-bold mb-4 gradient-text text-3xl font-bold mb-2">Bem-vindo</h2>
           <p className="text-gray-400 mb-8">Entre com suas credenciais para acessar o sistema.</p>
           
           <form onSubmit={handleSubmit} className="space-y-5">
