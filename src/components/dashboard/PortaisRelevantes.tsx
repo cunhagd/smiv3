@@ -119,22 +119,20 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
         .join(', ');
 
       return (
-        <div className="custom-tooltip" style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '10px' }}>
-          <p style={{ color: 'rgba(255,255,255,0.7)', margin: '0 0 8px 0' }}><strong>Portal:</strong> {label}</p>
-          <p style={{ color: '#fff', margin: '0 0 8px 0' }}><strong>Pontuação:</strong> {data.pontuacao}</p>
-          <br />
+        <div className="custom-tooltip" style={{ backgroundColor: '#141414', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '8px', padding: '8px' }}>
+          <p style={{ color: 'rgba(255,255,255,0.7)', margin: '0 0 6px 0', fontSize: '12px' }}><strong>Portal:</strong> {label}</p>
+          <p style={{ color: '#fff', margin: '0 0 6px 0', fontSize: '12px' }}><strong>Pontuação:</strong> {data.pontuacao}</p>
           {/* Contêiner flex para os valores, gráfico e percentuais */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {/* Coluna dos valores numéricos */}
-            <div>
-              <p style={{ color: sentimentColors.Positivas, margin: '0 0 8px 0' }}>Positivas: {data.positivo}</p>
-              <p style={{ color: sentimentColors.Negativas, margin: '0 0 8px 0' }}>Negativas: {data.negativo}</p>
-              <p style={{ color: sentimentColors.Neutras, margin: '0 0 8px 0' }}>Neutras: {data.neutro}</p>
-              <p style={{ margin: '0 0 8px 0' }}></p> {/* Linha vazia */}
-              <p style={{ color: '#fff', margin: '0 0 8px 0' }}><strong>Total de Notícias: </strong>{data.quantidade}</p>
+            <div style={{ fontSize: '12px' }}>
+              <p style={{ color: sentimentColors.Positivas, margin: '0 0 4px 0' }}>Positivas: {data.positivo}</p>
+              <p style={{ color: sentimentColors.Negativas, margin: '0 0 4px 0' }}>Negativas: {data.negativo}</p>
+              <p style={{ color: sentimentColors.Neutras, margin: '0 0 4px 0' }}>Neutras: {data.neutro}</p>
+              <p style={{ color: '#fff', margin: '0 0 4px 0' }}><strong>Total: </strong>{data.quantidade}</p>
             </div>
             {/* Gráfico de Pizza */}
-            <div className="w-20 h-20 relative rounded-full overflow-hidden">
+            <div className="w-16 h-16 relative rounded-full overflow-hidden">
               <div
                 className="absolute w-full h-full"
                 style={{
@@ -144,16 +142,16 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
               />
             </div>
             {/* Coluna dos percentuais com inline blocks à esquerda */}
-            <div>
-              <p style={{ color: sentimentColors.Positivas, margin: '0 0 8px 0' }}>
+            <div style={{ fontSize: '12px' }}>
+              <p style={{ color: sentimentColors.Positivas, margin: '0 0 4px 0' }}>
                 <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: sentimentColors.Positivas, marginRight: '4px' }}></span>
                 {data['%positivo']}
               </p>
-              <p style={{ color: sentimentColors.Negativas, margin: '0 0 8px 0' }}>
+              <p style={{ color: sentimentColors.Negativas, margin: '0 0 4px 0' }}>
                 <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: sentimentColors.Negativas, marginRight: '4px' }}></span>
                 {data['%negativo']}
               </p>
-              <p style={{ color: sentimentColors.Neutras, margin: '0 0 8px 0' }}>
+              <p style={{ color: sentimentColors.Neutras, margin: '0 0 4px 0' }}>
                 <span className="inline-block w-2 h-2 rounded-full" style={{ backgroundColor: sentimentColors.Neutras, marginRight: '4px' }}></span>
                 {data['%neutro']}
               </p>
@@ -192,19 +190,23 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
         <ResponsiveContainer width="100%" height={300}>
           <RechartsBarChart
             data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+            margin={{ top: 20, right: 10, left: 10, bottom: 5 }}
           >
             <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
             <XAxis
               dataKey="portal"
               stroke="#888"
-              tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
+              tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }}
               interval={0}
               angle={-45}
               textAnchor="end"
               height={60}
             />
-            <YAxis stroke="#888" tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }} domain={['auto', 0]} />
+            <YAxis
+              stroke="#888"
+              tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 10 }}
+              domain={['auto', 0]}
+            />
             <Tooltip
               content={<CustomTooltip />}
               cursor={false}
@@ -217,7 +219,7 @@ const PortaisRelevantes: React.FC<PortaisRelevantesProps> = ({ dateRange }) => {
             </defs>
             <Bar
               dataKey="pontuacao"
-              barSize={30}
+              barSize={20} // Reduzido para caber no espaço menor
               radius={[4, 4, 0, 0]}
               isAnimationActive={false}
             >

@@ -61,9 +61,13 @@ const Dashboard = () => {
         </div>
 
         {/* Charts Row */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-          <NoticiasPeriodo dateRange={dateRange} />
-          <PortaisRelevantes dateRange={dateRange} />
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          <div className="lg:col-span-2">
+            <NoticiasPeriodo dateRange={dateRange} />
+          </div>
+          <div className="lg:col-span-1">
+            <PortaisRelevantes dateRange={dateRange} />
+          </div>
         </div>
 
         {/* Bottom Row */}

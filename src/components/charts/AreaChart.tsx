@@ -16,6 +16,7 @@ interface AreaChartProps {
   yAxisKey?: string;
   xAxisKey?: string;
   hideAxis?: boolean;
+  xAxisOptions?: { interval?: number; angle?: number; textAnchor?: string }; // Adicionada propriedade xAxisOptions
 }
 
 const AreaChart = ({
@@ -25,6 +26,7 @@ const AreaChart = ({
   yAxisKey = 'value',
   xAxisKey = 'name',
   hideAxis = false,
+  xAxisOptions,
 }: AreaChartProps) => {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
@@ -73,6 +75,9 @@ const AreaChart = ({
             tick={{ fill: 'rgba(255,255,255,0.5)', fontSize: 12 }}
             axisLine={{ stroke: 'rgba(255,255,255,0.1)' }}
             tickLine={{ stroke: 'rgba(255,255,255,0.1)' }}
+            interval={xAxisOptions?.interval !== undefined ? xAxisOptions.interval : 'preserveStartEnd'} // Usar interval de xAxisOptions ou padrão
+            angle={xAxisOptions?.angle || 0} // Rotação dos rótulos, padrão 0
+            textAnchor={xAxisOptions?.textAnchor || 'middle'} // Ancoragem dos rótulos, padrão 'middle'
           />
         )}
 
