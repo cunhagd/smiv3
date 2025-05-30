@@ -1,26 +1,70 @@
-
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Dashboard from './pages/Dashboard';
 import Spreadsheet from './pages/Spreadsheet';
 import SemanaEstrategica from './pages/SemanaEstrategica';
 import Gerenciamento from './pages/Gerenciamento';
 import Login from './pages/Login';
+import PrivateRoute from './components/PrivateRouter';
+
+// Componente interno para lidar com o redirecionamento da rota raiz
+const RootRedirect = () => {
+  const location = useLocation(); // Agora useLocation está dentro do contexto do Router
+
+  // Função para verificar se o usuário está autenticado
+  const isAuthenticated = () => {
+    const token = localStorage.getItem('token');
+    return !!token; // Retorna true se o token existir
+  };
+
+  return isAuthenticated() ? (
+    <Navigate to={location.pathname === '/' ? '/spreadsheet' : location.pathname} replace />
+  ) : (
+    <Navigate to="/login" replace />
+  );
+};
 
 function App() {
-  // Verifica se o usuário "logou" (apenas para redirecionar para o login inicialmente)
-  const isAuthenticated = localStorage.getItem('isAuthenticated') === 'true';
-
   return (
     <Router>
       <Routes>
-        {/* Redireciona a raiz ("/") para a página de login se não estiver autenticado */}
-        <Route path="/" element={isAuthenticated ? <Navigate to="/spreadsheet" replace /> : <Navigate to="/login" replace />} />
-        {/* Remove a verificação de autenticação para todas as rotas protegidas */}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/spreadsheet" element={<Spreadsheet />} />
-        <Route path="/semana-estrategica" element={<SemanaEstrategica />} />
-        <Route path="/gerenciamento" element={<Gerenciamento />} />
-        {/* Mantém a rota de login */}
+        {/* Rota raiz ("/"): Usa o componente RootRedirect */}
+        <Route path="/" element={<RootRedirect />} />
+        
+        {/* Rotas protegidas usando PrivateRoute */}
+        <Route
+          path="/dashboard"
+          element={
+            <PrivateRoute>
+              <Dashboard />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/spreadsheet"
+          element={
+            <PrivateRoute>
+              <Spreadsheet />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/semana-estrategica"
+          element={
+            <PrivateRoute>
+              <SemanaEstrategica />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/gerenciamento"
+          element={
+            <PrivateRoute>
+              <Gerenciamento />
+            </PrivateRoute>
+          }
+        />
+        
+        {/* Rota de login, que não precisa de autenticação */}
         <Route path="/login" element={<Login />} />
       </Routes>
     </Router>

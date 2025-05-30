@@ -11,21 +11,43 @@ const Login = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
 
-    // Simula um "login" sem qualquer validação
-    setTimeout(() => {
-      // Define o status de autenticação como true, independentemente do email e senha
-      localStorage.setItem('isAuthenticated', 'true');
+    try {
+      // Definir a URL da API usando variável de ambiente ou fallback
+      const API_URL = process.env.REACT_APP_API_URL || 'https://auth-service-production-768c.up.railway.app';
+      const response = await fetch(`${API_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.message || 'Login failed');
+      }
+
+      // Armazenar o token no localStorage
+      localStorage.setItem('token', data.token);
+      localStorage.setItem('user', JSON.stringify(data.user));
+
       navigate('/dashboard');
       toast({
-        title: "Login realizado com sucesso",
-        description: "Bem-vindo ao Sistema de Monitoramento de Imprensa",
+        title: 'Login realizado com sucesso',
+        description: 'Bem-vindo ao Sistema de Monitoramento de Imprensa',
       });
+    } catch (error) {
+      toast({
+        title: 'Erro ao fazer login',
+        description: error.message || 'Verifique suas credenciais e tente novamente.',
+        variant: 'destructive',
+      });
+    } finally {
       setLoading(false);
-    }, 1000);
+    }
   };
 
   return (
@@ -38,7 +60,7 @@ const Login = () => {
               <span className="text-black font-bold text-xl">MG</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold mb-4 gradient-text text-2xl font-bold">Governo de Minas Gerais</h1>
+              <h1 className="text-2xl font-bold mb-4 gradient-text text-2xl font-bold">Governo do Minas Gerais</h1>
               <p className="text-gray-400">Sistema de Monitoramento de Imprensa</p>
             </div>
           </div>
@@ -58,7 +80,6 @@ const Login = () => {
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="seu.email@governo.mg.gov.br"
                 className="form-input"
-                // Removido o "required" para permitir entradas vazias
               />
             </div>
             
@@ -74,7 +95,6 @@ const Login = () => {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   className="form-input pr-10"
-                  // Removido o "required" para permitir entradas vazias
                 />
                 <button
                   type="button"
