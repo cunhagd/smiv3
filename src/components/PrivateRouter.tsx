@@ -3,7 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
 
 // Definir a URL da API como a URL do Railway
-const API_BASE_URL = 'https://api-auth-service.up.railway.app';
+const API_BASE_URL = 'smi-api-production-fae2.up.railway.app';
 
 const PrivateRoute = ({ children }) => {
   const { toast } = useToast();
