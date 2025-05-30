@@ -16,8 +16,8 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Definir a URL da API usando variável de ambiente ou fallback
-      const API_URL = process.env.REACT_APP_API_URL || 'https://auth-service-production-768c.up.railway.app';
+      // Definir a URL da API usando variável de ambiente
+      const API_URL = process.env.REACT_APP_API_URL; // Sem fallback
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
