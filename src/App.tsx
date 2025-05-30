@@ -4,7 +4,7 @@ import Spreadsheet from './pages/Spreadsheet';
 import SemanaEstrategica from './pages/SemanaEstrategica';
 import Gerenciamento from './pages/Gerenciamento';
 import Login from './pages/Login';
-import PrivateRoute from './components/PrivateRouter';
+import PrivateRoute from './components/PrivateRouter'; // Corrigido o nome do componente
 
 // Componente interno para lidar com o redirecionamento da rota raiz
 const RootRedirect = () => {

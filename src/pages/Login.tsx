@@ -3,6 +3,9 @@ import { useNavigate } from 'react-router-dom';
 import { Eye, EyeOff, ChevronRight } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 
+// Definir a URL da API como a URL do Railway
+const API_BASE_URL = 'https://api-auth-service.up.railway.app';
+
 const Login = () => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -13,31 +16,27 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('HandleSubmit chamado');
     setLoading(true);
 
     try {
-      // Depuração e validação da variável de ambiente
-      const API_URL = process.env.REACT_APP_API_URL;
-      console.log('API_URL:', API_URL); // Log para verificar o valor
-      if (!API_URL) {
-        throw new Error('A variável de ambiente REACT_APP_API_URL não está definida. Verifique as configurações no Railway.');
-      }
-
-      const response = await fetch(`${API_URL}/auth/login`, {
+      console.log('API_BASE_URL:', API_BASE_URL); // Verifica o valor da URL
+      const response = await fetch(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password }),
       });
 
+      console.log('Resposta recebida:', response);
       const data = await response.json();
 
       if (!response.ok) {
         throw new Error(data.message || 'Login failed');
       }
 
-      // Armazenar o token no localStorage
       localStorage.setItem('token', data.token);
       localStorage.setItem('user', JSON.stringify(data.user));
+      console.log('Login bem-sucedido, navegando para /dashboard');
 
       navigate('/dashboard');
       toast({
@@ -45,6 +44,7 @@ const Login = () => {
         description: 'Bem-vindo ao Sistema de Monitoramento de Imprensa',
       });
     } catch (error) {
+      console.error('Erro no login:', error);
       toast({
         title: 'Erro ao fazer login',
         description: error.message || 'Verifique suas credenciais e tente novamente.',
@@ -52,6 +52,7 @@ const Login = () => {
       });
     } finally {
       setLoading(false);
+      console.log('Fim do handleSubmit');
     }
   };
 
@@ -65,7 +66,7 @@ const Login = () => {
               <span className="text-black font-bold text-xl">MG</span>
             </div>
             <div>
-              <h1 className="text-2xl font-bold mb-4 gradient-text text-2xl font-bold">Governo do Minas Gerais</h1>
+              <h1 className="text-2xl font-bold mb-4 gradient-text text-2xl font-bold">Governo de Minas Gerais</h1>
               <p className="text-gray-400">Sistema de Monitoramento de Imprensa</p>
             </div>
           </div>

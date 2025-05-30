@@ -1,46 +1,56 @@
-import React from 'react';
-import { Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Navigate, useLocation } from 'react-router-dom';
 import { useToast } from '@/hooks/use-toast';
+
+// Definir a URL da API como a URL do Railway
+const API_BASE_URL = 'https://api-auth-service.up.railway.app';
 
 const PrivateRoute = ({ children }) => {
   const { toast } = useToast();
-  const token = localStorage.getItem('token');
+  const location = useLocation();
+  const [isValid, setIsValid] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  if (!token) {
-    toast({
-      title: "Acesso negado",
-      description: "Por favor, faça login para acessar esta página.",
-      variant: "destructive",
-    });
-    return <Navigate to="/login" />;
+  useEffect(() => {
+    const checkAuth = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setIsLoading(false);
+        return;
+      }
+
+      try {
+        const response = await fetch(`${API_BASE_URL}/auth/verify`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+
+        if (!response.ok) {
+          throw new Error('Token inválido ou expirado');
+        }
+
+        setIsValid(true);
+      } catch (error) {
+        console.error('Erro na validação do token:', error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        toast({
+          title: 'Sessão expirada',
+          description: 'Por favor, faça login novamente.',
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    checkAuth();
+  }, [toast]);
+
+  if (isLoading) {
+    return <div className="flex items-center justify-center h-screen">Carregando...</div>;
   }
 
-  // Verificar token com o backend (opcional, para maior segurança)
-  const verifyToken = async () => {
-    try {
-      const response = await fetch('http://localhost:3001/auth/verify', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (!response.ok) {
-        throw new Error('Token invalid');
-      }
-    } catch (error) {
-      localStorage.removeItem('token');
-      localStorage.removeItem('user');
-      toast({
-        title: "Sessão expirada",
-        description: "Por favor, faça login novamente.",
-        variant: "destructive",
-      });
-      return false;
-    }
-    return true;
-  };
-
-  // Executar verificação assíncrona (usar useEffect ou uma abordagem mais robusta em produção)
-  const isValid = token ? verifyToken() : false;
-
-  return isValid ? children : <Navigate to="/login" />;
+  return isValid ? children : <Navigate to="/login" state={{ from: location }} replace />;
 };
 
 export default PrivateRoute;
