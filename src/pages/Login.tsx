@@ -16,8 +16,13 @@ const Login = () => {
     setLoading(true);
 
     try {
-      // Definir a URL da API usando variável de ambiente
-      const API_URL = process.env.REACT_APP_API_URL; // Sem fallback
+      // Depuração e validação da variável de ambiente
+      const API_URL = process.env.REACT_APP_API_URL;
+      console.log('API_URL:', API_URL); // Log para verificar o valor
+      if (!API_URL) {
+        throw new Error('A variável de ambiente REACT_APP_API_URL não está definida. Verifique as configurações no Railway.');
+      }
+
       const response = await fetch(`${API_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
